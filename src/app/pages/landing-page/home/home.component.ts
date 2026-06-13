@@ -96,7 +96,7 @@ export class HomeComponent {
       role: 'Maize Farmer, Ghana',
       quote:
         "TripSecure didn't just give me a loan; they gave me a roadmap for success. My yields have doubled in just two seasons.",
-      image: '/images/farmer-stories/akosua.png',
+      image: '/images/farmer-stories-akosua.png',
       alt: 'Akosua holding a basket of freshly harvested vegetables',
     },
     {
@@ -104,7 +104,7 @@ export class HomeComponent {
       role: "Cocoa Farmer, Côte d'Ivoire",
       quote:
         "The monitoring system saved my crop from a blight I didn't even see coming. This technology is a blessing for our community.",
-      image: '/images/farmer-stories/kwame.png',
+      image: '/images/farmer-stories-kwame.png',
       alt: 'Portrait of Kwame standing outdoors on his farm',
     },
     {
@@ -112,7 +112,7 @@ export class HomeComponent {
       role: 'Young Agri-Entrepreneur, Ghana',
       quote:
         'As a young entrepreneur, finding finance was impossible until TripSecure. They looked at my data, not just my collateral.',
-      image: '/images/farmer-stories/abena.png',
+      image: '/images/farmer-stories-abena.png',
       alt: 'Abena holding a tablet inside a greenhouse',
     },
   ];
