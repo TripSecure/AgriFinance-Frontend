@@ -53,3 +53,29 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+
+## Figma to Code
+
+Act as an expert frontend developer. I am providing you with a Figma design snippet (or a screenshot/design specification) for this specific UI element: [Describe the element, e.g., "a hero section with a signup form"].
+
+Please generate the code based on the following strict requirements:
+
+1. TECH STACK & STYLING:
+- Framework: [HTML/CSS, Angular]
+- Styling: [e.g., BootStrap, Styled Components, SCSS Modules]
+- Accessibility: Ensure all elements have correct aria-labels, semantic HTML, and are fully keyboard-navigable.
+
+2. LAYOUT & RESPONSIVENESS:
+- Recreate the exact spacing, padding, and margins from the design snippet.
+- Implement responsive design. Make sure it scales gracefully for Mobile, Tablet, and Desktop breakpoints.
+- Use Flexbox or CSS Grid for layouts. Avoid absolute positioning unless absolutely necessary.
+
+3. TYPOGRAPHY & COLORS:
+- Use these exact colors: [List hex codes or your design system tokens].
+- Use these exact font weights, sizes, and line-heights: [List typography rules].
+
+4. CODE QUALITY & STRUCTURE:
+- Write clean, self-documenting, and maintainable code.
+- Extract repeated components where possible.
+- Return ONLY the finalized code block without unnecessary conversational filler.

@@ -1,0 +1,21 @@
+<section class="partners" aria-labelledby="partners-heading">
+  <h2 id="partners-heading" class="visually-hidden">Organizations we work with</h2>
+  <div
+    class="partner-carousel"
+    tabindex="0"
+    aria-label="Partner organizations. Focus or hover to pause movement."
+  >
+    <div class="partner-track">
+      <ul class="partner-list">
+        @for (partner of partners; track partner) {
+          <li>{{ partner }}</li>
+        }
+      </ul>
+      <ul class="partner-list" aria-hidden="true">
+        @for (partner of partners; track partner) {
+          <li>{{ partner }}</li>
+        }
+      </ul>
+    </div>
+  </div>
+</section>

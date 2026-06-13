@@ -1,0 +1,57 @@
+<header class="site-header">
+  <nav class="navbar" aria-label="Primary navigation">
+    <a class="brand" routerLink="/home" aria-label="TripSecure AgriFinance home" (click)="closeMenu()">
+      <img src="images/logo.png" alt="TripSecure AgriFinance Logo" class="brand-logo" />
+      <span class="brand-name">TripSecure AgriFinance</span>
+    </a>
+
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-controls="primary-menu"
+      [attr.aria-expanded]="isMenuOpen()"
+      aria-label="Toggle navigation menu"
+      (click)="toggleMenu()"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div id="primary-menu" class="menu" [class.menu-open]="isMenuOpen()">
+      <div class="nav-links">
+        <a
+          class="nav-link"
+          routerLink="/home"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          ariaCurrentWhenActive="page"
+          (click)="closeMenu()"
+        >Home</a>
+        <a
+          class="nav-link"
+          routerLink="/our-solutions"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+          (click)="closeMenu()"
+        >Our Solutions</a>
+        <a
+          class="nav-link"
+          routerLink="/contact-us"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+          (click)="closeMenu()"
+        >Contact Us</a>
+      </div>
+
+      <div class="nav-actions" aria-label="Account actions">
+        <button class="action-button action-button-outline" type="button" routerLink="/auth/login">Sign In</button>
+        <button class="action-button action-button-primary" type="button" routerLink="/auth/sign-up">Register</button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main class="main">
+  <router-outlet />
+</main>
