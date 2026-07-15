@@ -1,0 +1,261 @@
+﻿<div class="register-page provider-register-page">
+  <header class="gateway-header fixed-top">
+    <a class="gateway-brand" routerLink="/home" aria-label="TripSecure AgriFinance home">
+      <span class="gateway-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>TripSecure AgriFinance</span>
+    </a>
+    <nav aria-label="Registration support">
+      <a routerLink="/contact-us">Help Center</a>
+      <a class="gateway-sign-in" routerLink="/auth/login">Sign In</a>
+    </nav>
+  </header>
+
+  <main class="register-main" aria-labelledby="register-heading">
+    <header class="register-intro">
+      <p>Registration</p>
+      <h1 id="register-heading">{{ pageTitle }}</h1>
+    </header>
+
+    <form
+      class="registration-form provider-form"
+      [formGroup]="registrationForm"
+      (ngSubmit)="onSubmit()"
+    >
+      <section class="registration-card" aria-labelledby="business-details">
+        <header class="registration-card-header">
+          <mat-icon aria-hidden="true">business</mat-icon>
+          <h2 id="business-details">1. Business Details</h2>
+        </header>
+
+        <div class="registration-card-body provider-business-grid">
+          <app-form-input
+            class="provider-input provider-full-width"
+            name="businessName"
+            label="Business Name"
+            type="text"
+            placeholder="Legal registered name"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="provider-input"
+            name="registrationNumber"
+            label="Registration Number"
+            type="text"
+            placeholder="BRN-12345678"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="provider-input"
+            name="tin"
+            label="Tax Identification Number"
+            type="text"
+            placeholder="TIN-987654321"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="provider-input provider-full-width"
+            name="businessAddress"
+            label="Business Address"
+            type="textform"
+            placeholder="Full physical address"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="provider-input"
+            name="contactPerson"
+            label="Contact Person"
+            type="text"
+            placeholder="Authorized representative"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="provider-input"
+            name="phone"
+            label="Phone Number"
+            type="tel"
+            placeholder="+1 (555) 000-0000"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="provider-input provider-full-width"
+            name="email"
+            label="Email Address"
+            type="email"
+            placeholder="contact@business.com"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+        </div>
+      </section>
+
+      <section class="registration-card" aria-labelledby="service-type">
+        <header class="registration-card-header">
+          <mat-icon aria-hidden="true">construction</mat-icon>
+          <h2 id="service-type">2. Service Type</h2>
+        </header>
+
+        <div class="registration-card-body provider-service-body">
+          <p class="service-instruction">
+            Select all services your organization is licensed and capable of providing:
+          </p>
+
+          <div class="service-checkbox-grid">
+            <app-form-input
+              class="service-checkbox"
+              name="tractorServices"
+              label="Tractor Services"
+              type="checkbox"
+              [formGroup]="registrationForm"
+            />
+            <app-form-input
+              class="service-checkbox"
+              name="irrigationServices"
+              label="Irrigation Services"
+              type="checkbox"
+              [formGroup]="registrationForm"
+            />
+            <app-form-input
+              class="service-checkbox"
+              name="agrochemicals"
+              label="Agrochemicals"
+              type="checkbox"
+              [formGroup]="registrationForm"
+            />
+            <app-form-input
+              class="service-checkbox"
+              name="soilTesting"
+              label="Soil Testing"
+              type="checkbox"
+              [formGroup]="registrationForm"
+            />
+            <app-form-input
+              class="service-checkbox"
+              name="logisticsAggregation"
+              label="Logistics & Aggregation"
+              type="checkbox"
+              [formGroup]="registrationForm"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="registration-card" aria-labelledby="service-region">
+        <header class="registration-card-header">
+          <mat-icon aria-hidden="true">pin_drop</mat-icon>
+          <h2 id="service-region">3. Service Region/Coverage</h2>
+        </header>
+
+        <div class="registration-card-body provider-region-body">
+          <app-form-input
+            class="provider-input provider-full-width"
+            name="operationalJurisdiction"
+            label="Operational Jurisdictions"
+            [isOption]="true"
+            [selections]="operationalJurisdictions"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+          <p class="region-help">You can add specific sub-districts and hubs in the next step.</p>
+        </div>
+      </section>
+
+      <section class="registration-card" aria-labelledby="document-upload">
+        <header class="registration-card-header">
+          <mat-icon aria-hidden="true">upload_file</mat-icon>
+          <h2 id="document-upload">4. Document Upload</h2>
+        </header>
+
+        <div class="registration-card-body document-grid provider-document-grid">
+          <app-form-input
+            class="file-field provider-file-field"
+            type="file"
+            name="businessRegistrationCertificate"
+            label="Business Registration Certificate"
+            icon="upload_file"
+            placeholder="business registration certificate"
+            formText="PDF/JPG"
+            accept=".pdf,image/png,image/jpeg"
+            [allowMultiple]="false"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="file-field provider-file-field"
+            type="file"
+            name="tinCertificate"
+            label="TIN Certificate"
+            icon="verified"
+            placeholder="TIN certificate"
+            formText="PDF/JPG"
+            accept=".pdf,image/png,image/jpeg"
+            [allowMultiple]="false"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="file-field provider-file-field"
+            type="file"
+            name="directorId"
+            label="Director ID (Valid Passport/National ID)"
+            icon="add_a_photo"
+            placeholder="director ID front"
+            formText="Capture or upload ID front"
+            accept="image/png,image/jpeg"
+            [allowMultiple]="false"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="file-field provider-file-field"
+            type="file"
+            name="portraitPhoto"
+            label="Upload Portrait Photo"
+            icon="add_a_photo"
+            placeholder="portrait photo"
+            formText="Capture a clear headshot of yourself"
+            accept="image/png,image/jpeg"
+            [allowMultiple]="false"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+        </div>
+      </section>
+
+      <p class="compliance-note">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>
+          <strong>Compliance Note</strong>
+          Your information is encrypted and only used for regulatory KYC screening. Reviews
+          typically take 24-48 business hours.
+        </span>
+      </p>
+
+      <footer class="registration-actions">
+        <p class="data-note">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          Your data is encrypted and processed according to DPA 2012
+        </p>
+
+        <div class="action-buttons">
+          <button class="save-draft-button" type="button" (click)="saveDraft()">Save Draft</button>
+          <button class="submit-review-button" type="submit">Submit for Review</button>
+        </div>
+      </footer>
+    </form>
+  </main>
+</div>

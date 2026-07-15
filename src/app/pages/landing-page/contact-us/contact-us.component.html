@@ -4,14 +4,18 @@
       <p class="contact-hero-label">Get in Touch</p>
       <h1 id="contact-hero-heading">Ready to Secure Your<br /><span>Farm's Future?</span></h1>
       <p class="contact-hero-description">
-        Join thousands of farmers, cooperatives, and agribusinesses already building resilience
-        and growth with TripSecure AgriFinance.
+        Join thousands of farmers, cooperatives, and agribusinesses already building resilience and
+        growth with TripSecure AgriFinance.
       </p>
 
       <address class="contact-hero-details">
         <div class="contact-method">
           <span class="contact-method-icon contact-method-icon-phone" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.3 1.2.4 2.4.6 3.7.6.5 0 .8.4.8.9V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.6c.5 0 .9.4.9.8 0 1.3.2 2.5.6 3.7.1.4 0 .8-.3 1.1l-2.2 2.2Z" /></svg>
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.3 1.2.4 2.4.6 3.7.6.5 0 .8.4.8.9V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.6c.5 0 .9.4.9.8 0 1.3.2 2.5.6 3.7.1.4 0 .8-.3 1.1l-2.2 2.2Z"
+              />
+            </svg>
           </span>
           <div>
             <span>Call Anytime</span>
@@ -21,11 +25,15 @@
 
         <div class="contact-method">
           <span class="contact-method-icon contact-method-icon-email" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M3 4h18v16H3V4Zm2 2v.5l7 5.2 7-5.2V6H5Zm14 12V9l-7 5.2L5 9v9h14Z" /></svg>
+            <svg viewBox="0 0 24 24">
+              <path d="M3 4h18v16H3V4Zm2 2v.5l7 5.2 7-5.2V6H5Zm14 12V9l-7 5.2L5 9v9h14Z" />
+            </svg>
           </span>
           <div>
             <span>Email Us</span>
-            <a href="mailto:Tripsecureagrifinanceltd@gmail.com">Tripsecureagrifinanceltd@gmail.com</a>
+            <a href="mailto:Tripsecureagrifinanceltd@gmail.com"
+              >Tripsecureagrifinanceltd@gmail.com</a
+            >
           </div>
         </div>
       </address>
@@ -44,64 +52,66 @@
 </section>
 
 <ng-template #contactFooter>
-<footer class="contact-footer">
-  <div class="contact-footer-layout">
-    <div class="contact-footer-brand">
-      <a routerLink="/home" aria-label="TripSecure AgriFinance home">TripSecure AgriFinance</a>
-      <p>&copy; 2026 TripSecure AgriFinance.</p>
+  <footer class="contact-footer">
+    <div class="contact-footer-layout">
+      <div class="contact-footer-brand">
+        <a routerLink="/home" aria-label="TripSecure AgriFinance home">TripSecure AgriFinance</a>
+        <p>&copy; 2026 TripSecure AgriFinance.</p>
+      </div>
+
+      <nav class="contact-footer-nav" aria-label="Footer navigation">
+        <section aria-labelledby="contact-footer-services">
+          <h2 id="contact-footer-services">Services</h2>
+          <ul>
+            <li><a routerLink="/our-solutions">Grow</a></li>
+            <li><a routerLink="/our-solutions">Fund</a></li>
+            <li><a routerLink="/our-solutions">Protect</a></li>
+            <li><a routerLink="/our-solutions">Monitor</a></li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="contact-footer-company">
+          <h2 id="contact-footer-company">Company</h2>
+          <ul>
+            <li><a routerLink="/home">About Us</a></li>
+            <li><span>Careers</span></li>
+            <li><span>Partners</span></li>
+            <li><span>Resources</span></li>
+          </ul>
+        </section>
+
+        <section class="contact-footer-legal" aria-labelledby="contact-footer-legal-heading">
+          <h2 id="contact-footer-legal-heading">Legal</h2>
+          <ul>
+            <li><span>Privacy Policy</span></li>
+            <li><span>Terms of Service</span></li>
+            <li><span>Security</span></li>
+          </ul>
+
+          <form class="newsletter-form" (submit)="$event.preventDefault()">
+            <label for="newsletter-email"
+              >Join our newsletter for the latest market insights.</label
+            >
+            <div>
+              <input
+                id="newsletter-email"
+                type="email"
+                autocomplete="email"
+                placeholder="Email address"
+                aria-label="Newsletter email address"
+              />
+              <button type="submit">Join</button>
+            </div>
+          </form>
+        </section>
+      </nav>
     </div>
-
-    <nav class="contact-footer-nav" aria-label="Footer navigation">
-      <section aria-labelledby="contact-footer-services">
-        <h2 id="contact-footer-services">Services</h2>
-        <ul>
-          <li><a routerLink="/our-solutions">Grow</a></li>
-          <li><a routerLink="/our-solutions">Fund</a></li>
-          <li><a routerLink="/our-solutions">Protect</a></li>
-          <li><a routerLink="/our-solutions">Monitor</a></li>
-        </ul>
-      </section>
-
-      <section aria-labelledby="contact-footer-company">
-        <h2 id="contact-footer-company">Company</h2>
-        <ul>
-          <li><a routerLink="/home">About Us</a></li>
-          <li><span>Careers</span></li>
-          <li><span>Partners</span></li>
-          <li><span>Resources</span></li>
-        </ul>
-      </section>
-
-      <section class="contact-footer-legal" aria-labelledby="contact-footer-legal-heading">
-        <h2 id="contact-footer-legal-heading">Legal</h2>
-        <ul>
-          <li><span>Privacy Policy</span></li>
-          <li><span>Terms of Service</span></li>
-          <li><span>Security</span></li>
-        </ul>
-
-        <form class="newsletter-form" (submit)="$event.preventDefault()">
-          <label for="newsletter-email">Join our newsletter for the latest market insights.</label>
-          <div>
-            <input
-              id="newsletter-email"
-              type="email"
-              autocomplete="email"
-              placeholder="Email address"
-              aria-label="Newsletter email address"
-            />
-            <button type="submit">Join</button>
-          </div>
-        </form>
-      </section>
-    </nav>
-  </div>
-</footer>
+  </footer>
 </ng-template>
 
 <section class="contact-form-section" aria-labelledby="contact-form-heading">
   <div class="contact-form-layout">
-    <form class="contact-form-card" (submit)="applyNow($event)" novalidate>
+    <form class="contact-form-card" [formGroup]="contactForm" (ngSubmit)="applyNow()" novalidate>
       <h2 id="contact-form-heading">Send Us a Message</h2>
 
       <div class="contact-form-grid">
@@ -112,10 +122,10 @@
             type="text"
             autocomplete="name"
             placeholder="Kojo Mensah"
-            [formField]="contactForm.fullName"
+            formControlName="fullName"
           />
-          @if (contactForm.fullName().touched() && contactForm.fullName().invalid()) {
-            <p class="field-error">{{ contactForm.fullName().errors()[0].message }}</p>
+          @if (getContactFieldError('fullName'); as errorMessage) {
+            <p class="field-error">{{ errorMessage }}</p>
           }
         </div>
 
@@ -126,10 +136,10 @@
             type="email"
             autocomplete="email"
             placeholder="kojo@example.com"
-            [formField]="contactForm.emailAddress"
+            formControlName="emailAddress"
           />
-          @if (contactForm.emailAddress().touched() && contactForm.emailAddress().invalid()) {
-            <p class="field-error">{{ contactForm.emailAddress().errors()[0].message }}</p>
+          @if (getContactFieldError('emailAddress'); as errorMessage) {
+            <p class="field-error">{{ errorMessage }}</p>
           }
         </div>
 
@@ -140,16 +150,16 @@
             type="tel"
             autocomplete="tel"
             placeholder="+233 54 123 4567"
-            [formField]="contactForm.phoneNumber"
+            formControlName="phoneNumber"
           />
-          @if (contactForm.phoneNumber().touched() && contactForm.phoneNumber().invalid()) {
-            <p class="field-error">{{ contactForm.phoneNumber().errors()[0].message }}</p>
+          @if (getContactFieldError('phoneNumber'); as errorMessage) {
+            <p class="field-error">{{ errorMessage }}</p>
           }
         </div>
 
         <div class="form-field">
           <label for="farm-type">Farm Type</label>
-          <select id="farm-type" [formField]="contactForm.farmType">
+          <select id="farm-type" formControlName="farmType">
             <option value="Commercial Crop">Commercial Crop</option>
             <option value="Smallholder Farm">Smallholder Farm</option>
             <option value="Cooperative">Cooperative</option>
@@ -163,37 +173,54 @@
             id="contact-message"
             rows="5"
             placeholder="Tell us about your Agri-project or financial needs..."
-            [formField]="contactForm.message"
+            formControlName="message"
           ></textarea>
-          @if (contactForm.message().touched() && contactForm.message().invalid()) {
-            <p class="field-error">{{ contactForm.message().errors()[0].message }}</p>
+          @if (getContactFieldError('message'); as errorMessage) {
+            <p class="field-error">{{ errorMessage }}</p>
           }
         </div>
       </div>
 
-      <button class="contact-form-submit" type="submit" [disabled]="contactForm().submitting()">
+      <button class="contact-form-submit" type="submit" [disabled]="isSubmitting()">
         Apply Now
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18l18-9L3 3Zm2 3.2 11.5 5.8L5 17.8V6.2Z" /></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 3v18l18-9L3 3Zm2 3.2 11.5 5.8L5 17.8V6.2Z" />
+        </svg>
       </button>
     </form>
 
     <aside class="contact-support" aria-label="TripSecure contact information">
       <section class="headquarters-card" aria-labelledby="headquarters-heading">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7Zm0 2a5 5 0 0 1 5 5c0 3.3-3.4 7.9-5 9.9C10.4 16.9 7 12.3 7 9a5 5 0 0 1 5-5Zm0 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" /></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7Zm0 2a5 5 0 0 1 5 5c0 3.3-3.4 7.9-5 9.9C10.4 16.9 7 12.3 7 9a5 5 0 0 1 5-5Zm0 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"
+          />
+        </svg>
         <h2 id="headquarters-heading">Our Headquarters</h2>
         <address>GS-0704-0089<br />Accra, Ghana</address>
         <a href="https://maps.google.com/?q=Accra,Ghana" target="_blank" rel="noopener noreferrer">
           Get Directions
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7h-2V6.4l-8.3 8.3-1.4-1.4L17.6 5H14V3ZM5 5h6v2H7v10h10v-4h2v6H5V5Z" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14 3h7v7h-2V6.4l-8.3 8.3-1.4-1.4L17.6 5H14V3ZM5 5h6v2H7v10h10v-4h2v6H5V5Z" />
+          </svg>
         </a>
       </section>
 
       <section class="support-hours-card" aria-labelledby="support-hours-heading">
         <h2 id="support-hours-heading">Support Hours</h2>
         <dl>
-          <div><dt>Mon - Fri</dt><dd>8AM - 5PM GMT</dd></div>
-          <div><dt>Saturday</dt><dd>9AM - 5PM GMT</dd></div>
-          <div><dt>Sunday</dt><dd>Chat &amp; Email</dd></div>
+          <div>
+            <dt>Mon - Fri</dt>
+            <dd>8AM - 5PM GMT</dd>
+          </div>
+          <div>
+            <dt>Saturday</dt>
+            <dd>9AM - 5PM GMT</dd>
+          </div>
+          <div>
+            <dt>Sunday</dt>
+            <dd>Chat &amp; Email</dd>
+          </div>
         </dl>
         <button type="button">
           <span>Need immediate help?</span>
@@ -220,7 +247,11 @@
       />
 
       <article class="operations-card">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.9 6h-3a15.7 15.7 0 0 0-1.4-3.5A8.1 8.1 0 0 1 18.9 8ZM12 4c.8 1 1.5 2.3 1.9 4h-3.8c.4-1.7 1.1-3 1.9-4ZM4.3 14a8 8 0 0 1 0-4h3.8a17 17 0 0 0 0 4H4.3Zm.8 2h3a15.7 15.7 0 0 0 1.4 3.5A8.1 8.1 0 0 1 5.1 16Zm3-8h-3a8.1 8.1 0 0 1 4.4-3.5A15.7 15.7 0 0 0 8.1 8ZM12 20c-.8-1-1.5-2.3-1.9-4h3.8c-.4 1.7-1.1 3-1.9 4Zm2.3-6H9.7a15 15 0 0 1 0-4h4.6a15 15 0 0 1 0 4Zm.2 5.5a15.7 15.7 0 0 0 1.4-3.5h3a8.1 8.1 0 0 1-4.4 3.5Zm1.4-5.5a17 17 0 0 0 0-4h3.8a8 8 0 0 1 0 4h-3.8Z" /></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.9 6h-3a15.7 15.7 0 0 0-1.4-3.5A8.1 8.1 0 0 1 18.9 8ZM12 4c.8 1 1.5 2.3 1.9 4h-3.8c.4-1.7 1.1-3 1.9-4ZM4.3 14a8 8 0 0 1 0-4h3.8a17 17 0 0 0 0 4H4.3Zm.8 2h3a15.7 15.7 0 0 0 1.4 3.5A8.1 8.1 0 0 1 5.1 16Zm3-8h-3a8.1 8.1 0 0 1 4.4-3.5A15.7 15.7 0 0 0 8.1 8ZM12 20c-.8-1-1.5-2.3-1.9-4h3.8c-.4 1.7-1.1 3-1.9 4Zm2.3-6H9.7a15 15 0 0 1 0-4h4.6a15 15 0 0 1 0 4Zm.2 5.5a15.7 15.7 0 0 0 1.4-3.5h3a8.1 8.1 0 0 1-4.4 3.5Zm1.4-5.5a17 17 0 0 0 0-4h3.8a8 8 0 0 1 0 4h-3.8Z"
+          />
+        </svg>
         <h3>Regional Operations Center</h3>
         <p>
           We have representatives in every major agricultural hub to provide on-site support for

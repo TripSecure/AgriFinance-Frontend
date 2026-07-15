@@ -1,8 +1,9 @@
 import { NgOptimizedImage, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { FormField, email, form, required, submit } from '@angular/forms/signals';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
-interface ContactFormModel {
+interface ContactFormValue {
   fullName: string;
   emailAddress: string;
   phoneNumber: string;
@@ -12,34 +13,71 @@ interface ContactFormModel {
 
 @Component({
   selector: 'app-contact-us',
-  imports: [NgOptimizedImage, NgTemplateOutlet, FormField],
+  imports: [NgOptimizedImage, NgTemplateOutlet, ReactiveFormsModule, RouterLink],
   templateUrl: './contact-us.component.html',
   styleUrl: './contact-us.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContactUsComponent {
-  private readonly contactModel = signal<ContactFormModel>({
-    fullName: '',
-    emailAddress: '',
-    phoneNumber: '',
-    farmType: 'Commercial Crop',
-    message: '',
+  private readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly contactErrorMessages: Record<
+    keyof ContactFormValue,
+    Partial<Record<string, string>>
+  > = {
+    fullName: {
+      required: 'Enter your full name.',
+    },
+    emailAddress: {
+      required: 'Enter your email address.',
+      email: 'Enter a valid email address.',
+    },
+    phoneNumber: {
+      required: 'Enter your phone number.',
+    },
+    farmType: {
+      required: 'Select a farm type.',
+    },
+    message: {
+      required: 'Tell us how we can help.',
+    },
+  };
+
+  protected readonly isSubmitting = signal(false);
+  protected readonly contactForm = this.formBuilder.group({
+    fullName: ['', Validators.required],
+    emailAddress: ['', [Validators.required, Validators.email]],
+    phoneNumber: ['', Validators.required],
+    farmType: ['Commercial Crop', Validators.required],
+    message: ['', Validators.required],
   });
+  protected readonly contactControls = this.contactForm.controls;
 
-  protected readonly contactForm = form(this.contactModel, (fields) => {
-    required(fields.fullName, { message: 'Enter your full name.' });
-    required(fields.emailAddress, { message: 'Enter your email address.' });
-    email(fields.emailAddress, { message: 'Enter a valid email address.' });
-    required(fields.phoneNumber, { message: 'Enter your phone number.' });
-    required(fields.farmType, { message: 'Select a farm type.' });
-    required(fields.message, { message: 'Tell us how we can help.' });
-  });
+  protected getContactFieldError(controlName: keyof ContactFormValue): string | null {
+    const control = this.contactControls[controlName];
 
-  protected async applyNow(event: SubmitEvent): Promise<void> {
-    event.preventDefault();
+    if (!control.touched || control.valid) {
+      return null;
+    }
 
-    await submit(this.contactForm, async (submittedForm) => {
-      console.log('Contact application:', submittedForm().value());
-    });
+    const messages = this.contactErrorMessages[controlName];
+    const errorKey = Object.keys(control.errors ?? {}).find((key) => messages[key]);
+
+    return errorKey ? (messages[errorKey] ?? null) : null;
+  }
+
+  protected async applyNow(): Promise<void> {
+    if (this.contactForm.invalid) {
+      this.contactForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSubmitting.set(true);
+
+    try {
+      const submittedForm: ContactFormValue = this.contactForm.getRawValue();
+      console.log('Contact application:', submittedForm);
+    } finally {
+      this.isSubmitting.set(false);
+    }
   }
 }

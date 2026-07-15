@@ -1,0 +1,382 @@
+﻿:host {
+  display: block;
+  min-height: 100%;
+}
+
+.register-page {
+  min-height: 100vh;
+  background: #fafafa;
+  color: #003b70;
+}
+
+.gateway-header {
+  display: flex;
+  min-height: 72px;
+  padding: 0 clamp(24px, 6vw, 72px);
+  border-bottom: 1px solid #d7dfdf;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: #fff;
+
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+
+    a {
+      color: #39454b;
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      text-decoration: none;
+
+      &:focus-visible {
+        border-radius: 3px;
+        box-shadow: 0 0 0 3px #c7d7ea;
+        outline: none;
+      }
+    }
+  }
+}
+
+.gateway-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #003b70;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-decoration: none;
+
+  &:focus-visible {
+    border-radius: 3px;
+    box-shadow: 0 0 0 3px #c7d7ea;
+    outline: none;
+  }
+
+  &-mark {
+    position: relative;
+    width: 32px;
+    height: 34px;
+
+    i {
+      position: absolute;
+      width: 17px;
+      height: 9px;
+      border-radius: 2px;
+      background: #003b70;
+    }
+
+    i:first-child {
+      top: 7px;
+      left: 0;
+    }
+
+    i:nth-child(2) {
+      top: 16px;
+      left: 8px;
+      transform: rotate(90deg);
+    }
+
+    i:last-child {
+      top: 0;
+      left: 18px;
+      background: #31f098;
+      transform: rotate(90deg);
+    }
+  }
+}
+
+.gateway-sign-in {
+  min-width: 92px;
+  padding: 9px 18px;
+  border-radius: 3px;
+  background: #003b70;
+  color: #fff !important;
+  text-align: center;
+}
+
+.register-main {
+  width: min(100% - 48px, 1064px);
+  margin: 0 auto;
+  padding: 104px 0 56px;
+}
+
+.register-intro {
+  margin-bottom: 22px;
+
+  p {
+    margin: 0 0 6px;
+    color: #667085;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0;
+    color: #003b70;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 750;
+    line-height: 1.2;
+  }
+}
+
+.finance-form {
+  display: grid;
+  gap: 28px;
+}
+
+.form-section {
+  overflow: hidden;
+  border: 1px solid #e2e6e8;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 25, 48, 0.03);
+}
+
+.form-section-header {
+  display: flex;
+  min-height: 66px;
+  padding: 0 34px;
+  align-items: center;
+  background: #f4f4f4;
+
+  h2 {
+    margin: 0;
+    color: #003b70;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+}
+
+.form-section-body {
+  padding: 34px;
+}
+
+.form-grid,
+.document-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 30px;
+}
+
+.document-section-body {
+  display: grid;
+  gap: 26px;
+}
+
+.document-note {
+  display: flex;
+  min-height: 54px;
+  margin: 0;
+  padding: 12px 18px;
+  border: 1px solid #dbe6e1;
+  border-radius: 7px;
+  align-items: center;
+  gap: 12px;
+  background: #f4faf7;
+  color: #003b70;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.45;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    color: #003b70;
+    font-size: 18px;
+  }
+}
+
+.registration-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 12px;
+}
+
+.data-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #f5f5f5;
+  color: #475467;
+  font-size: 0.72rem;
+  line-height: 1.4;
+
+  mat-icon {
+    width: 14px;
+    height: 14px;
+    color: #667085;
+    font-size: 14px;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.save-draft-button,
+.submit-review-button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 7px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 4px #c7d7ea;
+    outline: none;
+  }
+}
+
+.save-draft-button {
+  background: transparent;
+  color: #003b70;
+}
+
+.submit-review-button {
+  min-width: 190px;
+  padding: 0 28px;
+  background: #003b70;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(0, 59, 112, 0.18);
+}
+
+:host ::ng-deep app-form-input.finance-input .input-field,
+:host ::ng-deep app-form-input.finance-file-input .file-input-field {
+  margin-bottom: 0;
+}
+
+:host ::ng-deep app-form-input.finance-input label,
+:host ::ng-deep app-form-input.finance-file-input label {
+  color: #263238 !important;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+:host ::ng-deep app-form-input.finance-input input {
+  min-height: 50px;
+  padding: 0 18px;
+  border-color: #bac4c9;
+  border-radius: 0;
+  color: #111827;
+  font-size: 0.92rem;
+  line-height: 1.3;
+}
+
+:host ::ng-deep app-form-input.finance-input input::placeholder {
+  color: #b8c0c3;
+  opacity: 1;
+}
+
+:host ::ng-deep app-form-input.finance-file-input .file-dropzone {
+  min-height: 212px;
+  padding: 34px 24px 28px;
+  border-color: #c1cace;
+  border-radius: 0;
+}
+
+:host ::ng-deep app-form-input.finance-file-input .file-input-icon {
+  width: 33px;
+  height: 33px;
+  margin-bottom: 18px;
+  color: #758079;
+  font-size: 33px;
+}
+
+:host ::ng-deep app-form-input.finance-file-input .file-input-title {
+  color: #1f2933;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+:host ::ng-deep app-form-input.finance-file-input .file-input-browse {
+  color: #003b70;
+  font-weight: 800;
+  text-transform: none;
+}
+
+:host ::ng-deep app-form-input.finance-file-input .file-input-help {
+  margin-top: 18px;
+  color: #68747a;
+  font-size: 0.66rem;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+@media (max-width: 780px) {
+  .gateway-header {
+    position: static !important;
+    min-height: auto;
+    padding: 18px 24px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .gateway-header nav {
+    flex-wrap: wrap;
+  }
+
+  .register-main {
+    width: min(100% - 32px, 1064px);
+    padding-top: 32px;
+  }
+
+  .form-section-header {
+    min-height: 56px;
+    padding: 0 20px;
+
+    h2 {
+      font-size: 0.84rem;
+    }
+  }
+
+  .form-section-body {
+    padding: 24px 20px;
+  }
+
+  .form-grid,
+  .document-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .action-buttons {
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .submit-review-button {
+    min-width: 0;
+    flex: 1;
+  }
+
+  :host ::ng-deep app-form-input.finance-file-input .file-dropzone {
+    min-height: 190px;
+  }
+}

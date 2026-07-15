@@ -1,5 +1,5 @@
 <div class="gateway-page">
-  <header class="gateway-header">
+  <header class="gateway-header fixed-top">
     <a class="gateway-brand" routerLink="/home" aria-label="TripSecure AgriFinance home">
       <span class="gateway-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
       <span>TripSecure AgriFinance</span>
@@ -14,33 +14,81 @@
     <section class="gateway-intro" aria-labelledby="gateway-heading">
       <h1 id="gateway-heading">Join the TripSecure Ecosystem</h1>
       <p>
-        Select your role to begin your digital transformation in agriculture. Experience a
-        platform designed for impact, growth, and financial security.
+        Select your role to begin your digital transformation in agriculture. Experience a platform
+        designed for impact, growth, and financial security.
       </p>
     </section>
 
     <section class="role-grid" aria-label="Choose your registration role">
       <article class="role-card">
         <span class="role-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M3 5h11v10h-1.2a3 3 0 0 0-5.6 0H6V9H3V5Zm3 2v6h.2a3 3 0 0 1 5.6 0H12V7H6Zm9 2h3l3 3v3h-1.2a3 3 0 0 0-5.6 0H15V9Zm2 2v2h1.8l-2-2H17ZM10 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm7 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z" /></svg>
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M3 5h11v10h-1.2a3 3 0 0 0-5.6 0H6V9H3V5Zm3 2v6h.2a3 3 0 0 1 5.6 0H12V7H6Zm9 2h3l3 3v3h-1.2a3 3 0 0 0-5.6 0H15V9Zm2 2v2h1.8l-2-2H17ZM10 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm7 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"
+            />
+          </svg>
         </span>
         <h2>Input Service Provider</h2>
         <p>Supply verified inputs to a vetted network of farming clusters.</p>
-        <a routerLink="/auth/register" [queryParams]="{ role: 'provider' }">
+        <a routerLink="/auth/register/provider">
           Register Facility
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6 1.4-1.4 7.4 7.4-7.4 7.4L9 18Z" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m9 18 6-6-6-6 1.4-1.4 7.4 7.4-7.4 7.4L9 18Z" />
+          </svg>
         </a>
       </article>
 
       <article class="role-card">
         <span class="role-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M12 2 2 7v2h20V7L12 2Zm0 2.2L17.6 7H6.4L12 4.2ZM4 11v7H2v2h20v-2h-2v-7h-2v7h-3v-7h-2v7h-2v-7H9v7H6v-7H4Z" /></svg>
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 2 2 7v2h20V7L12 2Zm0 2.2L17.6 7H6.4L12 4.2ZM4 11v7H2v2h20v-2h-2v-7h-2v7h-3v-7h-2v7h-2v-7H9v7H6v-7H4Z"
+            />
+          </svg>
         </span>
         <h2>Finance Partner</h2>
         <p>Deploy capital and insurance with data-driven risk insights.</p>
-        <a routerLink="/auth/register" [queryParams]="{ role: 'finance' }">
+        <a routerLink="/auth/register/finance">
           Partner With Us
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6 1.4-1.4 7.4 7.4-7.4 7.4L9 18Z" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m9 18 6-6-6-6 1.4-1.4 7.4 7.4-7.4 7.4L9 18Z" />
+          </svg>
+        </a>
+      </article>
+
+      <article class="role-card">
+        <span class="role-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 2 2 7v2h20V7L12 2Zm0 2.2L17.6 7H6.4L12 4.2ZM4 11v7H2v2h20v-2h-2v-7h-2v7h-3v-7h-2v7h-2v-7H9v7H6v-7H4Z"
+            />
+          </svg>
+        </span>
+        <h2>Portfolio Officer</h2>
+        <p>Manage and monitor institutional credit portfolios and risks.</p>
+        <a routerLink="/auth/register/portfolio">
+          Register As Portfolio Officer
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m9 18 6-6-6-6 1.4-1.4 7.4 7.4-7.4 7.4L9 18Z" />
+          </svg>
+        </a>
+      </article>
+
+      <article class="role-card">
+        <span class="role-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 2 2 7v2h20V7L12 2Zm0 2.2L17.6 7H6.4L12 4.2ZM4 11v7H2v2h20v-2h-2v-7h-2v7h-3v-7h-2v7h-2v-7H9v7H6v-7H4Z"
+            />
+          </svg>
+        </span>
+        <h2>Extension Officer</h2>
+        <p>Provide technical field support and advisory services to farmers.</p>
+        <a routerLink="/auth/register/extension">
+          Register As Ext Officer
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m9 18 6-6-6-6 1.4-1.4 7.4 7.4-7.4 7.4L9 18Z" />
+          </svg>
         </a>
       </article>
     </section>

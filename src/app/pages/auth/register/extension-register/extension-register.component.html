@@ -1,0 +1,160 @@
+<div class="register-page">
+  <header class="gateway-header fixed-top">
+    <a class="gateway-brand" routerLink="/home" aria-label="TripSecure AgriFinance home">
+      <span class="gateway-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>TripSecure AgriFinance</span>
+    </a>
+    <nav aria-label="Registration support">
+      <a routerLink="/contact-us">Help Center</a>
+      <a class="gateway-sign-in" routerLink="/auth/login">Sign In</a>
+    </nav>
+  </header>
+
+  <main class="register-main" aria-labelledby="register-heading">
+    <header class="register-intro">
+      <p>Registration</p>
+      <h1 id="register-heading">{{ pageTitle }}</h1>
+    </header>
+
+    <form class="registration-form" [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+      <section class="registration-card" aria-labelledby="personal-information">
+        <header class="registration-card-header">
+          <mat-icon aria-hidden="true">person</mat-icon>
+          <h2 id="personal-information">Personal Information</h2>
+        </header>
+
+        <div class="registration-card-body">
+          <app-form-input
+            name="fullName"
+            label="Full Name"
+            type="text"
+            placeholder="Kwame Mensah"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            name="dateOfBirth"
+            label="Date of Birth"
+            type="date"
+            placeholder="mm/dd/yyyy"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            name="nationalIdNumber"
+            label="National ID / Ghana Card Number"
+            type="text"
+            placeholder="GHA-000000000-0"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            name="phone"
+            label="Phone"
+            type="tel"
+            placeholder="+233 00 000 0000"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            name="email"
+            label="Email"
+            type="email"
+            placeholder="k.mensah@tripsecure.gh"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+        </div>
+      </section>
+
+      <section class="registration-card" aria-labelledby="employment-details">
+        <header class="registration-card-header">
+          <mat-icon aria-hidden="true">business_center</mat-icon>
+          <h2 id="employment-details">Employment Details</h2>
+        </header>
+
+        <div class="registration-card-body registration-card-body-three">
+          <app-form-input
+            name="staffId"
+            label="Staff ID"
+            type="text"
+            placeholder="STF-IACPP-104"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            name="regionDistrict"
+            label="Region/District"
+            [isOption]="true"
+            [selections]="regionDistricts"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            name="supervisorName"
+            label="Supervisor Name"
+            type="text"
+            placeholder="Reporting Officer Name"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+        </div>
+      </section>
+
+      <section class="registration-card" aria-labelledby="document-upload">
+        <header class="registration-card-header">
+          <mat-icon aria-hidden="true">upload_file</mat-icon>
+          <h2 id="document-upload">Document Upload</h2>
+        </header>
+
+        <div class="registration-card-body document-grid">
+          <app-form-input
+            class="file-field"
+            type="file"
+            name="nationalIdPhotos"
+            label="National ID Photo (Front + Back)"
+            icon="credit_card"
+            placeholder="front & back images"
+            formText="JPG, PNG up to 10MB"
+            accept="image/png,image/jpeg"
+            [allowMultiple]="true"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="file-field"
+            type="file"
+            name="passportPhoto"
+            label="Passport Photo"
+            icon="account_circle"
+            placeholder="a clear headshot"
+            formText="Professional background required note that this photo will be also used as your profile photo"
+            accept="image/png,image/jpeg"
+            [allowMultiple]="false"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+        </div>
+      </section>
+
+      <footer class="registration-actions">
+        <p class="data-note">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          Your data is encrypted and processed according to DPA 2012
+        </p>
+
+        <div class="action-buttons">
+          <button class="save-draft-button" type="button" (click)="saveDraft()">Save Draft</button>
+          <button class="submit-review-button" type="submit">Submit for Review</button>
+        </div>
+      </footer>
+    </form>
+  </main>
+</div>

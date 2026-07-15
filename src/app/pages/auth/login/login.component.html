@@ -19,13 +19,19 @@
       <h1 id="login-story-heading">Securing Farmers,<br />Financing Growth</h1>
       <div class="login-story-rule" aria-hidden="true"></div>
       <p class="login-story-copy">
-        Empowering the next generation of agricultural investment through secure, transparent,
-        and impact-driven financial infrastructure.
+        Empowering the next generation of agricultural investment through secure, transparent, and
+        impact-driven financial infrastructure.
       </p>
 
       <dl class="login-stats">
-        <div><dt>14k+</dt><dd>Active Farmers</dd></div>
-        <div><dt>GHS 2.4B+</dt><dd>Capital Accessible</dd></div>
+        <div>
+          <dt>14k+</dt>
+          <dd>Active Farmers</dd>
+        </div>
+        <div>
+          <dt>GHS 2.4B+</dt>
+          <dd>Capital Accessible</dd>
+        </div>
       </dl>
     </div>
   </section>
@@ -37,21 +43,25 @@
         <p>Access your portfolio and manage your agricultural assets.</p>
       </header>
 
-      <form class="login-form" (submit)="signIn($event)" novalidate>
+      <form class="login-form" [formGroup]="loginForm" (ngSubmit)="signIn()" novalidate>
         <div class="login-field">
           <label for="login-identity">Email or Username</label>
           <div class="login-control">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 8c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Zm-5.6 4c.8-1.1 2.9-2 5.6-2s4.8.9 5.6 2H6.4Z" /></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 8c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Zm-5.6 4c.8-1.1 2.9-2 5.6-2s4.8.9 5.6 2H6.4Z"
+              />
+            </svg>
             <input
               id="login-identity"
               type="text"
               autocomplete="username"
               placeholder="name@company.com"
-              [formField]="loginForm.identity"
+              formControlName="identity"
             />
           </div>
-          @if (loginForm.identity().touched() && loginForm.identity().invalid()) {
-            <p class="login-error">{{ loginForm.identity().errors()[0].message }}</p>
+          @if (getLoginFieldError('identity'); as errorMessage) {
+            <p class="login-error">{{ errorMessage }}</p>
           }
         </div>
 
@@ -61,13 +71,17 @@
             <a routerLink="/auth/forgot-password">Forgot Password?</a>
           </div>
           <div class="login-control">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v10h14V10a2 2 0 0 0-2-2Zm-7-2a2 2 0 0 1 4 0v2h-4V6Zm7 12H7v-8h10v8Z" /></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v10h14V10a2 2 0 0 0-2-2Zm-7-2a2 2 0 0 1 4 0v2h-4V6Zm7 12H7v-8h10v8Z"
+              />
+            </svg>
             <input
               id="login-password"
               [type]="showPassword() ? 'text' : 'password'"
               autocomplete="current-password"
               placeholder="Password"
-              [formField]="loginForm.password"
+              formControlName="password"
             />
             <button
               class="password-toggle"
@@ -76,26 +90,36 @@
               [attr.aria-pressed]="showPassword()"
               (click)="togglePasswordVisibility()"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-5 0-9.3 2.9-11 7 1.7 4.1 6 7 11 7s9.3-2.9 11-7c-1.7-4.1-6-7-11-7Zm0 12c-3.8 0-7.3-2-8.8-5C4.7 9 8.2 7 12 7s7.3 2 8.8 5c-1.5 3-5 5-8.8 5Zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm0 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" /></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 5c-5 0-9.3 2.9-11 7 1.7 4.1 6 7 11 7s9.3-2.9 11-7c-1.7-4.1-6-7-11-7Zm0 12c-3.8 0-7.3-2-8.8-5C4.7 9 8.2 7 12 7s7.3 2 8.8 5c-1.5 3-5 5-8.8 5Zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm0 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"
+                />
+              </svg>
             </button>
           </div>
-          @if (loginForm.password().touched() && loginForm.password().invalid()) {
-            <p class="login-error">{{ loginForm.password().errors()[0].message }}</p>
+          @if (getLoginFieldError('password'); as errorMessage) {
+            <p class="login-error">{{ errorMessage }}</p>
           }
         </div>
 
         <label class="remember-device">
-          <input type="checkbox" [formField]="loginForm.rememberDevice" />
+          <input type="checkbox" formControlName="rememberDevice" />
           <span>Remember this device</span>
         </label>
 
-        <button class="sign-in-button" type="submit" [disabled]="loginForm().submitting()">
+        <button class="sign-in-button" type="submit" [disabled]="isSubmitting()">
           Sign In
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13.3 5.3-1.4 1.4 4.3 4.3H4v2h12.2l-4.3 4.3 1.4 1.4 6-6a1 1 0 0 0 0-1.4l-6-6Z" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="m13.3 5.3-1.4 1.4 4.3 4.3H4v2h12.2l-4.3 4.3 1.4 1.4 6-6a1 1 0 0 0 0-1.4l-6-6Z"
+            />
+          </svg>
         </button>
       </form>
 
-      <p class="register-prompt">Don't have an account? <a routerLink="/auth/sign-up">Register</a></p>
+      <p class="register-prompt">
+        Don't have an account? <a routerLink="/auth/sign-up">Register</a>
+      </p>
 
       <nav class="login-legal" aria-label="Legal and support links">
         <span>Privacy<br />Policy</span>
