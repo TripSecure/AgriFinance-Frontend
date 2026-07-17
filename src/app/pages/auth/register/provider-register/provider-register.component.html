@@ -50,7 +50,7 @@
 
           <app-form-input
             class="provider-input"
-            name="tin"
+            name="tinNumber"
             label="Tax Identification Number"
             type="text"
             placeholder="TIN-987654321"
@@ -80,20 +80,30 @@
 
           <app-form-input
             class="provider-input"
-            name="phone"
+            name="phoneNumber"
             label="Phone Number"
             type="tel"
-            placeholder="+1 (555) 000-0000"
+            placeholder="+233 00 000 0000"
             [isRequired]="true"
             [formGroup]="registrationForm"
           />
 
           <app-form-input
             class="provider-input provider-full-width"
-            name="email"
+            name="emailAddress"
             label="Email Address"
             type="email"
             placeholder="contact@business.com"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="provider-input provider-full-width"
+            name="password"
+            label="Password"
+            type="password"
+            placeholder="Minimum 12 characters"
             [isRequired]="true"
             [formGroup]="registrationForm"
           />
@@ -111,42 +121,17 @@
             Select all services your organization is licensed and capable of providing:
           </p>
 
-          <div class="service-checkbox-grid">
-            <app-form-input
-              class="service-checkbox"
-              name="tractorServices"
-              label="Tractor Services"
-              type="checkbox"
-              [formGroup]="registrationForm"
-            />
-            <app-form-input
-              class="service-checkbox"
-              name="irrigationServices"
-              label="Irrigation Services"
-              type="checkbox"
-              [formGroup]="registrationForm"
-            />
-            <app-form-input
-              class="service-checkbox"
-              name="agrochemicals"
-              label="Agrochemicals"
-              type="checkbox"
-              [formGroup]="registrationForm"
-            />
-            <app-form-input
-              class="service-checkbox"
-              name="soilTesting"
-              label="Soil Testing"
-              type="checkbox"
-              [formGroup]="registrationForm"
-            />
-            <app-form-input
-              class="service-checkbox"
-              name="logisticsAggregation"
-              label="Logistics & Aggregation"
-              type="checkbox"
-              [formGroup]="registrationForm"
-            />
+          <div class="service-checkbox-grid" role="group" aria-label="Service types">
+            @for (service of serviceTypeOptions; track service.value) {
+              <label class="provider-checkbox">
+                <input
+                  type="checkbox"
+                  [checked]="isServiceTypeSelected(service.value)"
+                  (change)="onServiceTypeChange(service.value, $event)"
+                />
+                <span>{{ service.label }}</span>
+              </label>
+            }
           </div>
         </div>
       </section>
@@ -158,16 +143,19 @@
         </header>
 
         <div class="registration-card-body provider-region-body">
-          <app-form-input
-            class="provider-input provider-full-width"
-            name="operationalJurisdiction"
-            label="Operational Jurisdictions"
-            [isOption]="true"
-            [selections]="operationalJurisdictions"
-            [isRequired]="true"
-            [formGroup]="registrationForm"
-          />
-          <p class="region-help">You can add specific sub-districts and hubs in the next step.</p>
+          <div class="provider-checkbox-group" role="group" aria-label="Operational jurisdictions">
+            @for (jurisdiction of operationalJurisdictionOptions; track jurisdiction) {
+              <label class="provider-checkbox">
+                <input
+                  type="checkbox"
+                  [checked]="isOperationalJurisdictionSelected(jurisdiction)"
+                  (change)="onOperationalJurisdictionChange(jurisdiction, $event)"
+                />
+                <span>{{ jurisdiction }}</span>
+              </label>
+            }
+          </div>
+          <p class="region-help">You can select multiple jurisdictions.</p>
         </div>
       </section>
 
@@ -213,8 +201,8 @@
           <app-form-input
             class="file-field provider-file-field"
             type="file"
-            name="directorId"
-            uploadDocumentType="director_id"
+            name="directorIdFront"
+            uploadDocumentType="director_id_front"
             label="Director ID (Valid Passport/National ID)"
             icon="add_a_photo"
             placeholder="director ID front"

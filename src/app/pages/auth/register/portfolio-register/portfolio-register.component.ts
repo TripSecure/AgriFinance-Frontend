@@ -16,6 +16,7 @@ type RoleRegistrationControls = {
   nationalIdNumber: FormControl<string>;
   phone: FormControl<string>;
   email: FormControl<string>;
+  password: FormControl<string>;
   staffId: FormControl<string>;
   regionDistrict: FormControl<string>;
   supervisorName: FormControl<string>;
@@ -45,6 +46,10 @@ export class PortfolioRegisterComponent {
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
+    }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(12)],
     }),
     staffId: new FormControl('', { nonNullable: true, validators: Validators.required }),
     regionDistrict: new FormControl('Accra Metropolitan', {

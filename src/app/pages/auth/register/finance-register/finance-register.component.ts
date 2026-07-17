@@ -7,14 +7,15 @@ import { FormInputComponent } from '../../../../shared/form-input/form-input.com
 type FinancePartnerRegistrationControls = {
   institutionName: FormControl<string>;
   bankLicenseNumber: FormControl<string>;
-  tin: FormControl<string>;
+  tinNumber: FormControl<string>;
   headOfficeAddress: FormControl<string>;
   contactOfficerName: FormControl<string>;
   roleDesignation: FormControl<string>;
-  phone: FormControl<string>;
-  email: FormControl<string>;
+  phoneNumber: FormControl<string>;
+  emailAddress: FormControl<string>;
+  password: FormControl<string>;
   licenseCertificate: FormControl<string>;
-  authorisationLetter: FormControl<string>;
+  authorizationLetter: FormControl<string>;
 };
 
 @Component({
@@ -26,14 +27,14 @@ type FinancePartnerRegistrationControls = {
 })
 export class FinanceRegisterComponent {
   protected readonly pageTitle = 'Finance Partner Registration';
-  protected readonly uploadRole = 'finance_partner';
+  protected readonly uploadRole = 'bank';
   protected readonly registrationForm = new FormGroup<FinancePartnerRegistrationControls>({
     institutionName: new FormControl('', { nonNullable: true, validators: Validators.required }),
     bankLicenseNumber: new FormControl('', {
       nonNullable: true,
       validators: Validators.required,
     }),
-    tin: new FormControl('', {
+    tinNumber: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/^\d{9}$/)],
     }),
@@ -49,16 +50,20 @@ export class FinanceRegisterComponent {
       nonNullable: true,
       validators: Validators.required,
     }),
-    phone: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    email: new FormControl('', {
+    phoneNumber: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    emailAddress: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
+    }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(12)],
     }),
     licenseCertificate: new FormControl('', {
       nonNullable: true,
       validators: Validators.required,
     }),
-    authorisationLetter: new FormControl('', {
+    authorizationLetter: new FormControl('', {
       nonNullable: true,
       validators: Validators.required,
     }),

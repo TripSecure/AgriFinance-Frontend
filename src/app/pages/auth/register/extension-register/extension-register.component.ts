@@ -4,17 +4,23 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
 
+type DocumentUploadControls = {
+  nationalIdFront: FormControl<string>;
+  nationalIdBack: FormControl<string>;
+  passportPhoto: FormControl<string>;
+};
+
 type RoleRegistrationControls = {
   fullName: FormControl<string>;
   dateOfBirth: FormControl<string>;
   nationalIdNumber: FormControl<string>;
   phone: FormControl<string>;
   email: FormControl<string>;
+  password: FormControl<string>;
   staffId: FormControl<string>;
   regionDistrict: FormControl<string>;
   supervisorName: FormControl<string>;
-  nationalIdPhotos: FormControl<string[]>;
-  passportPhoto: FormControl<string>;
+  documentUpload: FormGroup<DocumentUploadControls>;
 };
 
 @Component({
@@ -41,21 +47,32 @@ export class ExtensionRegisterComponent {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
     }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(12)],
+    }),
     staffId: new FormControl('', { nonNullable: true, validators: Validators.required }),
     regionDistrict: new FormControl('Accra Metropolitan', {
       nonNullable: true,
       validators: Validators.required,
     }),
     supervisorName: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    nationalIdPhotos: new FormControl<string[]>([], {
-      nonNullable: true,
-      validators: Validators.required,
-    }),
-    passportPhoto: new FormControl('', {
-      nonNullable: true,
-      validators: Validators.required,
+    documentUpload: new FormGroup<DocumentUploadControls>({
+      nationalIdFront: new FormControl('', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
+      nationalIdBack: new FormControl('', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
+      passportPhoto: new FormControl('', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
     }),
   });
+  protected readonly documentUploadForm = this.registrationForm.controls.documentUpload;
 
   protected onSubmit(): void {
     this.registrationForm.markAllAsTouched();

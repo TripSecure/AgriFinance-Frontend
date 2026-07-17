@@ -45,7 +45,7 @@
 
           <app-form-input
             class="finance-input"
-            name="tin"
+            name="tinNumber"
             label="TIN (Tax Identification Number)"
             type="text"
             placeholder="9-digit TIN"
@@ -93,20 +93,30 @@
 
           <app-form-input
             class="finance-input"
-            name="phone"
+            name="phoneNumber"
             label="Phone Number"
             type="tel"
-            placeholder="+1 (555) 000-0000"
+            placeholder="+233 00 000 0000"
             [isRequired]="true"
             [formGroup]="registrationForm"
           />
 
           <app-form-input
             class="finance-input"
-            name="email"
+            name="emailAddress"
             label="Email Address"
             type="email"
             placeholder="officer@institution.com"
+            [isRequired]="true"
+            [formGroup]="registrationForm"
+          />
+
+          <app-form-input
+            class="finance-input"
+            name="password"
+            label="Password"
+            type="password"
+            placeholder="Minimum 12 characters"
             [isRequired]="true"
             [formGroup]="registrationForm"
           />
@@ -139,8 +149,8 @@
             <app-form-input
               class="finance-file-input"
               type="file"
-              name="authorisationLetter"
-              uploadDocumentType="authorisation_letter"
+              name="authorizationLetter"
+              uploadDocumentType="authorization_letter"
               label="Authorisation Letter"
               icon="badge"
               placeholder="authorisation letter"

@@ -4,23 +4,27 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
 
+type ProviderServiceType =
+  | 'tractor_services'
+  | 'irrigation_services'
+  | 'agrochemicals'
+  | 'soil_testing'
+  | 'logistics_aggregation';
+
 type ProviderRegistrationControls = {
   businessName: FormControl<string>;
   registrationNumber: FormControl<string>;
-  tin: FormControl<string>;
+  tinNumber: FormControl<string>;
   businessAddress: FormControl<string>;
   contactPerson: FormControl<string>;
-  phone: FormControl<string>;
-  email: FormControl<string>;
-  tractorServices: FormControl<boolean>;
-  irrigationServices: FormControl<boolean>;
-  agrochemicals: FormControl<boolean>;
-  soilTesting: FormControl<boolean>;
-  logisticsAggregation: FormControl<boolean>;
-  operationalJurisdiction: FormControl<string>;
+  phoneNumber: FormControl<string>;
+  emailAddress: FormControl<string>;
+  password: FormControl<string>;
+  serviceTypes: FormControl<ProviderServiceType[]>;
+  operationalJurisdictions: FormControl<string[]>;
   businessRegistrationCertificate: FormControl<string>;
   tinCertificate: FormControl<string>;
-  directorId: FormControl<string>;
+  directorIdFront: FormControl<string>;
   portraitPhoto: FormControl<string>;
 };
 
@@ -33,9 +37,15 @@ type ProviderRegistrationControls = {
 })
 export class ProviderRegisterComponent {
   protected readonly pageTitle = 'Input Service Provider Registration';
-  protected readonly uploadRole = 'input_service_provider';
-  protected readonly operationalJurisdictions = [
-    'Select primary region...',
+  protected readonly uploadRole = 'input_provider';
+  protected readonly serviceTypeOptions: Array<{ value: ProviderServiceType; label: string }> = [
+    { value: 'tractor_services', label: 'Tractor Services' },
+    { value: 'irrigation_services', label: 'Irrigation Services' },
+    { value: 'agrochemicals', label: 'Agrochemicals' },
+    { value: 'soil_testing', label: 'Soil Testing' },
+    { value: 'logistics_aggregation', label: 'Logistics & Aggregation' },
+  ];
+  protected readonly operationalJurisdictionOptions = [
     'Accra Metropolitan',
     'Kumasi Metropolitan',
     'Tamale Metropolitan',
@@ -43,20 +53,23 @@ export class ProviderRegisterComponent {
   protected readonly registrationForm = new FormGroup<ProviderRegistrationControls>({
     businessName: new FormControl('', { nonNullable: true, validators: Validators.required }),
     registrationNumber: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    tin: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    tinNumber: new FormControl('', { nonNullable: true, validators: Validators.required }),
     businessAddress: new FormControl('', { nonNullable: true, validators: Validators.required }),
     contactPerson: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    phone: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    email: new FormControl('', {
+    phoneNumber: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    emailAddress: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
     }),
-    tractorServices: new FormControl(false, { nonNullable: true }),
-    irrigationServices: new FormControl(false, { nonNullable: true }),
-    agrochemicals: new FormControl(false, { nonNullable: true }),
-    soilTesting: new FormControl(true, { nonNullable: true }),
-    logisticsAggregation: new FormControl(false, { nonNullable: true }),
-    operationalJurisdiction: new FormControl('Select primary region...', {
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(12)],
+    }),
+    serviceTypes: new FormControl<ProviderServiceType[]>([], {
+      nonNullable: true,
+      validators: Validators.required,
+    }),
+    operationalJurisdictions: new FormControl<string[]>([], {
       nonNullable: true,
       validators: Validators.required,
     }),
@@ -68,7 +81,7 @@ export class ProviderRegisterComponent {
       nonNullable: true,
       validators: Validators.required,
     }),
-    directorId: new FormControl('', {
+    directorIdFront: new FormControl('', {
       nonNullable: true,
       validators: Validators.required,
     }),
@@ -77,6 +90,32 @@ export class ProviderRegisterComponent {
       validators: Validators.required,
     }),
   });
+
+  protected isServiceTypeSelected(value: ProviderServiceType): boolean {
+    return this.registrationForm.controls.serviceTypes.value.includes(value);
+  }
+
+  protected onServiceTypeChange(value: ProviderServiceType, event: Event): void {
+    const checked = event.target instanceof HTMLInputElement && event.target.checked;
+    const control = this.registrationForm.controls.serviceTypes;
+    const current = control.value;
+    control.setValue(checked ? [...current, value] : current.filter((item) => item !== value));
+    control.markAsDirty();
+    control.markAsTouched();
+  }
+
+  protected isOperationalJurisdictionSelected(value: string): boolean {
+    return this.registrationForm.controls.operationalJurisdictions.value.includes(value);
+  }
+
+  protected onOperationalJurisdictionChange(value: string, event: Event): void {
+    const checked = event.target instanceof HTMLInputElement && event.target.checked;
+    const control = this.registrationForm.controls.operationalJurisdictions;
+    const current = control.value;
+    control.setValue(checked ? [...current, value] : current.filter((item) => item !== value));
+    control.markAsDirty();
+    control.markAsTouched();
+  }
 
   protected onSubmit(): void {
     this.registrationForm.markAllAsTouched();
