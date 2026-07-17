@@ -117,21 +117,40 @@
           <app-form-input
             class="file-field"
             type="file"
-            name="nationalIdPhotos"
-            label="National ID Photo (Front + Back)"
+            name="nationalIdFront"
+            uploadDocumentType="national_id_front"
+            label="National ID Photo Front"
             icon="credit_card"
-            placeholder="front & back images"
+            placeholder="front image"
             formText="JPG, PNG up to 10MB"
             accept="image/png,image/jpeg"
-            [allowMultiple]="true"
+            [allowMultiple]="false"
             [isRequired]="true"
-            [formGroup]="registrationForm"
+            [formGroup]="documentUploadForm"
+            [uploadRole]="uploadRole"
+          />
+
+          <app-form-input
+            class="file-field"
+            type="file"
+            name="nationalIdBack"
+            uploadDocumentType="national_id_back"
+            label="National ID Photo Back"
+            icon="credit_card"
+            placeholder="back image"
+            formText="JPG, PNG up to 10MB"
+            accept="image/png,image/jpeg"
+            [allowMultiple]="false"
+            [isRequired]="true"
+            [formGroup]="documentUploadForm"
+            [uploadRole]="uploadRole"
           />
 
           <app-form-input
             class="file-field"
             type="file"
             name="passportPhoto"
+            uploadDocumentType="passport_photo"
             label="Passport Photo"
             icon="account_circle"
             placeholder="a clear headshot"
@@ -139,7 +158,8 @@
             accept="image/png,image/jpeg"
             [allowMultiple]="false"
             [isRequired]="true"
-            [formGroup]="registrationForm"
+            [formGroup]="documentUploadForm"
+            [uploadRole]="uploadRole"
           />
         </div>
       </section>

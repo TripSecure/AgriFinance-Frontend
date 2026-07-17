@@ -4,8 +4,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
 
-type FileControlValue = File[];
-
 type RoleRegistrationControls = {
   fullName: FormControl<string>;
   dateOfBirth: FormControl<string>;
@@ -15,8 +13,8 @@ type RoleRegistrationControls = {
   staffId: FormControl<string>;
   regionDistrict: FormControl<string>;
   supervisorName: FormControl<string>;
-  nationalIdPhotos: FormControl<FileControlValue>;
-  passportPhoto: FormControl<FileControlValue>;
+  nationalIdPhotos: FormControl<string[]>;
+  passportPhoto: FormControl<string>;
 };
 
 @Component({
@@ -28,6 +26,7 @@ type RoleRegistrationControls = {
 })
 export class ExtensionRegisterComponent {
   protected readonly pageTitle = 'Extension Officer Registration';
+  protected readonly uploadRole = 'extension_officer';
   protected readonly regionDistricts = [
     'Accra Metropolitan',
     'Kumasi Metropolitan',
@@ -48,11 +47,11 @@ export class ExtensionRegisterComponent {
       validators: Validators.required,
     }),
     supervisorName: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    nationalIdPhotos: new FormControl<FileControlValue>([], {
+    nationalIdPhotos: new FormControl<string[]>([], {
       nonNullable: true,
       validators: Validators.required,
     }),
-    passportPhoto: new FormControl<FileControlValue>([], {
+    passportPhoto: new FormControl('', {
       nonNullable: true,
       validators: Validators.required,
     }),

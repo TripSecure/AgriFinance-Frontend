@@ -1,4 +1,4 @@
-﻿<div class="register-page provider-register-page">
+<div class="register-page provider-register-page">
   <header class="gateway-header fixed-top">
     <a class="gateway-brand" routerLink="/home" aria-label="TripSecure AgriFinance home">
       <span class="gateway-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -182,6 +182,7 @@
             class="file-field provider-file-field"
             type="file"
             name="businessRegistrationCertificate"
+            uploadDocumentType="business_registration_certificate"
             label="Business Registration Certificate"
             icon="upload_file"
             placeholder="business registration certificate"
@@ -190,12 +191,14 @@
             [allowMultiple]="false"
             [isRequired]="true"
             [formGroup]="registrationForm"
+            [uploadRole]="uploadRole"
           />
 
           <app-form-input
             class="file-field provider-file-field"
             type="file"
             name="tinCertificate"
+            uploadDocumentType="tin_certificate"
             label="TIN Certificate"
             icon="verified"
             placeholder="TIN certificate"
@@ -204,12 +207,14 @@
             [allowMultiple]="false"
             [isRequired]="true"
             [formGroup]="registrationForm"
+            [uploadRole]="uploadRole"
           />
 
           <app-form-input
             class="file-field provider-file-field"
             type="file"
             name="directorId"
+            uploadDocumentType="director_id"
             label="Director ID (Valid Passport/National ID)"
             icon="add_a_photo"
             placeholder="director ID front"
@@ -218,12 +223,14 @@
             [allowMultiple]="false"
             [isRequired]="true"
             [formGroup]="registrationForm"
+            [uploadRole]="uploadRole"
           />
 
           <app-form-input
             class="file-field provider-file-field"
             type="file"
             name="portraitPhoto"
+            uploadDocumentType="portrait_photo"
             label="Upload Portrait Photo"
             icon="add_a_photo"
             placeholder="portrait photo"
@@ -232,6 +239,7 @@
             [allowMultiple]="false"
             [isRequired]="true"
             [formGroup]="registrationForm"
+            [uploadRole]="uploadRole"
           />
         </div>
       </section>

@@ -1,10 +1,8 @@
-﻿import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
-
-type FileControlValue = File[];
 
 type FinancePartnerRegistrationControls = {
   institutionName: FormControl<string>;
@@ -15,8 +13,8 @@ type FinancePartnerRegistrationControls = {
   roleDesignation: FormControl<string>;
   phone: FormControl<string>;
   email: FormControl<string>;
-  licenseCertificate: FormControl<FileControlValue>;
-  authorisationLetter: FormControl<FileControlValue>;
+  licenseCertificate: FormControl<string>;
+  authorisationLetter: FormControl<string>;
 };
 
 @Component({
@@ -28,6 +26,7 @@ type FinancePartnerRegistrationControls = {
 })
 export class FinanceRegisterComponent {
   protected readonly pageTitle = 'Finance Partner Registration';
+  protected readonly uploadRole = 'finance_partner';
   protected readonly registrationForm = new FormGroup<FinancePartnerRegistrationControls>({
     institutionName: new FormControl('', { nonNullable: true, validators: Validators.required }),
     bankLicenseNumber: new FormControl('', {
@@ -55,11 +54,11 @@ export class FinanceRegisterComponent {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
     }),
-    licenseCertificate: new FormControl<FileControlValue>([], {
+    licenseCertificate: new FormControl('', {
       nonNullable: true,
       validators: Validators.required,
     }),
-    authorisationLetter: new FormControl<FileControlValue>([], {
+    authorisationLetter: new FormControl('', {
       nonNullable: true,
       validators: Validators.required,
     }),

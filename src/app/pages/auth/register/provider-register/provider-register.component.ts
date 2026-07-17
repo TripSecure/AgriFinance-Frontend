@@ -1,10 +1,8 @@
-﻿import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
-
-type FileControlValue = File[];
 
 type ProviderRegistrationControls = {
   businessName: FormControl<string>;
@@ -20,10 +18,10 @@ type ProviderRegistrationControls = {
   soilTesting: FormControl<boolean>;
   logisticsAggregation: FormControl<boolean>;
   operationalJurisdiction: FormControl<string>;
-  businessRegistrationCertificate: FormControl<FileControlValue>;
-  tinCertificate: FormControl<FileControlValue>;
-  directorId: FormControl<FileControlValue>;
-  portraitPhoto: FormControl<FileControlValue>;
+  businessRegistrationCertificate: FormControl<string>;
+  tinCertificate: FormControl<string>;
+  directorId: FormControl<string>;
+  portraitPhoto: FormControl<string>;
 };
 
 @Component({
@@ -35,6 +33,7 @@ type ProviderRegistrationControls = {
 })
 export class ProviderRegisterComponent {
   protected readonly pageTitle = 'Input Service Provider Registration';
+  protected readonly uploadRole = 'input_service_provider';
   protected readonly operationalJurisdictions = [
     'Select primary region...',
     'Accra Metropolitan',
@@ -61,19 +60,19 @@ export class ProviderRegisterComponent {
       nonNullable: true,
       validators: Validators.required,
     }),
-    businessRegistrationCertificate: new FormControl<FileControlValue>([], {
+    businessRegistrationCertificate: new FormControl('', {
       nonNullable: true,
       validators: Validators.required,
     }),
-    tinCertificate: new FormControl<FileControlValue>([], {
+    tinCertificate: new FormControl('', {
       nonNullable: true,
       validators: Validators.required,
     }),
-    directorId: new FormControl<FileControlValue>([], {
+    directorId: new FormControl('', {
       nonNullable: true,
       validators: Validators.required,
     }),
-    portraitPhoto: new FormControl<FileControlValue>([], {
+    portraitPhoto: new FormControl('', {
       nonNullable: true,
       validators: Validators.required,
     }),

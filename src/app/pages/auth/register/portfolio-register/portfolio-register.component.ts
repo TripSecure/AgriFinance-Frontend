@@ -4,7 +4,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
 
-type FileControlValue = File[];
+type DocumentUploadControls = {
+  nationalIdFront: FormControl<string>;
+  nationalIdBack: FormControl<string>;
+  passportPhoto: FormControl<string>;
+};
 
 type RoleRegistrationControls = {
   fullName: FormControl<string>;
@@ -15,8 +19,7 @@ type RoleRegistrationControls = {
   staffId: FormControl<string>;
   regionDistrict: FormControl<string>;
   supervisorName: FormControl<string>;
-  nationalIdPhotos: FormControl<FileControlValue>;
-  passportPhoto: FormControl<FileControlValue>;
+  documentUpload: FormGroup<DocumentUploadControls>;
 };
 
 @Component({
@@ -28,6 +31,7 @@ type RoleRegistrationControls = {
 })
 export class PortfolioRegisterComponent {
   protected readonly pageTitle = 'Portfolio Officer Registration';
+  protected readonly uploadRole = 'portfolio_officer';
   protected readonly regionDistricts = [
     'Accra Metropolitan',
     'Kumasi Metropolitan',
@@ -48,15 +52,22 @@ export class PortfolioRegisterComponent {
       validators: Validators.required,
     }),
     supervisorName: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    nationalIdPhotos: new FormControl<FileControlValue>([], {
-      nonNullable: true,
-      validators: Validators.required,
-    }),
-    passportPhoto: new FormControl<FileControlValue>([], {
-      nonNullable: true,
-      validators: Validators.required,
+    documentUpload: new FormGroup<DocumentUploadControls>({
+      nationalIdFront: new FormControl('', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
+      nationalIdBack: new FormControl('', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
+      passportPhoto: new FormControl('', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
     }),
   });
+  protected readonly documentUploadForm = this.registrationForm.controls.documentUpload;
 
   protected onSubmit(): void {
     this.registrationForm.markAllAsTouched();

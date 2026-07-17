@@ -1,4 +1,4 @@
-﻿<div class="register-page">
+<div class="register-page">
   <header class="gateway-header fixed-top">
     <a class="gateway-brand" routerLink="/home" aria-label="TripSecure AgriFinance home">
       <span class="gateway-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -124,6 +124,7 @@
               class="finance-file-input"
               type="file"
               name="licenseCertificate"
+              uploadDocumentType="license_certificate"
               label="License Certificate"
               icon="upload_file"
               placeholder="license certificate"
@@ -132,12 +133,14 @@
               [allowMultiple]="false"
               [isRequired]="true"
               [formGroup]="registrationForm"
+              [uploadRole]="uploadRole"
             />
 
             <app-form-input
               class="finance-file-input"
               type="file"
               name="authorisationLetter"
+              uploadDocumentType="authorisation_letter"
               label="Authorisation Letter"
               icon="badge"
               placeholder="authorisation letter"
@@ -146,6 +149,7 @@
               [allowMultiple]="false"
               [isRequired]="true"
               [formGroup]="registrationForm"
+              [uploadRole]="uploadRole"
             />
           </div>
 

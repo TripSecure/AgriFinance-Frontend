@@ -490,3 +490,41 @@ select {
     min-width: 0;
   }
 }
+
+.file-dropzone.file-dropzone-uploading {
+  border-color: #0b3d70;
+}
+
+.file-dropzone.file-dropzone-error {
+  border-color: #d92d20;
+}
+
+.file-input-status,
+.file-input-error {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 1rem 0 0;
+  max-width: 440px;
+  text-align: center;
+}
+
+.file-input-status {
+  color: #0b3d70;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.file-input-status-icon {
+  height: 18px;
+  width: 18px;
+  font-size: 18px;
+}
+
+.file-input-error {
+  color: #b42318;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}

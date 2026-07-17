@@ -118,6 +118,7 @@
             class="file-field"
             type="file"
             name="nationalIdPhotos"
+            uploadDocumentType="national_id_photos"
             label="National ID Photo (Front + Back)"
             icon="credit_card"
             placeholder="front & back images"
@@ -126,12 +127,14 @@
             [allowMultiple]="true"
             [isRequired]="true"
             [formGroup]="registrationForm"
+            [uploadRole]="uploadRole"
           />
 
           <app-form-input
             class="file-field"
             type="file"
             name="passportPhoto"
+            uploadDocumentType="passport_photo"
             label="Passport Photo"
             icon="account_circle"
             placeholder="a clear headshot"
@@ -140,6 +143,7 @@
             [allowMultiple]="false"
             [isRequired]="true"
             [formGroup]="registrationForm"
+            [uploadRole]="uploadRole"
           />
         </div>
       </section>

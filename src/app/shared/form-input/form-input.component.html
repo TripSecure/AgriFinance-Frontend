@@ -1,4 +1,4 @@
-﻿@if (isSelect) {
+@if (isSelect) {
   <div class="form_field input-field" [formGroup]="formGroup">
     <label for="priority">{{ label }}</label>
 
@@ -56,6 +56,9 @@
       role="button"
       tabindex="0"
       [class.file-dropzone-active]="isDragActive()"
+      [class.file-dropzone-uploading]="uploadStatus === 'uploading'"
+      [class.file-dropzone-error]="uploadStatus === 'error'"
+      [attr.aria-busy]="uploadStatus === 'uploading'"
       [attr.aria-describedby]="formText ? name + '-help' : null"
       [attr.aria-label]="label + '. Drag and drop files here or browse files.'"
       (click)="browseFiles()"
@@ -86,12 +89,27 @@
         <p class="file-input-help" [id]="name + '-help'">{{ formText }}</p>
       }
 
-      @if (selectedFileNames().length) {
+      @if (uploadStatus === 'uploading') {
+        <p class="file-input-status" role="status">
+          <mat-icon class="file-input-status-icon" aria-hidden="true">progress_activity</mat-icon>
+          Uploading...
+        </p>
+      }
+
+      @if (uploadStatus === 'uploaded' && uploadedFileName) {
+        <ul class="file-input-selection" aria-label="Uploaded file">
+          <li>{{ uploadedFileName }}</li>
+        </ul>
+      } @else if (selectedFileNames().length) {
         <ul class="file-input-selection" aria-label="Selected files">
           @for (fileName of selectedFileNames(); track fileName) {
             <li>{{ fileName }}</li>
           }
         </ul>
+      }
+
+      @if (uploadStatus === 'error' && uploadError) {
+        <p class="file-input-error" role="alert">{{ uploadError }}</p>
       }
     </div>
   </div>
