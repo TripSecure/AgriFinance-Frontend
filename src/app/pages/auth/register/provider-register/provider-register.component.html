@@ -247,6 +247,10 @@
           Your data is encrypted and processed according to DPA 2012
         </p>
 
+        @if (localSubmitError()) {
+          <p class="registration-feedback registration-feedback-error" role="alert">{{ localSubmitError() }}</p>
+        }
+
         @if (registrationMessage()) {
           <p class="registration-feedback" role="status">{{ registrationMessage() }}</p>
         }
@@ -268,3 +272,4 @@
     </form>
   </main>
 </div>
+

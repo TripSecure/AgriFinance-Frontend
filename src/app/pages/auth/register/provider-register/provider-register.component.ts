@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
 import { SubmitRegistration } from '../services/registration.actions';
+import { getInvalidControlLabels } from '../services/registration-form-validation';
 import { RegistrationState } from '../services/registration.state';
 import {
   ProviderRegistrationPayload,
@@ -41,6 +42,7 @@ export class ProviderRegisterComponent {
   protected readonly registrationLoading = this.store.selectSignal(RegistrationState.isLoading);
   protected readonly registrationMessage = this.store.selectSignal(RegistrationState.message);
   protected readonly registrationErrors = this.store.selectSignal(RegistrationState.errors);
+  protected readonly localSubmitError = signal<string | null>(null);
 
   protected readonly pageTitle = 'Input Service Provider Registration';
   protected readonly uploadRole = 'input_provider';
@@ -127,9 +129,11 @@ export class ProviderRegisterComponent {
     this.registrationForm.markAllAsTouched();
 
     if (this.registrationForm.invalid) {
+      this.localSubmitError.set(this.getInvalidFormMessage());
       return;
     }
 
+    this.localSubmitError.set(null);
     this.store.dispatch(new SubmitRegistration(this.buildPayload())).subscribe();
   }
 
@@ -166,5 +170,14 @@ export class ProviderRegisterComponent {
         portraitPhoto: value.portraitPhoto,
       },
     };
+  }
+
+  private getInvalidFormMessage(): string {
+    const invalidFields = getInvalidControlLabels(this.registrationForm);
+    const visibleFields = invalidFields.slice(0, 6);
+    const remainingCount = invalidFields.length - visibleFields.length;
+    const remainingMessage = remainingCount > 0 ? ` and ${remainingCount} more` : '';
+
+    return `Please complete: ${visibleFields.join(', ')}${remainingMessage}.`;
   }
 }
