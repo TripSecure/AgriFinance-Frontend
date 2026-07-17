@@ -1,8 +1,12 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
+import { Store } from '@ngxs/store';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
+import { SubmitRegistration } from '../services/registration.actions';
+import { RegistrationState } from '../services/registration.state';
+import { BankRegistrationPayload } from '../services/registration.state.model';
 
 type FinancePartnerRegistrationControls = {
   institutionName: FormControl<string>;
@@ -26,6 +30,12 @@ type FinancePartnerRegistrationControls = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FinanceRegisterComponent {
+  private readonly store = inject(Store);
+
+  protected readonly registrationLoading = this.store.selectSignal(RegistrationState.isLoading);
+  protected readonly registrationMessage = this.store.selectSignal(RegistrationState.message);
+  protected readonly registrationErrors = this.store.selectSignal(RegistrationState.errors);
+
   protected readonly pageTitle = 'Finance Partner Registration';
   protected readonly uploadRole = 'bank';
   protected readonly registrationForm = new FormGroup<FinancePartnerRegistrationControls>({
@@ -76,10 +86,36 @@ export class FinanceRegisterComponent {
       return;
     }
 
-    console.log('finance registration', this.registrationForm.getRawValue());
+    this.store.dispatch(new SubmitRegistration(this.buildPayload())).subscribe();
   }
 
   protected saveDraft(): void {
     console.log('finance draft', this.registrationForm.getRawValue());
+  }
+
+  private buildPayload(): BankRegistrationPayload {
+    const value = this.registrationForm.getRawValue();
+
+    return {
+      role: 'bank',
+      password: value.password,
+      submitForReview: true,
+      institutionDetails: {
+        institutionName: value.institutionName,
+        bankLicenseNumber: value.bankLicenseNumber,
+        tinNumber: value.tinNumber,
+        headOfficeAddress: value.headOfficeAddress,
+      },
+      contactOfficerInformation: {
+        contactOfficerName: value.contactOfficerName,
+        roleDesignation: value.roleDesignation,
+        phoneNumber: value.phoneNumber,
+        emailAddress: value.emailAddress,
+      },
+      documentUpload: {
+        licenseCertificate: value.licenseCertificate,
+        authorizationLetter: value.authorizationLetter,
+      },
+    };
   }
 }

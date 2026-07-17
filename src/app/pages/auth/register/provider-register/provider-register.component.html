@@ -247,9 +247,22 @@
           Your data is encrypted and processed according to DPA 2012
         </p>
 
+        @if (registrationMessage()) {
+          <p class="registration-feedback" role="status">{{ registrationMessage() }}</p>
+        }
+
+        @if (registrationErrors().length) {
+          <ul class="registration-feedback registration-feedback-error" role="alert">
+            @for (error of registrationErrors(); track error) {
+              <li>{{ error }}</li>
+            }
+          </ul>
+        }
         <div class="action-buttons">
           <button class="save-draft-button" type="button" (click)="saveDraft()">Save Draft</button>
-          <button class="submit-review-button" type="submit">Submit for Review</button>
+          <button class="submit-review-button" type="submit" [disabled]="registrationLoading()">
+            {{ registrationLoading() ? 'Submitting...' : 'Submit for Review' }}
+          </button>
         </div>
       </footer>
     </form>

@@ -380,3 +380,17 @@
     min-height: 190px;
   }
 }
+
+.registration-feedback {
+  margin: 0;
+  color: #026c3d;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.registration-feedback-error {
+  color: #b42318;
+  list-style: none;
+  padding: 0;
+}

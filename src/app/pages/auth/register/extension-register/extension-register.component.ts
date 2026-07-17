@@ -1,8 +1,12 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
+import { Store } from '@ngxs/store';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
+import { SubmitRegistration } from '../services/registration.actions';
+import { RegistrationState } from '../services/registration.state';
+import { ExtensionOfficerRegistrationPayload } from '../services/registration.state.model';
 
 type DocumentUploadControls = {
   nationalIdFront: FormControl<string>;
@@ -31,6 +35,12 @@ type RoleRegistrationControls = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExtensionRegisterComponent {
+  private readonly store = inject(Store);
+
+  protected readonly registrationLoading = this.store.selectSignal(RegistrationState.isLoading);
+  protected readonly registrationMessage = this.store.selectSignal(RegistrationState.message);
+  protected readonly registrationErrors = this.store.selectSignal(RegistrationState.errors);
+
   protected readonly pageTitle = 'Extension Officer Registration';
   protected readonly uploadRole = 'extension_officer';
   protected readonly regionDistricts = [
@@ -81,10 +91,33 @@ export class ExtensionRegisterComponent {
       return;
     }
 
-    console.log('extension registration', this.registrationForm.getRawValue());
+    this.store.dispatch(new SubmitRegistration(this.buildPayload())).subscribe();
   }
 
   protected saveDraft(): void {
     console.log('extension draft', this.registrationForm.getRawValue());
+  }
+
+  private buildPayload(): ExtensionOfficerRegistrationPayload {
+    const value = this.registrationForm.getRawValue();
+
+    return {
+      role: 'extension_officer',
+      password: value.password,
+      submitForReview: true,
+      personalInformation: {
+        fullName: value.fullName,
+        dateOfBirth: value.dateOfBirth,
+        nationalIdNumber: value.nationalIdNumber,
+        phone: value.phone,
+        email: value.email,
+      },
+      employmentDetails: {
+        staffId: value.staffId,
+        regionDistrict: value.regionDistrict,
+        supervisorName: value.supervisorName,
+      },
+      documentUpload: value.documentUpload,
+    };
   }
 }

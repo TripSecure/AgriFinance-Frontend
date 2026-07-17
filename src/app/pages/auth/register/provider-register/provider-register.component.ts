@@ -1,15 +1,15 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
+import { Store } from '@ngxs/store';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
-
-type ProviderServiceType =
-  | 'tractor_services'
-  | 'irrigation_services'
-  | 'agrochemicals'
-  | 'soil_testing'
-  | 'logistics_aggregation';
+import { SubmitRegistration } from '../services/registration.actions';
+import { RegistrationState } from '../services/registration.state';
+import {
+  ProviderRegistrationPayload,
+  ProviderServiceType,
+} from '../services/registration.state.model';
 
 type ProviderRegistrationControls = {
   businessName: FormControl<string>;
@@ -36,6 +36,12 @@ type ProviderRegistrationControls = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProviderRegisterComponent {
+  private readonly store = inject(Store);
+
+  protected readonly registrationLoading = this.store.selectSignal(RegistrationState.isLoading);
+  protected readonly registrationMessage = this.store.selectSignal(RegistrationState.message);
+  protected readonly registrationErrors = this.store.selectSignal(RegistrationState.errors);
+
   protected readonly pageTitle = 'Input Service Provider Registration';
   protected readonly uploadRole = 'input_provider';
   protected readonly serviceTypeOptions: Array<{ value: ProviderServiceType; label: string }> = [
@@ -124,10 +130,41 @@ export class ProviderRegisterComponent {
       return;
     }
 
-    console.log('provider registration', this.registrationForm.getRawValue());
+    this.store.dispatch(new SubmitRegistration(this.buildPayload())).subscribe();
   }
 
   protected saveDraft(): void {
     console.log('provider draft', this.registrationForm.getRawValue());
+  }
+
+  private buildPayload(): ProviderRegistrationPayload {
+    const value = this.registrationForm.getRawValue();
+
+    return {
+      role: 'input_provider',
+      password: value.password,
+      submitForReview: true,
+      businessDetails: {
+        businessName: value.businessName,
+        registrationNumber: value.registrationNumber,
+        tinNumber: value.tinNumber,
+        businessAddress: value.businessAddress,
+        contactPerson: value.contactPerson,
+        phoneNumber: value.phoneNumber,
+        emailAddress: value.emailAddress,
+      },
+      serviceType: {
+        serviceTypes: value.serviceTypes,
+      },
+      serviceRegionCoverage: {
+        operationalJurisdictions: value.operationalJurisdictions,
+      },
+      documentUpload: {
+        businessRegistrationCertificate: value.businessRegistrationCertificate,
+        tinCertificate: value.tinCertificate,
+        directorIdFront: value.directorIdFront,
+        portraitPhoto: value.portraitPhoto,
+      },
+    };
   }
 }
