@@ -123,7 +123,7 @@ export class AuthState implements NgxsOnInit {
 
     return this.authService.requestLoginOtp(action.payload).pipe(
       tap((response: OtpResponse) => {
-        if (response.isSuccessful) {
+        if (this.isSuccessfulResponse(response)) {
           ctx.patchState({
             requestId: response.data?.requestId ?? null,
             prefix: response.data?.prefix ?? null,
@@ -161,7 +161,7 @@ export class AuthState implements NgxsOnInit {
 
     return this.authService.login(action.payload).pipe(
       switchMap((response: LoginResponse) => {
-        if (!response.isSuccessful) {
+        if (!this.isSuccessfulResponse(response)) {
           ctx.patchState({
             isAuthenticated: false,
             loading: false,
@@ -211,7 +211,7 @@ export class AuthState implements NgxsOnInit {
 
     return this.authService.loadLoggedInUser(action.accessToken).pipe(
       tap((response: CurrentSessionResponse) => {
-        if (response.isSuccessful) {
+        if (this.isSuccessfulResponse(response)) {
           ctx.patchState({
             loading: false,
             isAuthenticated: true,
@@ -259,7 +259,7 @@ export class AuthState implements NgxsOnInit {
 
     return this.authService.signinWithUsername(action.payload).pipe(
       tap((response: LoginResponse) => {
-        if (response.isSuccessful) {
+        if (this.isSuccessfulResponse(response)) {
           const accessToken = this.getAccessToken(response);
           const decodedToken = accessToken ? this.decodeJWT(accessToken) : {};
           ctx.patchState({
@@ -303,7 +303,7 @@ export class AuthState implements NgxsOnInit {
 
     return this.authService.signinWithPhone(action.payload).pipe(
       tap((response: OtpResponse) => {
-        if (response.isSuccessful) {
+        if (this.isSuccessfulResponse(response)) {
           ctx.patchState({
             requestId: response.data?.requestId ?? null,
             prefix: response.data?.prefix ?? null,
@@ -328,7 +328,7 @@ export class AuthState implements NgxsOnInit {
 
     return this.authService.signinWithEmail(action.payload).pipe(
       tap((response: OtpResponse) => {
-        if (response.isSuccessful) {
+        if (this.isSuccessfulResponse(response)) {
           ctx.patchState({
             requestId: response.data?.requestId ?? null,
             prefix: response.data?.prefix ?? null,
@@ -353,7 +353,7 @@ export class AuthState implements NgxsOnInit {
 
     return this.authService.verifyPhone(action.payload).pipe(
       tap((response: LoginResponse) => {
-        if (response.isSuccessful) {
+        if (this.isSuccessfulResponse(response)) {
           const accessToken = this.getAccessToken(response);
           const decodedToken = accessToken ? this.decodeJWT(accessToken) : {};
           ctx.patchState({
@@ -387,7 +387,7 @@ export class AuthState implements NgxsOnInit {
 
     return this.authService.verifyEmail(action.payload).pipe(
       tap((response: LoginResponse) => {
-        if (response.isSuccessful) {
+        if (this.isSuccessfulResponse(response)) {
           const accessToken = this.getAccessToken(response);
           const decodedToken = accessToken ? this.decodeJWT(accessToken) : {};
           ctx.patchState({
@@ -444,6 +444,10 @@ export class AuthState implements NgxsOnInit {
     return JSON.parse(jsonPayload) as Record<string, unknown>;
   }
 
+  private isSuccessfulResponse(response: { success?: boolean; isSuccessful?: boolean }): boolean {
+    return response.success === true || response.isSuccessful === true;
+  }
+
   private getAccessToken(response: LoginResponse): string | null {
     return response.data.accessToken ?? response.data.token ?? null;
   }
@@ -457,13 +461,25 @@ export class AuthState implements NgxsOnInit {
     return typeof value === 'string' ? value : null;
   }
 
-  private getResponseErrors(response: { errors: unknown; message?: string | null }): string[] {
+  private getResponseErrors(response: {
+    errors?: unknown;
+    error?: unknown;
+    message?: string | null;
+  }): string[] {
     if (Array.isArray(response.errors)) {
       return response.errors.filter((error): error is string => typeof error === 'string');
     }
 
     if (typeof response.errors === 'string') {
       return [response.errors];
+    }
+
+    if (typeof response.error === 'string') {
+      return [response.error];
+    }
+
+    if (this.hasMessage(response.error)) {
+      return [response.error.message];
     }
 
     if (response.message) {

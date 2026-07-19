@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
 import { SubmitRegistration } from '../services/registration.actions';
@@ -37,6 +37,7 @@ type RoleRegistrationControls = {
 })
 export class ExtensionRegisterComponent {
   private readonly store = inject(Store);
+  private readonly router = inject(Router);
 
   protected readonly registrationLoading = this.store.selectSignal(RegistrationState.isLoading);
   protected readonly registrationMessage = this.store.selectSignal(RegistrationState.message);
@@ -95,7 +96,13 @@ export class ExtensionRegisterComponent {
     }
 
     this.localSubmitError.set(null);
-    this.store.dispatch(new SubmitRegistration(this.buildPayload())).subscribe();
+    this.store.dispatch(new SubmitRegistration(this.buildPayload())).subscribe({
+      next: () => {
+        if (this.store.selectSnapshot(RegistrationState.isSuccessful)) {
+          void this.router.navigate(['/auth/login']);
+        }
+      },
+    });
   }
 
   protected saveDraft(): void {

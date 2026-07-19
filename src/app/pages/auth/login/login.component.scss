@@ -70,35 +70,32 @@
 }
 
 .login-mark {
-  position: absolute;
-  top: clamp(48px, 8vh, 78px);
-  left: clamp(38px, 7vw, 72px);
-  width: 68px;
-  height: 68px;
+  padding: 4rem;
 
-  span {
-    position: absolute;
-    width: 32px;
-    height: 17px;
-    border-radius: 4px;
-    background: #fff;
-  }
 
-  span:first-child {
-    top: 10px;
-    left: 0;
-  }
-  span:nth-child(2) {
-    top: 27px;
-    left: 17px;
-    transform: rotate(90deg);
-  }
-  span:last-child {
-    top: 0;
-    left: 36px;
-    background: #31f098;
-    transform: rotate(90deg);
-  }
+  // span {
+  //   position: absolute;
+  //   width: 32px;
+  //   height: 17px;
+  //   border-radius: 4px;
+  //   background: #fff;
+  // }
+
+  // span:first-child {
+  //   top: 10px;
+  //   left: 0;
+  // }
+  // span:nth-child(2) {
+  //   top: 27px;
+  //   left: 17px;
+  //   transform: rotate(90deg);
+  // }
+  // span:last-child {
+  //   top: 0;
+  //   left: 36px;
+  //   background: #31f098;
+  //   transform: rotate(90deg);
+  // }
 }
 
 .login-stats {

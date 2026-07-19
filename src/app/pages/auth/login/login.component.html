@@ -11,7 +11,7 @@
     <div class="login-story-overlay" aria-hidden="true"></div>
 
     <div class="login-mark" aria-label="TripSecure AgriFinance">
-      <span></span><span></span><span></span>
+       <span class="gateway-brand-mark" aria-hidden="true"><img src="images/login-logo.png" alt="TripSecure AgriFinance Logo" class="brand-logo" /></span>
     </div>
 
     <div class="login-story-content">
@@ -127,6 +127,7 @@
                 placeholder="123456"
                 maxlength="6"
                 pattern="[0-9]{6}"
+                appNumbersOnly
                 formControlName="otpCode"
                 [attr.aria-invalid]="loginControls.otpCode.touched && loginControls.otpCode.invalid"
               />

@@ -79,10 +79,16 @@ export interface VerificationRequest {
   code: string;
 }
 
-export interface LoginResponse {
+export interface ApiResponseBase {
   message: string;
-  code: number;
-  isSuccessful: boolean;
+  code?: number;
+  success?: boolean;
+  isSuccessful?: boolean;
+  errors?: unknown;
+  error?: unknown;
+}
+
+export interface LoginResponse extends ApiResponseBase {
   data: {
     expiry?: string;
     token?: string;
@@ -92,26 +98,17 @@ export interface LoginResponse {
     nextStep?: string | null;
     lastLogin?: string;
   };
-  errors: unknown;
 }
-export interface CurrentSessionResponse {
-  message: string;
-  code: number;
-  isSuccessful: boolean;
+export interface CurrentSessionResponse extends ApiResponseBase {
   data: {
     user: AuthUser;
     profile: AuthProfile;
     canAccessDashboard: boolean;
   };
-  errors: unknown;
 }
-export interface OtpResponse {
-  message: string;
-  code: number;
-  isSuccessful: boolean;
+export interface OtpResponse extends ApiResponseBase {
   data: {
     requestId: string;
     prefix: string;
   } | null;
-  errors: unknown;
 }

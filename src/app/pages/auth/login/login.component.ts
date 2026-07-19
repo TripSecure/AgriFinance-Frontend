@@ -1,7 +1,7 @@
 import { NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngxs/store';
 import {
   LoginWithOtp,
@@ -10,6 +10,7 @@ import {
   ResetLoginOtpRequest,
 } from '../services/auth/auth.actions';
 import { AuthState } from '../services/auth/auth.states';
+import { NumbersOnlyDirective } from '../../../directives/numbers-only.directive';
 
 interface LoginFormValue {
   identity: string;
@@ -22,13 +23,14 @@ type LoginControlName = 'identity' | 'password' | 'otpCode';
 
 @Component({
   selector: 'app-login',
-  imports: [NgOptimizedImage, RouterLink, ReactiveFormsModule],
+  imports: [NgOptimizedImage, RouterLink, ReactiveFormsModule, NumbersOnlyDirective],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
   private readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
   private readonly loginErrorMessages: Record<LoginControlName, string> = {
@@ -117,9 +119,23 @@ export class LoginComponent {
     this.store.dispatch(new LoginWithOtp({ identity, password, otpCode })).subscribe(() => {
       if (this.store.selectSnapshot(AuthState.isAuthenticated)) {
         this.store.dispatch(new PersistState()).subscribe();
-        void this.router.navigateByUrl('/home');
+        void this.router.navigateByUrl(this.getPostLoginUrl());
       }
     });
+  }
+
+  private getPostLoginUrl(): string {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+
+    if (
+      returnUrl?.startsWith('/') &&
+      !returnUrl.startsWith('//') &&
+      !returnUrl.startsWith('/auth')
+    ) {
+      return returnUrl;
+    }
+
+    return '/dashboard';
   }
 
   private markControlsAsTouched(controlNames: LoginControlName[]): boolean {
