@@ -1,17 +1,34 @@
-import { Signal } from '@angular/core';
-
 // state/auth.state.model.ts
 export interface AuthStateModel {
   isAuthenticated: boolean;
   token: string | null;
   userId: string | null;
+  currentUser: AuthUser | null;
+  profile: AuthProfile | null;
+  canAccessDashboard: boolean;
   expiry: string | null;
   loading: boolean;
+  loginOtpRequested: boolean;
   requestId?: string | null;
   prefix?: string | null;
   lastLogin: string | null;
   errors: string[];
   message: string | null;
+}
+export interface AuthUser {
+  id: string;
+  phone: string | null;
+  email: string | null;
+}
+export interface AuthProfile {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  email: string | null;
+  role: string;
+  status: string;
+  phone_verification_status: string;
+  email_verification_status: string;
 }
 export interface VerifyStateModel {
   requestId: string;
@@ -26,17 +43,28 @@ export const authInitialState: AuthStateModel = {
   isAuthenticated: false,
   token: null,
   userId: null,
+  currentUser: null,
+  profile: null,
+  canAccessDashboard: false,
   requestId: null,
   prefix: null,
   expiry: null,
   lastLogin: null,
   loading: false,
+  loginOtpRequested: false,
   errors: [],
   message: null,
 };
 export interface SigninCredentials {
   username: string;
   password: string;
+}
+export interface LoginOtpRequestCredentials {
+  identity: string;
+  password: string;
+}
+export interface LoginWithOtpCredentials extends LoginOtpRequestCredentials {
+  otpCode: string;
 }
 export interface UserWithPhone {
   phoneNumber: string;
@@ -46,8 +74,8 @@ export interface UserWithEmail {
   email: string;
 }
 export interface VerificationRequest {
-  requestId: any;
-  prefix: any;
+  requestId: string;
+  prefix: string;
   code: string;
 }
 
@@ -56,11 +84,26 @@ export interface LoginResponse {
   code: number;
   isSuccessful: boolean;
   data: {
-    expiry: string;
-    token: string;
-    lastLogin: string;
+    expiry?: string;
+    token?: string;
+    accessToken?: string;
+    refreshToken?: string;
+    profile?: AuthProfile;
+    nextStep?: string | null;
+    lastLogin?: string;
   };
-  errors: any;
+  errors: unknown;
+}
+export interface CurrentSessionResponse {
+  message: string;
+  code: number;
+  isSuccessful: boolean;
+  data: {
+    user: AuthUser;
+    profile: AuthProfile;
+    canAccessDashboard: boolean;
+  };
+  errors: unknown;
 }
 export interface OtpResponse {
   message: string;
@@ -69,6 +112,6 @@ export interface OtpResponse {
   data: {
     requestId: string;
     prefix: string;
-  };
-  errors: any | null;
+  } | null;
+  errors: unknown;
 }

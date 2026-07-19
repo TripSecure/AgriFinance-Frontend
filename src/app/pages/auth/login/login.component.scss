@@ -84,9 +84,21 @@
     background: #fff;
   }
 
-  span:first-child { top: 10px; left: 0; }
-  span:nth-child(2) { top: 27px; left: 17px; transform: rotate(90deg); }
-  span:last-child { top: 0; left: 36px; background: #31f098; transform: rotate(90deg); }
+  span:first-child {
+    top: 10px;
+    left: 0;
+  }
+  span:nth-child(2) {
+    top: 27px;
+    left: 17px;
+    transform: rotate(90deg);
+  }
+  span:last-child {
+    top: 0;
+    left: 36px;
+    background: #31f098;
+    transform: rotate(90deg);
+  }
 }
 
 .login-stats {
@@ -163,7 +175,9 @@
     text-transform: uppercase;
   }
 
-  label { color: #31383d; }
+  label {
+    color: #31383d;
+  }
 }
 
 .login-label-row {
@@ -209,7 +223,9 @@
       box-shadow: 0 0 0 3px rgba(49, 240, 152, 0.18);
     }
 
-    &[aria-invalid='true'] { border-color: #b42318; }
+    &[aria-invalid='true'] {
+      border-color: #b42318;
+    }
   }
 }
 
@@ -228,7 +244,11 @@
   cursor: pointer;
   transform: translateY(-50%);
 
-  svg { width: 17px; height: 17px; fill: currentColor; }
+  svg {
+    width: 17px;
+    height: 17px;
+    fill: currentColor;
+  }
 }
 
 .login-error {
@@ -245,7 +265,11 @@
   color: #505a60;
   font-size: 0.72rem;
 
-  input { width: 16px; height: 16px; accent-color: #00865a; }
+  input {
+    width: 16px;
+    height: 16px;
+    accent-color: #00865a;
+  }
 }
 
 .sign-in-button {
@@ -263,9 +287,18 @@
   letter-spacing: 0.08em;
   cursor: pointer;
 
-  svg { width: 16px; height: 16px; fill: currentColor; }
-  &:hover { background: #002d57; }
-  &:disabled { cursor: wait; opacity: 0.7; }
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+  &:hover {
+    background: #002d57;
+  }
+  &:disabled {
+    cursor: wait;
+    opacity: 0.7;
+  }
 }
 
 .register-prompt {
@@ -274,7 +307,11 @@
   font-size: 0.72rem;
   text-align: center;
 
-  a { color: #003b70; font-weight: 700; text-underline-offset: 3px; }
+  a {
+    color: #003b70;
+    font-weight: 700;
+    text-underline-offset: 3px;
+  }
 }
 
 .login-legal {
@@ -287,7 +324,10 @@
   font-size: 0.55rem;
   line-height: 1.25;
 
-  a { color: inherit; text-decoration: none; }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 .login-panel a:focus-visible,
@@ -298,22 +338,101 @@
 }
 
 @media (max-width: 900px) {
-  .login-page { grid-template-columns: 1fr; }
-  .login-story { min-height: 700px; }
-  .login-panel { min-height: 720px; }
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+  .login-story {
+    min-height: 700px;
+  }
+  .login-panel {
+    min-height: 720px;
+  }
 }
 
 @media (max-width: 520px) {
-  .login-story { min-height: 640px; }
-  .login-story-content { right: 24px; bottom: 54px; left: 24px; }
-  .login-mark { top: 36px; left: 24px; }
-  .login-stats { gap: 10px; }
-  .login-stats div { padding: 18px 15px; }
-  .login-panel { min-height: auto; padding: 64px 20px 44px; }
-  .register-prompt { margin-top: 52px; }
-  .login-legal { margin-top: 50px; }
+  .login-story {
+    min-height: 640px;
+  }
+  .login-story-content {
+    right: 24px;
+    bottom: 54px;
+    left: 24px;
+  }
+  .login-mark {
+    top: 36px;
+    left: 24px;
+  }
+  .login-stats {
+    gap: 10px;
+  }
+  .login-stats div {
+    padding: 18px 15px;
+  }
+  .login-panel {
+    min-height: auto;
+    padding: 64px 20px 44px;
+  }
+  .register-prompt {
+    margin-top: 52px;
+  }
+  .login-legal {
+    margin-top: 50px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sign-in-button { transition: none; }
+  .sign-in-button {
+    transition: none;
+  }
+}
+
+.login-alert,
+.login-success {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  line-height: 1.45;
+
+  p {
+    margin: 0;
+  }
+
+  p + p {
+    margin-top: 6px;
+  }
+}
+
+.login-alert {
+  border: 1px solid #f0b5ad;
+  background: #fff2f0;
+  color: #8f1f15;
+}
+
+.login-success {
+  border: 1px solid #a9e8c9;
+  background: #effcf5;
+  color: #05603a;
+}
+
+.login-secondary-button {
+  width: fit-content;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #003b70;
+  font-family: 'Courier New', monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
 }

@@ -39,76 +39,130 @@
   <section class="login-panel" aria-labelledby="login-heading">
     <div class="login-panel-content">
       <header>
-        <h2 id="login-heading">Welcome back</h2>
-        <p>Access your portfolio and manage your agricultural assets.</p>
+        <h2 id="login-heading">{{ loginTitle() }}</h2>
+        <p>{{ loginHelpText() }}</p>
       </header>
 
       <form class="login-form" [formGroup]="loginForm" (ngSubmit)="signIn()" novalidate>
-        <div class="login-field">
-          <label for="login-identity">Email or Username</label>
-          <div class="login-control">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 8c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Zm-5.6 4c.8-1.1 2.9-2 5.6-2s4.8.9 5.6 2H6.4Z"
-              />
-            </svg>
-            <input
-              id="login-identity"
-              type="text"
-              autocomplete="username"
-              placeholder="name@company.com"
-              formControlName="identity"
-            />
-          </div>
-          @if (getLoginFieldError('identity'); as errorMessage) {
-            <p class="login-error">{{ errorMessage }}</p>
-          }
-        </div>
-
-        <div class="login-field">
-          <div class="login-label-row">
-            <label for="login-password">Password</label>
-            <a routerLink="/auth/forgot-password">Forgot Password?</a>
-          </div>
-          <div class="login-control">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v10h14V10a2 2 0 0 0-2-2Zm-7-2a2 2 0 0 1 4 0v2h-4V6Zm7 12H7v-8h10v8Z"
-              />
-            </svg>
-            <input
-              id="login-password"
-              [type]="showPassword() ? 'text' : 'password'"
-              autocomplete="current-password"
-              placeholder="Password"
-              formControlName="password"
-            />
-            <button
-              class="password-toggle"
-              type="button"
-              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-              [attr.aria-pressed]="showPassword()"
-              (click)="togglePasswordVisibility()"
-            >
+        @if (!isOtpStep()) {
+          <div class="login-field">
+            <label for="login-identity">Phone Number or Email</label>
+            <div class="login-control">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path
-                  d="M12 5c-5 0-9.3 2.9-11 7 1.7 4.1 6 7 11 7s9.3-2.9 11-7c-1.7-4.1-6-7-11-7Zm0 12c-3.8 0-7.3-2-8.8-5C4.7 9 8.2 7 12 7s7.3 2 8.8 5c-1.5 3-5 5-8.8 5Zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm0 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"
+                  d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 8c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Zm-5.6 4c.8-1.1 2.9-2 5.6-2s4.8.9 5.6 2H6.4Z"
                 />
               </svg>
-            </button>
+              <input
+                id="login-identity"
+                type="text"
+                autocomplete="username"
+                placeholder="0558014538"
+                formControlName="identity"
+                [attr.aria-invalid]="
+                  loginControls.identity.touched && loginControls.identity.invalid
+                "
+              />
+            </div>
+            @if (getLoginFieldError('identity'); as errorMessage) {
+              <p class="login-error">{{ errorMessage }}</p>
+            }
           </div>
-          @if (getLoginFieldError('password'); as errorMessage) {
-            <p class="login-error">{{ errorMessage }}</p>
-          }
-        </div>
+
+          <div class="login-field">
+            <div class="login-label-row">
+              <label for="login-password">Password</label>
+              <a routerLink="/auth/forgot-password">Forgot Password?</a>
+            </div>
+            <div class="login-control">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v10h14V10a2 2 0 0 0-2-2Zm-7-2a2 2 0 0 1 4 0v2h-4V6Zm7 12H7v-8h10v8Z"
+                />
+              </svg>
+              <input
+                id="login-password"
+                [type]="showPassword() ? 'text' : 'password'"
+                autocomplete="current-password"
+                placeholder="Password"
+                formControlName="password"
+                [attr.aria-invalid]="
+                  loginControls.password.touched && loginControls.password.invalid
+                "
+              />
+              <button
+                class="password-toggle"
+                type="button"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                [attr.aria-pressed]="showPassword()"
+                (click)="togglePasswordVisibility()"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 5c-5 0-9.3 2.9-11 7 1.7 4.1 6 7 11 7s9.3-2.9 11-7c-1.7-4.1-6-7-11-7Zm0 12c-3.8 0-7.3-2-8.8-5C4.7 9 8.2 7 12 7s7.3 2 8.8 5c-1.5 3-5 5-8.8 5Zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm0 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"
+                  />
+                </svg>
+              </button>
+            </div>
+            @if (getLoginFieldError('password'); as errorMessage) {
+              <p class="login-error">{{ errorMessage }}</p>
+            }
+          </div>
+        }
+
+        @if (isOtpStep()) {
+          <div class="login-field">
+            <label for="login-otp">Verification Code</label>
+            <div class="login-control">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M2 5h2v2H2V5Zm4 0h2v2H6V5Zm4 0h2v2h-2V5Zm4 0h2v2h-2V5ZM2 9h2v2H2V9Zm4 0h2v2H6V9Zm4 0h2v2h-2V9Zm4 0h2v2h-2V9ZM2 13h2v2H2v-2Zm4 0h2v2H6v-2Zm4 0h2v2h-2v-2Zm4 0h2v2h-2v-2ZM6 17h2v2H6v-2Zm4 0h2v2h-2v-2Z"
+                />
+              </svg>
+              <input
+                id="login-otp"
+                type="text"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                placeholder="123456"
+                maxlength="6"
+                pattern="[0-9]{6}"
+                formControlName="otpCode"
+                [attr.aria-invalid]="loginControls.otpCode.touched && loginControls.otpCode.invalid"
+              />
+            </div>
+            @if (getLoginFieldError('otpCode'); as errorMessage) {
+              <p class="login-error">{{ errorMessage }}</p>
+            }
+          </div>
+
+          <button
+            class="login-secondary-button"
+            type="button"
+            [disabled]="authLoading()"
+            (click)="editLoginDetails()"
+          >
+            Use different details
+          </button>
+        }
+
+        @if (authErrors().length) {
+          <div class="login-alert" role="alert">
+            @for (error of authErrors(); track error) {
+              <p>{{ error }}</p>
+            }
+          </div>
+        } @else if (authMessage()) {
+          <p class="login-success" role="status">{{ authMessage() }}</p>
+        }
 
         <label class="remember-device">
           <input type="checkbox" formControlName="rememberDevice" />
           <span>Remember this device</span>
         </label>
 
-        <button class="sign-in-button" type="submit" [disabled]="isSubmitting()">
-          Sign In
+        <button class="sign-in-button" type="submit" [disabled]="authLoading()">
+          {{ authLoading() ? 'Please wait...' : submitButtonText() }}
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
               d="m13.3 5.3-1.4 1.4 4.3 4.3H4v2h12.2l-4.3 4.3 1.4 1.4 6-6a1 1 0 0 0 0-1.4l-6-6Z"

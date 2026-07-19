@@ -9,6 +9,7 @@ import { withNgxsFormPlugin } from '@ngxs/form-plugin';
 import { provideStore } from '@ngxs/store';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './interceptors/auth.interceptor';
+import { AuthState } from './pages/auth/services/auth/auth.states';
 import { RegistrationState } from './pages/auth/register/services/registration.state';
 
 export const appConfig: ApplicationConfig = {
@@ -21,6 +22,10 @@ export const appConfig: ApplicationConfig = {
         preset: Aura,
       },
     }),
-    provideStore([RegistrationState], withNgxsReduxDevtoolsPlugin(), withNgxsFormPlugin()),
+    provideStore(
+      [AuthState, RegistrationState],
+      withNgxsReduxDevtoolsPlugin(),
+      withNgxsFormPlugin(),
+    ),
   ],
 };
