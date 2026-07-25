@@ -5,12 +5,12 @@ import { Actions, ofActionDispatched } from '@ngxs/store';
 import { Logout } from '../../../pages/auth/services/auth/auth.actions';
 
 @Component({
-  selector: 'app-super-admin-dashboard',
+  selector: 'app-input-provider-dashboard',
   imports: [RouterModule, NavbarComponent],
-  templateUrl: './super-admin-dashboard.component.html',
-  styleUrl: './super-admin-dashboard.component.scss',
+  templateUrl: './input-provider-dashboard.component.html',
+  styleUrl: './input-provider-dashboard.component.scss',
 })
-export class SuperAdminDashboardComponent {
+export class InputProviderDashboardComponent {
   constructor(
     private actions$: Actions,
     private router: Router,

@@ -12,6 +12,25 @@ export const routes: Routes = [
         (m) => m.SuperAdminDashboardComponent,
       ),
     title: 'Super Admin Dashboard',
+    children: [
+      { path: '', redirectTo: 'home', pathMatch: 'full' },
+      {
+        path: 'home',
+        loadComponent: () =>
+          import('./super-admin-dashboard/components/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
+        title: 'Home',
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./super-admin-dashboard/components/users/users.component').then(
+            (m) => m.UsersComponent,
+          ),
+        title: 'Users',
+      },
+    ],
   },
   {
     path: 'portfolio-officer',

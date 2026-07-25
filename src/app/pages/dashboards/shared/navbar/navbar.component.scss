@@ -1,0 +1,143 @@
+nav {
+  padding: 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  position: sticky;
+  top: 0px;
+  background: #ffffff;
+  border-bottom: 1px solid #d0d5dd;
+  .logo {
+    height: 100%;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    text-align: center;
+    img {
+      height: 80%;
+      object-fit: contain;
+    }
+    p {
+      font-family: Inter;
+      font-style: normal;
+      line-height: 10.773px;
+      font-weight: 600;
+      font-size: 12px;
+      line-height: 18px;
+      color: #344054;
+    }
+  }
+
+  .user__name {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .options {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #667085 !important;
+    &__option {
+      padding: 1rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+      &:hover {
+        cursor: pointer;
+      }
+      // &-active {
+      //   // color: $primary_color;
+      //   // border-bottom: solid $primary_color 0.15rem;
+      // }
+    }
+    &__info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      &__name {
+        display: flex;
+        align-items: center;
+        button {
+          font-size: 14px;
+          font-weight: 300;
+        }
+        :hover {
+          cursor: pointer;
+        }
+      }
+      &__label {
+        border: solid white;
+        border-radius: 1000px;
+        display: grid;
+        place-items: center;
+        // padding: 4px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+        background-color: #ecfdf3;
+        img {
+          width: 2.5rem;
+          border-radius: 50%;
+        }
+      }
+    }
+  }
+
+  .hamburger {
+    display: none;
+  }
+}
+
+a {
+  text-decoration: none;
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+p {
+  margin: 0;
+}
+// a:focus,
+// .active-link {
+
+// }
+
+.document__download {
+  font-family: "Open Sans";
+  font-size: 14px;
+  font-style: normal;
+}
+
+@media (max-width: 800px) {
+  nav {
+    padding: 1rem;
+    .options {
+      display: none !important;
+    }
+
+    .hamburger {
+      display: block !important;
+      border: none;
+      background: transparent;
+    }
+  }
+}
+
+.name {
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 18px;
+  color: #344054;
+}
+::ng-deep {
+  .mat-mdc-menu-panel.mat-menu-below.mat-menu-before {
+    background-color: #fff;
+  }
+  .mat-mdc-menu-item-text{
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  // justify-content: center;
+}
+}

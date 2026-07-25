@@ -1,1 +1,65 @@
-<p>super-admin-dashboard works!</p>
+<div class="dashboard">
+
+  <div class="main d-flex">
+    <aside>
+      <nav>
+        <div class="sidebar-brand" aria-label="TripSecure AgriFinance">
+          <strong>TripSecure</strong>
+          <span>AgriFinance</span>
+        </div>
+
+        <a
+          [routerLink]="['home']"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <span class="material-symbols-outlined">grid_view</span>
+          Dashboard
+        </a>
+        <a [routerLink]="['farmers-data']" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">groups</span>
+          Farmers Data
+        </a>
+        <a [routerLink]="['agri-loans']" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">agriculture</span>
+          Agri-Loans
+        </a>
+        <a [routerLink]="['insurance']" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">health_and_safety</span>
+          Insurance
+        </a>
+        <a [routerLink]="['risk-scores']" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">query_stats</span>
+          Risk Scores
+        </a>
+        <a [routerLink]="['transactions']" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">account_balance_wallet</span>
+          Transactions
+        </a>
+        <a [routerLink]="['reports-hub']" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">hub</span>
+          Reports Hub
+        </a>
+        <a [routerLink]="['users']" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">manage_accounts</span>
+          Users
+        </a>
+        <a [routerLink]="['audit-log']" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">history_edu</span>
+          Audit Log
+        </a>
+      </nav>
+    </aside>
+    <div class="w-100">
+         <nav>
+    <app-navbar />
+  </nav>
+  <div class="content">
+    <router-outlet />
+  </div>
+    </div>
+  </div>
+</div>
+
+
+

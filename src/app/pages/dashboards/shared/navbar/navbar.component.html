@@ -1,0 +1,25 @@
+<nav>
+  <div class="logo" [routerLink]="['/']"></div>
+
+  <span class="options__info">
+    <div class="options__info__label">
+      <img [src]="'images/initial_profile.png'" alt="Profile Picture" class="profile-image" />
+    </div>
+    <span class="options__info__name" [matMenuTriggerFor]="accountOptions">
+      <p class="user__name">
+        <!-- <span>{{ "Evans" }}</span>
+        <span>{{ "Eshun" }}</span> -->
+      </p>
+      <mat-icon>keyboard_arrow_down </mat-icon>
+    </span>
+    <mat-menu #accountOptions="matMenu">
+      <button mat-menu-item (click)="goToAccountSettings()">
+        <span class="material-symbols-outlined">settings</span>
+        Account Settings
+      </button>
+      <button mat-menu-item (click)="onLogout()">
+        <span class="material-symbols-outlined">logout</span>Log out
+      </button>
+    </mat-menu>
+  </span>
+</nav>

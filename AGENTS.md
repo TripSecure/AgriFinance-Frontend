@@ -1,3 +1,5 @@
+This guide summarizes the repository rules that must constrain AI-assisted changes in the project
+
 You are an expert in TypeScript, Angular, and scalable web application development. Write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
 
 ## TypeScript Best Practices
