@@ -1,12 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { Logout } from '../../../auth/services/auth/auth.actions';
-// import { ToastrService } from '../../shared/toastr/toastr.service';
 import { AuthState } from '../../../auth/services/auth/auth.states';
+import { ToastrService } from '../../../../shared/toastr/toastr.service';
 // import {
 //   GetUser,
 //   UserState,
@@ -17,29 +16,29 @@ import { AuthState } from '../../../auth/services/auth/auth.states';
   imports: [RouterLink, MatIconModule, MatMenuModule],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarComponent {
-  private router = inject(Router);
-  private store = inject(Store);
-
-  // private toastr = inject(ToastrService);
+  private readonly router = inject(Router);
+  private readonly store = inject(Store);
+  private readonly toastr = inject(ToastrService);
 
   userId = this.store.selectSignal(AuthState.getUserId);
   // user = this.store.selectSignal(UserState.user);
-  user = signal("AO");
+  user = signal('AO');
 
-  ngOnInit() {
+  ngOnInit(): void {
     // this.store.dispatch(new GetUser(this.userId()));
   }
 
-  onLogout() {
+  onLogout(): void {
     this.store.dispatch(new Logout()).subscribe(() => {
-      // this.toastr.triggerToastr('success', 'Logout successful');
-      this.router.navigate(['/login']);
+      this.toastr.triggerToastr('success', 'Logged out successfully.');
+      void this.router.navigate(['/auth/login']);
     });
   }
 
-  goToAccountSettings() {
-    this.router.navigate(['/dashboard/account-settings']);
+  goToAccountSettings(): void {
+    void this.router.navigate(['/dashboard/account-settings']);
   }
 }

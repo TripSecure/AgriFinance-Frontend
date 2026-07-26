@@ -1,0 +1,13 @@
+<section class="confirm-modal" role="dialog" aria-labelledby="confirm-modal-title">
+  <h2 id="confirm-modal-title">Confirm action</h2>
+  <p>Are you sure you want to perform this action?</p>
+
+  <div class="confirm-modal__actions">
+    <button type="button" class="confirm-modal__button confirm-modal__button--secondary" (click)="cancel()">
+      Cancel
+    </button>
+    <button type="button" class="confirm-modal__button confirm-modal__button--primary" (click)="confirm()">
+      Confirm
+    </button>
+  </div>
+</section>

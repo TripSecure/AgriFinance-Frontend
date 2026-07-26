@@ -1,0 +1,25 @@
+@if (toastr$ | async; as toastr) {
+  @if (toastr.message) {
+    <div
+      class="main"
+      [class.success]="toastr.type === 'success'"
+      [class.error]="toastr.type === 'error'"
+      [class.info]="toastr.type === 'info'"
+      [class.persistent]="toastr.delay <= 0"
+      [style.--toastr-duration]="toastr.delay + 'ms'"
+      [attr.role]="toastr.type === 'error' ? 'alert' : 'status'"
+      [attr.aria-live]="toastr.type === 'error' ? 'assertive' : 'polite'"
+    >
+      <div class="toastr">
+        <img [ngSrc]="toastIconByType[toastr.type]" width="40" height="40" alt="" />
+        <p class="paragraph">
+          {{ toastr.message }}
+        </p>
+        <button type="button" class="close-button" aria-label="Dismiss notification" (click)="onClose()">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <div class="reader" aria-hidden="true"></div>
+    </div>
+  }
+}

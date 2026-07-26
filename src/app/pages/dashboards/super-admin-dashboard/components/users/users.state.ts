@@ -1,0 +1,265 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Action, Selector, State, StateContext } from '@ngxs/store';
+import { tap } from 'rxjs/operators';
+import { environment } from '../../../../../../environment/environment';
+
+export type UserReviewAction = 'approved' | 'rejected' | 'suspended';
+
+export interface UserApprovalOption {
+  label: string;
+  value: UserReviewAction;
+  icon: string;
+  successMessage: string;
+}
+
+export const userApprovalOptions: readonly UserApprovalOption[] = [
+  {
+    label: 'Approve',
+    value: 'approved',
+    icon: 'check_circle',
+    successMessage: 'User approved successfully.',
+  },
+  {
+    label: 'Deny',
+    value: 'rejected',
+    icon: 'cancel',
+    successMessage: 'User denied successfully.',
+  },
+  {
+    label: 'Suspend',
+    value: 'suspended',
+    icon: 'block',
+    successMessage: 'User suspended successfully.',
+  },
+];
+
+export interface User {
+  id: string;
+  fullName?: string | null;
+  full_name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  phoneNumber?: string | null;
+  role?: string | null;
+  status?: string | null;
+  approvalStatus?: string | null;
+  createdAt?: string | null;
+  dateCreated?: string | null;
+}
+
+interface UsersResponse {
+  message?: string;
+  code?: number;
+  success?: boolean;
+  isSuccessful?: boolean;
+  data: UsersData | User[];
+  errors?: unknown;
+}
+
+interface UsersData {
+  totalPages?: number;
+  pageIndex?: number;
+  pageSize?: number;
+  totalCount?: number;
+  results?: User[];
+  items?: User[];
+  data?: User[];
+}
+
+interface UserMutationResponse {
+  message?: string;
+  data?: User;
+}
+
+export interface UsersQueryParams {
+  first?: number;
+  rows?: number;
+  globalFilter?: string;
+  sortField?: string;
+  sortOrder?: number;
+  status?: string;
+}
+
+export interface UsersStateModel {
+  totalPages: number;
+  pageIndex: number;
+  pageSize: number;
+  totalCount: number;
+  isLoading: boolean;
+  approvingUserId: string | null;
+  users: User[];
+}
+
+export class GetUsers {
+  static readonly type = '[Users] Get Users';
+  constructor(public params?: UsersQueryParams) {}
+}
+
+export class UpdateUserApproval {
+  static readonly type = '[Users] Update User Approval';
+  constructor(
+    public userId: string,
+    public action: UserReviewAction,
+  ) {}
+}
+
+@State<UsersStateModel>({
+  name: 'users',
+  defaults: {
+    users: [],
+    totalPages: 0,
+    pageIndex: 0,
+    pageSize: 10,
+    totalCount: 0,
+    isLoading: false,
+    approvingUserId: null,
+  },
+})
+@Injectable()
+export class UsersState {
+  constructor(private readonly http: HttpClient) {}
+
+  @Selector()
+  static isLoading(state: UsersStateModel): boolean {
+    return state.isLoading;
+  }
+
+  @Selector()
+  static approvingUserId(state: UsersStateModel): string | null {
+    return state.approvingUserId;
+  }
+
+  @Selector()
+  static users(state: UsersStateModel): User[] {
+    return state.users;
+  }
+
+  @Selector()
+  static usersConfigs(state: UsersStateModel) {
+    const { totalPages, pageIndex, pageSize, totalCount } = state;
+    return { totalPages, pageIndex, pageSize, totalCount };
+  }
+
+  @Action(GetUsers)
+  getUsers(ctx: StateContext<UsersStateModel>, { params }: GetUsers) {
+    ctx.patchState({ isLoading: true });
+
+    return this.http.get<UsersResponse>(`${environment.api}/admin/users`, { params: this.toHttpParams(params) }).pipe(
+      tap({
+        next: (response) => {
+          const data = this.normalizeUsersData(response.data);
+          ctx.patchState({
+            users: data.results,
+            totalPages: data.totalPages,
+            pageIndex: data.pageIndex,
+            pageSize: data.pageSize,
+            totalCount: data.totalCount,
+            isLoading: false,
+          });
+        },
+        error: () => ctx.patchState({ isLoading: false }),
+      }),
+    );
+  }
+
+  @Action(UpdateUserApproval)
+  updateUserApproval(
+    ctx: StateContext<UsersStateModel>,
+    { userId, action }: UpdateUserApproval,
+  ) {
+    ctx.patchState({ approvingUserId: userId });
+
+    const reason = this.getReviewReason(action);
+
+    return this.http
+      .post<UserMutationResponse>(`${environment.api}/admin/users/${userId}/review`, {
+        userId,
+        action,
+        ...(reason ? { reason } : {}),
+      })
+      .pipe(
+        tap({
+          next: (response) => {
+            const state = ctx.getState();
+            const updatedUser = response.data;
+            ctx.patchState({
+              approvingUserId: null,
+              users: state.users.map((user) =>
+                user.id === userId
+                  ? {
+                      ...user,
+                      ...(updatedUser ?? {}),
+                      status: updatedUser?.status ?? action,
+                      approvalStatus: updatedUser?.approvalStatus ?? action,
+                    }
+                  : user,
+              ),
+            });
+          },
+          error: () => ctx.patchState({ approvingUserId: null }),
+        }),
+      );
+  }
+
+  private getReviewReason(action: UserReviewAction): string | null {
+    if (action === 'approved') {
+      return null;
+    }
+
+    return action === 'rejected' ? 'Rejected by super admin.' : 'Suspended by super admin.';
+  }
+
+  private toHttpParams(params?: UsersQueryParams): HttpParams {
+    let httpParams = new HttpParams();
+
+    if (!params) {
+      return httpParams;
+    }
+
+    const pageSize = params.rows ?? 10;
+    const pageIndex = Math.floor((params.first ?? 0) / pageSize) + 1;
+
+    httpParams = httpParams.set('pageIndex', String(pageIndex));
+    httpParams = httpParams.set('pageSize', String(pageSize));
+
+    if (params.globalFilter) {
+      httpParams = httpParams.set('search', params.globalFilter);
+    }
+
+    if (params.status) {
+      httpParams = httpParams.set('status', params.status);
+    }
+
+    if (params.sortField) {
+      httpParams = httpParams.set('sortBy', params.sortField);
+      httpParams = httpParams.set('sortOrder', params.sortOrder === -1 ? 'desc' : 'asc');
+    }
+
+    return httpParams;
+  }
+
+  private normalizeUsersData(data: UsersData | User[]): Required<Pick<UsersData, 'totalPages' | 'pageIndex' | 'pageSize' | 'totalCount'>> & { results: User[] } {
+    if (Array.isArray(data)) {
+      return {
+        results: data,
+        totalPages: 1,
+        pageIndex: 1,
+        pageSize: data.length,
+        totalCount: data.length,
+      };
+    }
+
+    const results = data.results ?? data.items ?? data.data ?? [];
+
+    return {
+      results,
+      totalPages: data.totalPages ?? 1,
+      pageIndex: data.pageIndex ?? 1,
+      pageSize: data.pageSize ?? results.length,
+      totalCount: data.totalCount ?? results.length,
+    };
+  }
+}

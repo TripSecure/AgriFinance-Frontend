@@ -1,0 +1,36 @@
+<div class="position-relative bg-white p-4 d-flex flex-column align-items-center text-center">
+  <button
+    type="button"
+    class="btn-close position-absolute top-0 end-0 m-3"
+    aria-label="Close"
+    (click)="onCancel()"
+  ></button>
+
+  <div
+    class="icon-badge d-inline-flex align-items-center justify-content-center rounded-circle bg-danger-subtle text-danger-emphasis mb-3"
+    aria-hidden="true"
+  >
+    <svg
+      width="40"
+      height="40"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M0.5 6.5a16 16 0 0 1 23 0" opacity="0.4" />
+      <path d="M4.5 10.5a10.5 10.5 0 0 1 15 0" opacity="0.4" />
+      <path d="M8.5 14.5a5 5 0 0 1 7 0" opacity="0.4" />
+      <circle cx="12" cy="18.5" r="1.1" fill="currentColor" opacity="0.4" stroke="none" />
+      <line x1="2" y1="2" x2="22" y2="22" />
+    </svg>
+  </div>
+
+  <h3 mat-dialog-title class="fs-5 fw-semibold text-dark mb-2">No Connection</h3>
+
+  <p class="text-secondary mb-0">
+    You're currently offline. Please check your internet connection to continue.
+  </p>
+</div>

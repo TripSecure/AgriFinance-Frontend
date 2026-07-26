@@ -11,6 +11,7 @@ import {
 } from '../services/auth/auth.actions';
 import { AuthState } from '../services/auth/auth.states';
 import { NumbersOnlyDirective } from '../../../directives/numbers-only.directive';
+import { ToastrService } from '../../../shared/toastr/toastr.service';
 
 interface LoginFormValue {
   identity: string;
@@ -33,6 +34,7 @@ export class LoginComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
+  private readonly toastr = inject(ToastrService);
   private readonly loginErrorMessages: Record<LoginControlName, string> = {
     identity: 'Enter your phone number or email.',
     password: 'Enter your password.',
@@ -106,7 +108,11 @@ export class LoginComponent {
       if (this.store.selectSnapshot(AuthState.isLoginOtpRequested)) {
         this.loginControls.otpCode.reset('');
         this.loginControls.otpCode.markAsUntouched();
+        this.toastr.triggerToastr('info', this.getAuthFeedbackMessage('Verification code sent.'));
+        return;
       }
+
+      this.showAuthError('Unable to send the verification code.');
     });
   }
 
@@ -119,9 +125,22 @@ export class LoginComponent {
     this.store.dispatch(new LoginWithOtp({ identity, password, otpCode })).subscribe(() => {
       if (this.store.selectSnapshot(AuthState.isAuthenticated)) {
         this.store.dispatch(new PersistState()).subscribe();
+        this.toastr.triggerToastr('success', this.getAuthFeedbackMessage('Login successful.'));
         void this.router.navigateByUrl(this.getPostLoginUrl());
+        return;
       }
+
+      this.showAuthError('Login failed. Check the code and try again.');
     });
+  }
+
+  private showAuthError(fallbackMessage: string): void {
+    this.toastr.triggerToastr('error', this.getAuthFeedbackMessage(fallbackMessage));
+  }
+
+  private getAuthFeedbackMessage(fallbackMessage: string): string {
+    const [firstError] = this.store.selectSnapshot(AuthState.getErrors);
+    return firstError || this.store.selectSnapshot(AuthState.message) || fallbackMessage;
   }
 
   private getPostLoginUrl(): string {

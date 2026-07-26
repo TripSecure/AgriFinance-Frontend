@@ -19,7 +19,8 @@ export class PortfolioOfficerDashboardComponent {
 
   ngOnInit() {
     this.actions$.pipe(ofActionDispatched(Logout)).subscribe(() => {
-      this.router.navigate(['/']);
+      void this.router.navigate(['/auth/login']);
     });
   }
 }
+

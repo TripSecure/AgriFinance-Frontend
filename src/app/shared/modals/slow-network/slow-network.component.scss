@@ -1,0 +1,16 @@
+.icon-badge {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+::ng-deep.mat-mdc-dialog-surface.mdc-dialog__surface {
+  border-radius: 4px;
+  border: 1px solid #d0d5dd;
+  background-color: #ffffff;
+  overflow-y: hidden;
+}
+
+::ng-deep.cdk-overlay-pane.mat-mdc-dialog-panel {
+  max-width: none;
+  width: 550px;
+}

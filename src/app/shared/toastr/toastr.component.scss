@@ -1,0 +1,131 @@
+.main {
+  --toastr-accent: #12b76a;
+  --toastr-duration: 4000ms;
+
+  border-radius: 8px;
+  background-color: #ffffff;
+  overflow: hidden;
+  width: min(400px, calc(100vw - 2rem));
+  min-height: 72px;
+  position: fixed;
+  top: 2rem;
+  right: 1rem;
+  z-index: 5000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  animation: slideIn 0.5s ease-out;
+  border: 1px solid #d0d5dd;
+  box-shadow: 0 12px 24px rgba(16, 24, 40, 0.12);
+
+  &.success {
+    --toastr-accent: #12b76a;
+  }
+
+  &.error {
+    --toastr-accent: #f04438;
+  }
+
+  &.info {
+    --toastr-accent: #2e90fa;
+  }
+
+  &.persistent .reader {
+    animation: none;
+  }
+
+  .toastr {
+    display: flex;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  img {
+    flex: 0 0 auto;
+  }
+
+  .paragraph {
+    color: #475467;
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 20px;
+    width: 100%;
+    margin: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .close-button {
+    border: 0;
+    background: transparent;
+    color: #667085;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      color: #344054;
+      background: #f2f4f7;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--toastr-accent);
+      outline-offset: 2px;
+    }
+
+    .material-symbols-outlined {
+      font-size: 20px;
+    }
+  }
+}
+
+.reader {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--toastr-accent);
+  animation: bgTransition var(--toastr-duration) linear 1 forwards;
+  transform-origin: left;
+  border-radius: inherit;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100vw);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bgTransition {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main,
+  .reader {
+    animation: none;
+  }
+}

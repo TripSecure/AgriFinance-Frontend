@@ -1,0 +1,38 @@
+<div class="position-relative bg-white p-4 d-flex flex-column align-items-center text-center">
+  <button
+    type="button"
+    class="btn-close position-absolute top-0 end-0 m-3"
+    aria-label="Close"
+    (click)="onCancel()"
+  ></button>
+
+  <div
+    class="icon-badge d-inline-flex align-items-center justify-content-center rounded-circle bg-warning-subtle text-warning-emphasis mb-3"
+    aria-hidden="true"
+  >
+    <svg
+      width="40"
+      height="40"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M0.5 6.5a16 16 0 0 1 23 0" opacity="0.35" />
+      <path d="M4.5 10.5a10.5 10.5 0 0 1 15 0" opacity="0.65" />
+      <path d="M8.5 14.5a5 5 0 0 1 7 0" />
+      <circle cx="12" cy="18.5" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  </div>
+
+  <h3 mat-dialog-title class="fs-5 fw-semibold text-dark mb-2">Unstable Connection</h3>
+
+  <p class="text-secondary mb-4">
+    Your internet connection seems slow right now. Some pages or actions may take longer than
+    usual to load.
+  </p>
+
+  <button type="button" class="btn btn-success px-4" (click)="onCancel()">Got it</button>
+</div>

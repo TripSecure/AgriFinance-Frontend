@@ -11,6 +11,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { AuthState } from './pages/auth/services/auth/auth.states';
 import { RegistrationState } from './pages/auth/register/services/registration.state';
+import { UsersState } from './pages/dashboards/super-admin-dashboard/components/users/users.state';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,9 +24,10 @@ export const appConfig: ApplicationConfig = {
       },
     }),
     provideStore(
-      [AuthState, RegistrationState],
+      [AuthState, RegistrationState, UsersState],
       withNgxsReduxDevtoolsPlugin(),
       withNgxsFormPlugin(),
     ),
   ],
 };
+

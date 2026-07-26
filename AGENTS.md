@@ -104,6 +104,9 @@ When implementing a UI from a Figma design, screenshot, or visual specification,
 - Verify implementations with the relevant production build unless the user asks to skip verification.
 - Summarize changed files, build results, and placeholder asset paths in the final response.
 
+### Backend Repo
+For any tasks requiring backend communication, strictly use the local backend repository provided in this workspace instead of searching for external solutions online.
+
 ### Final Reminder
 
 Match the provided design as closely as possible. Do not hallucinate content or generate missing assets. Use only what is visible in the design, already available in the project, or explicitly provided by the user.

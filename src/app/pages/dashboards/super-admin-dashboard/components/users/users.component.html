@@ -1,1 +1,131 @@
-<p>users works!</p>
+<div class="content">
+  <div class="title">
+    <h3>Users</h3>
+  </div>
+  <div class="filters">
+    <div class="filters__search">
+      <label for="usersSearch" class="d-block">Search</label>
+      <div class="filters__search__input-form">
+        <div class="d-flex align-items-center justify-content-center">
+          <span class="material-symbols-outlined">search</span>
+          <input
+            id="usersSearch"
+            (input)="onSearch($any($event.target)?.value ?? '')"
+            type="text"
+            placeholder="Search"
+          />
+        </div>
+      </div>
+    </div>
+    <div class="filters__actions">
+      <label for="statusFilter">Filter by status</label>
+      <button
+        id="statusFilter"
+        type="button"
+        [matMenuTriggerFor]="statusMenu"
+        class="filters__actions__input-form"
+      >
+        <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
+
+        <span class="material-symbols-outlined">keyboard_arrow_down</span>
+      </button>
+      <mat-menu #statusMenu="matMenu">
+        <button type="button" mat-menu-item (click)="onStatusFilter('')">
+          <span class="material-symbols-outlined">list</span>
+          <span>All statuses</span>
+        </button>
+        @for (option of approvalOptions; track option.value) {
+          <button type="button" mat-menu-item (click)="onStatusFilter(option.value)">
+            <span class="material-symbols-outlined">{{ option.icon }}</span>
+            <span>{{ option.label }}</span>
+          </button>
+        }
+      </mat-menu>
+    </div>
+  </div>
+  <div class="table-wrapper">
+    <div class="ps-3 py-2 d-flex align-items-center gap-3">
+      <div class="data-head">Total users</div>
+      <div
+        class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
+      >
+        {{ usersData().totalCount }}
+      </div>
+    </div>
+    <p-table
+      #usersTable
+      [value]="users()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="usersData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadUsers($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="fullName" id="name">
+            Name <p-sortIcon field="fullName"></p-sortIcon>
+          </th>
+          <th pSortableColumn="email" id="contact">
+            Contact <p-sortIcon field="email"></p-sortIcon>
+          </th>
+          <th pSortableColumn="role" id="role">Role <p-sortIcon field="role"></p-sortIcon></th>
+          <th pSortableColumn="status" id="status">
+            Status <p-sortIcon field="status"></p-sortIcon>
+          </th>
+          <th pSortableColumn="createdAt" id="created">
+            Date created <p-sortIcon field="createdAt"></p-sortIcon>
+          </th>
+          <th id="actions">Action</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-user>
+        <tr>
+          <td>{{ getUserName(user) }}</td>
+          <td>{{ getUserContact(user) }}</td>
+          <td>{{ getUserRole(user) }}</td>
+          <td>
+            <span
+              class="status-pill"
+              [class.status-pill--approved]="isApproved(user)"
+              [class.status-pill--rejected]="isRejected(user)"
+              [class.status-pill--pending]="isPending(user)"
+            >
+              {{ formatLabel(getUserStatus(user)) }}
+            </span>
+          </td>
+          <td>{{ user?.createdAt || user?.dateCreated || '-' }}</td>
+          <td>
+            <button
+              type="button"
+              class="action-button"
+              [matMenuTriggerFor]="approvalMenu"
+              [matMenuTriggerData]="{ user: user }"
+              [disabled]="isActionInProgress(user)"
+              aria-label="Open user approval actions"
+            >
+              <span class="material-symbols-outlined">more_vert</span>
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="6" class="empty-state">No users found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <mat-menu #approvalMenu="matMenu">
+      <ng-template matMenuContent let-user="user">
+        @for (option of approvalOptions; track option.value) {
+          <button type="button" mat-menu-item (click)="onApprovalRequest(user, option)">
+            <span>{{ option.label }}</span>
+          </button>
+        }
+      </ng-template>
+    </mat-menu>
+  </div>
+</div>
