@@ -1,13 +1,14 @@
 <div class="user-details">
   <a class="back-link" [routerLink]="['../']">
-    <mat-icon fontSet="material-icons-outlined">arrow_back</mat-icon>
+    <span class="material-symbols-outlined">arrow_back</span>
     Back to users
   </a>
 
   @if (isLoading()) {
     <section class="state-panel" aria-live="polite">
-      <mat-icon fontSet="material-icons-outlined">hourglass_empty</mat-icon>
+      <span class="material-symbols-outlined">hourglass_empty</span>
       <p>Loading user details...</p>
+      
     </section>
   } @else if (user()) {
     <section class="profile-hero">
@@ -47,7 +48,7 @@
         <div class="document-grid">
           @for (link of documentLinks(); track trackByLabel($index, link)) {
             <a class="document-link" [href]="link.url" target="_blank" rel="noopener noreferrer">
-              <mat-icon fontSet="material-icons-outlined">open_in_new</mat-icon>
+              <span class="material-symbols-outlined">open_in_new</span>
               <span>{{ link.label }}</span>
             </a>
           }
@@ -72,7 +73,8 @@
     }
   } @else {
     <section class="state-panel">
-      <mat-icon fontSet="material-icons-outlined">person_off</mat-icon>
+
+      <span class="material-symbols-outlined">person_off</span>
       <h2>User not found</h2>
       <p>We could not load the selected user profile.</p>
     </section>
