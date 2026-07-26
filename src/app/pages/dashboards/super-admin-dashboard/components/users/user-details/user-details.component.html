@@ -1,0 +1,82 @@
+<div class="user-details">
+  <a class="back-link" [routerLink]="['../']">
+    <mat-icon fontSet="material-icons-outlined">arrow_back</mat-icon>
+    Back to users
+  </a>
+
+  @if (isLoading()) {
+    <section class="state-panel" aria-live="polite">
+      <mat-icon fontSet="material-icons-outlined">hourglass_empty</mat-icon>
+      <p>Loading user details...</p>
+    </section>
+  } @else if (user()) {
+    <section class="profile-hero">
+      <div class="profile-hero__identity">
+        <div class="profile-hero__avatar" aria-hidden="true">{{ userInitials() }}</div>
+        <div>
+          <p class="profile-hero__eyebrow">User profile</p>
+          <h2>{{ userName() }}</h2>
+          <span>{{ getUserRole(user()) }}</span>
+        </div>
+      </div>
+
+      <span
+        class="status-pill"
+        [class.status-pill--approved]="isApproved()"
+        [class.status-pill--rejected]="isRejected()"
+        [class.status-pill--pending]="isPending()"
+      >
+        {{ formatLabel(status()) }}
+      </span>
+    </section>
+
+    <section class="summary-grid" aria-label="User summary">
+      @for (field of summaryFields(); track trackByLabel($index, field)) {
+        <article class="summary-card">
+          <span>{{ field.label }}</span>
+          <strong>{{ field.value }}</strong>
+        </article>
+      }
+    </section>
+
+    @if (documentLinks().length) {
+      <section class="detail-section">
+        <div class="detail-section__header">
+          <h3>Documents and links</h3>
+        </div>
+        <div class="document-grid">
+          @for (link of documentLinks(); track trackByLabel($index, link)) {
+            <a class="document-link" [href]="link.url" target="_blank" rel="noopener noreferrer">
+              <mat-icon fontSet="material-icons-outlined">open_in_new</mat-icon>
+              <span>{{ link.label }}</span>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+    @for (section of detailSections(); track trackBySection($index, section)) {
+      <section class="detail-section">
+        <div class="detail-section__header">
+          <h3>{{ section.title }}</h3>
+        </div>
+        <dl class="detail-grid">
+          @for (field of section.fields; track trackByLabel($index, field)) {
+            <div>
+              <dt>{{ field.label }}</dt>
+              <dd>{{ field.value }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+    }
+  } @else {
+    <section class="state-panel">
+      <mat-icon fontSet="material-icons-outlined">person_off</mat-icon>
+      <h2>User not found</h2>
+      <p>We could not load the selected user profile.</p>
+    </section>
+  }
+</div>
+
+

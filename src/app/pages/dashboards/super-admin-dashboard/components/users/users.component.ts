@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Store } from '@ngxs/store';
@@ -27,6 +28,7 @@ export class UsersComponent {
   private readonly dialog = inject(MatDialog);
   private readonly store = inject(Store);
   private readonly toastr = inject(ToastrService);
+  private readonly router = inject(Router);
 
   protected readonly users = this.store.selectSignal(UsersState.users);
   protected readonly usersData = this.store.selectSignal(UsersState.usersConfigs);
@@ -51,6 +53,23 @@ export class UsersComponent {
   protected onStatusFilter(status: string): void {
     this.selectedStatus = status;
     this.dispatchUsersLoad({ ...this.lastEvent, first: 0 });
+  }
+
+  protected onUserRowClick(user: User): void {
+    if (!user.id) {
+      return;
+    }
+
+    this.router.navigate(['/dashboard/super-admin/users', user.id]);
+  }
+
+  protected onUserRowKeydown(event: KeyboardEvent, user: User): void {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+
+    event.preventDefault();
+    this.onUserRowClick(user);
   }
 
   protected onApprovalRequest(user: User, option: UserApprovalOption): void {
@@ -145,3 +164,5 @@ export class UsersComponent {
     return sortField ?? undefined;
   }
 }
+
+

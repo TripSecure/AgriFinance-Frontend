@@ -30,6 +30,14 @@ export const routes: Routes = [
           ),
         title: 'Users',
       },
+      {
+        path: 'users/:userId',
+        loadComponent: () =>
+          import('./super-admin-dashboard/components/users/user-details/user-details.component').then(
+            (m) => m.UserDetailsComponent,
+          ),
+        title: 'User Details',
+      },
     ],
   },
   {
@@ -53,3 +61,4 @@ export const routes: Routes = [
     title: 'Extension Officer Dashboard',
   },
 ];
+

@@ -13,6 +13,22 @@ export interface UserApprovalOption {
   successMessage: string;
 }
 
+export interface User extends Record<string, unknown> {
+  id: string;
+  fullName?: string | null;
+  full_name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  phoneNumber?: string | null;
+  role?: string | null;
+  status?: string | null;
+  approvalStatus?: string | null;
+  createdAt?: string | null;
+  dateCreated?: string | null;
+}
+
 export const userApprovalOptions: readonly UserApprovalOption[] = [
   {
     label: 'Approve',
@@ -34,22 +50,6 @@ export const userApprovalOptions: readonly UserApprovalOption[] = [
   },
 ];
 
-export interface User {
-  id: string;
-  fullName?: string | null;
-  full_name?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  phoneNumber?: string | null;
-  role?: string | null;
-  status?: string | null;
-  approvalStatus?: string | null;
-  createdAt?: string | null;
-  dateCreated?: string | null;
-}
-
 interface UsersResponse {
   message?: string;
   code?: number;
@@ -57,6 +57,11 @@ interface UsersResponse {
   isSuccessful?: boolean;
   data: UsersData | User[];
   errors?: unknown;
+}
+
+interface UserDetailResponse {
+  message?: string;
+  data?: unknown;
 }
 
 interface UsersData {
@@ -89,13 +94,20 @@ export interface UsersStateModel {
   pageSize: number;
   totalCount: number;
   isLoading: boolean;
+  isDetailLoading: boolean;
   approvingUserId: string | null;
+  selectedUser: User | null;
   users: User[];
 }
 
 export class GetUsers {
   static readonly type = '[Users] Get Users';
   constructor(public params?: UsersQueryParams) {}
+}
+
+export class GetUserDetails {
+  static readonly type = '[Users] Get User Details';
+  constructor(public userId: string) {}
 }
 
 export class UpdateUserApproval {
@@ -115,7 +127,9 @@ export class UpdateUserApproval {
     pageSize: 10,
     totalCount: 0,
     isLoading: false,
+    isDetailLoading: false,
     approvingUserId: null,
+    selectedUser: null,
   },
 })
 @Injectable()
@@ -128,8 +142,18 @@ export class UsersState {
   }
 
   @Selector()
+  static isDetailLoading(state: UsersStateModel): boolean {
+    return state.isDetailLoading;
+  }
+
+  @Selector()
   static approvingUserId(state: UsersStateModel): string | null {
     return state.approvingUserId;
+  }
+
+  @Selector()
+  static selectedUser(state: UsersStateModel): User | null {
+    return state.selectedUser;
   }
 
   @Selector()
@@ -161,6 +185,23 @@ export class UsersState {
           });
         },
         error: () => ctx.patchState({ isLoading: false }),
+      }),
+    );
+  }
+
+  @Action(GetUserDetails)
+  getUserDetails(ctx: StateContext<UsersStateModel>, { userId }: GetUserDetails) {
+    ctx.patchState({ isDetailLoading: true, selectedUser: null });
+
+    return this.http.get<UserDetailResponse>(`${environment.api}/admin/users/${userId}`).pipe(
+      tap({
+        next: (response) => {
+          ctx.patchState({
+            selectedUser: this.normalizeUserDetail(response.data),
+            isDetailLoading: false,
+          });
+        },
+        error: () => ctx.patchState({ isDetailLoading: false }),
       }),
     );
   }
@@ -197,6 +238,15 @@ export class UsersState {
                     }
                   : user,
               ),
+              selectedUser:
+                state.selectedUser?.id === userId
+                  ? {
+                      ...state.selectedUser,
+                      ...(updatedUser ?? {}),
+                      status: updatedUser?.status ?? action,
+                      approvalStatus: updatedUser?.approvalStatus ?? action,
+                    }
+                  : state.selectedUser,
             });
           },
           error: () => ctx.patchState({ approvingUserId: null }),
@@ -262,4 +312,29 @@ export class UsersState {
       totalCount: data.totalCount ?? results.length,
     };
   }
+
+  private normalizeUserDetail(data: unknown): User | null {
+    if (!this.isRecord(data)) {
+      return null;
+    }
+
+    const nestedKeys = ['user', 'profile', 'account'];
+    for (const key of nestedKeys) {
+      const nested = data[key];
+      if (this.isUserRecord(nested)) {
+        return { ...data, ...nested };
+      }
+    }
+
+    return this.isUserRecord(data) ? data : null;
+  }
+
+  private isUserRecord(value: unknown): value is User {
+    return this.isRecord(value) && typeof value['id'] === 'string';
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+  }
 }
+
