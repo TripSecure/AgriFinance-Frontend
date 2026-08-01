@@ -1,0 +1,451 @@
+<div class="add-farmer-page">
+  <header class="page-header">
+    <a routerLink="/dashboard/portfolio-officer/farmers" class="back-link">
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      <span>Back to farmers</span>
+    </a>
+    <div>
+      <p>Portfolio Officer</p>
+      <h1>{{ pageTitle() }}</h1>
+    </div>
+  </header>
+
+  @if (isDetailLoading()) {
+    <p class="form-feedback" role="status">Loading farmer details...</p>
+  }
+
+  <mat-stepper [linear]="isLinear()" #stepper class="farmer-stepper">
+    <mat-step [stepControl]="personalDetailsForm">
+      <ng-template matStepLabel>Personal Details</ng-template>
+      <section class="form-section" aria-labelledby="personal-details-heading">
+        <header class="form-section-header">
+          <h2 id="personal-details-heading">Personal Details</h2>
+        </header>
+
+        <div class="form-section-body form-grid">
+          <app-form-input
+            name="fullName"
+            label="Full Name"
+            type="text"
+            placeholder="Ama Serwaa Mensah"
+            [isRequired]="true"
+            [formGroup]="personalDetailsForm"
+          />
+          <app-form-input
+            name="dateOfBirth"
+            label="Date of Birth"
+            type="date"
+            placeholder="mm/dd/yyyy"
+            [isRequired]="true"
+            [formGroup]="personalDetailsForm"
+          />
+          <app-form-input
+            name="gender"
+            label="Gender"
+            [isOption]="true"
+            [selections]="genderOptions"
+            [isRequired]="true"
+            [formGroup]="personalDetailsForm"
+          />
+          <app-form-input
+            name="nationalIdNumber"
+            label="National ID / Ghana Card Number"
+            type="text"
+            placeholder="GHA-000000000-0"
+            [isRequired]="true"
+            [formGroup]="personalDetailsForm"
+          />
+          <app-form-input
+            name="phone"
+            label="Phone Number"
+            type="tel"
+            placeholder="+233 00 000 0000"
+            [isRequired]="true"
+            [formGroup]="personalDetailsForm"
+          />
+          <app-form-input
+            name="email"
+            label="Email Address"
+            type="email"
+            placeholder="farmer@example.com"
+            [isRequired]="true"
+            [formGroup]="personalDetailsForm"
+          />
+        </div>
+      </section>
+
+      <div class="step-actions">
+        <button type="button" class="primary-action" matStepperNext>Next</button>
+      </div>
+    </mat-step>
+
+    <mat-step [stepControl]="documentUploadForm">
+      <ng-template matStepLabel>Upload Documents</ng-template>
+      <section class="form-section" aria-labelledby="document-upload-heading">
+        <header class="form-section-header">
+          <h2 id="document-upload-heading">Upload Documents</h2>
+        </header>
+
+        <div class="form-section-body document-upload-grid">
+          <app-form-input
+            class="document-upload-input"
+            type="file"
+            name="nationalIdFront"
+            uploadDocumentType="national_id_front"
+            label="National ID Front"
+            icon="badge"
+            placeholder=""
+            accept="image/png,image/jpeg,.pdf"
+            [allowMultiple]="false"
+            [isRequired]="true"
+            [formGroup]="documentUploadForm"
+            [uploadRole]="'farmer'"
+            [uploadStatus]="getUploadStatus('nationalIdFront')"
+            [uploadedFileName]="getUploadedFileName('nationalIdFront')"
+            [uploadEndpoint]="uploadEndpoint"
+          />
+          <app-form-input
+            class="document-upload-input"
+            type="file"
+            name="nationalIdBack"
+            uploadDocumentType="national_id_back"
+            label="National ID Back"
+            icon="badge"
+            placeholder=""
+            accept="image/png,image/jpeg,.pdf"
+            [allowMultiple]="false"
+            [isRequired]="true"
+            [formGroup]="documentUploadForm"
+            [uploadRole]="'farmer'"
+            [uploadStatus]="getUploadStatus('nationalIdBack')"
+            [uploadedFileName]="getUploadedFileName('nationalIdBack')"
+            [uploadEndpoint]="uploadEndpoint"
+          />
+          <app-form-input
+            class="document-upload-input"
+            type="file"
+            name="passportPhoto"
+            uploadDocumentType="passport_photo"
+            label="Passport Photo"
+            icon="account_box"
+            placeholder=""
+            accept="image/png,image/jpeg"
+            [allowMultiple]="false"
+            [isRequired]="true"
+            [formGroup]="documentUploadForm"
+            [uploadRole]="'farmer'"
+            [uploadStatus]="getUploadStatus('passportPhoto')"
+            [uploadedFileName]="getUploadedFileName('passportPhoto')"
+            [uploadEndpoint]="uploadEndpoint"
+          />
+          <app-form-input
+            class="document-upload-input"
+            type="file"
+            name="farmOwnershipDocument"
+            uploadDocumentType="farm_ownership_document"
+            label="Farm Ownership Docs"
+            icon="description"
+            placeholder=""
+            accept="image/png,image/jpeg,.pdf"
+            [allowMultiple]="false"
+            [isRequired]="true"
+            [formGroup]="documentUploadForm"
+            [uploadRole]="'farmer'"
+            [uploadStatus]="getUploadStatus('farmOwnershipDocument')"
+            [uploadedFileName]="getUploadedFileName('farmOwnershipDocument')"
+            [uploadEndpoint]="uploadEndpoint"
+          />
+        </div>
+      </section>
+
+      <div class="step-actions">
+        <button type="button" class="secondary-action" matStepperPrevious>Back</button>
+        <button type="button" class="primary-action" matStepperNext>Next</button>
+      </div>
+    </mat-step>
+    <mat-step [stepControl]="farmerDetailsForm">
+      <ng-template matStepLabel>Farmer Details</ng-template>
+      <section class="form-section" aria-labelledby="farmer-details-heading">
+        <header class="form-section-header">
+          <h2 id="farmer-details-heading">Farmer Details</h2>
+        </header>
+
+        <div class="form-section-body form-grid">
+          <app-form-input
+            name="farmerCode"
+            label="Farmer ID / Code"
+            type="text"
+            placeholder="FRM-0001"
+            [isRequired]="true"
+            [formGroup]="farmerDetailsForm"
+          />
+          <app-form-input
+            name="region"
+            label="Region"
+            [isOption]="true"
+            [selections]="regionOptions"
+            [isRequired]="true"
+            [formGroup]="farmerDetailsForm"
+          />
+          <app-form-input
+            name="district"
+            label="District"
+            type="text"
+            placeholder="Ejura Sekyedumase"
+            [isRequired]="true"
+            [formGroup]="farmerDetailsForm"
+          />
+          <app-form-input
+            name="community"
+            label="Community"
+            type="text"
+            placeholder="Aframso"
+            [isRequired]="true"
+            [formGroup]="farmerDetailsForm"
+          />
+          <app-form-input
+            name="gpsAddress"
+            label="Farm Address"
+            type="text"
+            placeholder="Kitson Street"
+            [isRequired]="true"
+            [formGroup]="farmerDetailsForm"
+          />
+          <app-form-input
+            name="gpsLatitude"
+            label="GPS Latitude"
+            type="number"
+            placeholder="5.6037"
+            [isRequired]="true"
+            [formGroup]="farmerDetailsForm"
+          />
+          <app-form-input
+            name="gpsLongitude"
+            label="GPS Longitude"
+            type="number"
+            placeholder="-0.1870"
+            [isRequired]="true"
+            [formGroup]="farmerDetailsForm"
+          />
+          <app-form-input
+            name="cooperativeName"
+            label="Cooperative / Group Name"
+            type="text"
+            placeholder="Green Growers Cooperative"
+            [isRequired]="true"
+            [formGroup]="farmerDetailsForm"
+          />
+        </div>
+      </section>
+
+      <div class="step-actions">
+        <button type="button" class="secondary-action" matStepperPrevious>Back</button>
+        <button type="button" class="primary-action" matStepperNext>Next</button>
+      </div>
+    </mat-step>
+
+    <mat-step [stepControl]="productionDetailsForm">
+      <ng-template matStepLabel>Production</ng-template>
+      <section class="form-section" aria-labelledby="production-heading">
+        <header class="form-section-header">
+          <h2 id="production-heading">Production</h2>
+        </header>
+
+        <div class="form-section-body form-grid">
+          <app-form-input
+            name="farmSizeAcres"
+            label="Farm Size (Acres)"
+            type="number"
+            placeholder="4.5"
+            [isRequired]="true"
+            [formGroup]="productionDetailsForm"
+          />
+          <app-form-input
+            name="primaryCrop"
+            label="Primary Crop"
+            [isOption]="true"
+            [selections]="cropOptions"
+            [isRequired]="true"
+            [formGroup]="productionDetailsForm"
+          />
+          <app-form-input
+            name="secondaryCrop"
+            label="Secondary Crop"
+            [isOption]="true"
+            [selections]="cropOptions"
+            [isRequired]="true"
+            [formGroup]="productionDetailsForm"
+          />
+          <app-form-input
+            name="annualYield"
+            label="Expected Annual Yield"
+            type="number"
+            placeholder="1200"
+            [isRequired]="true"
+            [formGroup]="productionDetailsForm"
+          />
+          <app-form-input
+            name="farmingExperienceYears"
+            label="Farming Experience (Years)"
+            type="number"
+            placeholder="6"
+            [isRequired]="true"
+            [formGroup]="productionDetailsForm"
+          />
+          <app-form-input
+            name="irrigationMethod"
+            label="Irrigation Method"
+            [isOption]="true"
+            [selections]="irrigationOptions"
+            [isRequired]="true"
+            [formGroup]="productionDetailsForm"
+          />
+        </div>
+      </section>
+
+      <div class="step-actions">
+        <button type="button" class="secondary-action" matStepperPrevious>Back</button>
+        <button type="button" class="primary-action" matStepperNext>Next</button>
+      </div>
+    </mat-step>
+
+    <mat-step [stepControl]="financialInformationForm">
+      <ng-template matStepLabel>Financials</ng-template>
+      <section class="form-section" aria-labelledby="financials-heading">
+        <header class="form-section-header">
+          <h2 id="financials-heading">Financials</h2>
+        </header>
+
+        <div class="form-section-body form-grid">
+          <app-form-input
+            name="bankName"
+            label="Bank Name"
+            type="text"
+            placeholder="Agricultural Development Bank"
+            [isRequired]="true"
+            [formGroup]="financialInformationForm"
+          />
+          <app-form-input
+            name="accountNumber"
+            label="Account Number"
+            type="text"
+            placeholder="0000000000"
+            [isRequired]="true"
+            [formGroup]="financialInformationForm"
+          />
+          <app-form-input
+            name="mobileMoneyProvider"
+            label="Mobile Money Provider"
+            [isOption]="true"
+            [selections]="mobileMoneyProviders"
+            [isRequired]="true"
+            [formGroup]="financialInformationForm"
+          />
+          <app-form-input
+            name="mobileMoneyNumber"
+            label="Mobile Money Number"
+            type="tel"
+            placeholder="+233 00 000 0000"
+            [isRequired]="true"
+            [formGroup]="financialInformationForm"
+          />
+          <app-form-input
+            name="estimatedAnnualIncome"
+            label="Estimated Annual Income (GHS)"
+            type="number"
+            placeholder="25000"
+            [isRequired]="true"
+            [formGroup]="financialInformationForm"
+          />
+          <app-form-input
+            name="existingLoans"
+            label="Existing Loans"
+            [isOption]="true"
+            [selections]="loanOptions"
+            [isRequired]="true"
+            [formGroup]="financialInformationForm"
+          />
+        </div>
+      </section>
+
+      <div class="step-actions">
+        <button type="button" class="secondary-action" matStepperPrevious>Back</button>
+        <button type="button" class="primary-action" matStepperNext>Next</button>
+      </div>
+    </mat-step>
+
+    <mat-step [stepControl]="declarationsForm">
+      <ng-template matStepLabel>Consent</ng-template>
+      <section class="form-section declaration-section" aria-labelledby="declarations-heading">
+        <header class="declaration-header">
+          <h2 id="declarations-heading">Registration Declarations</h2>
+        </header>
+
+        <div class="declaration-list" [formGroup]="declarationsForm">
+          <label class="declaration-item">
+            <input type="checkbox" formControlName="dataPrivacyConsent" />
+            <span>
+              <strong>Data Privacy &amp; Protection Consent</strong>
+              <small>
+                I hereby authorize AgriFinance Global to collect, store, and process my personal and
+                farm-related data for the purposes of financial assessment, risk management, and
+                service delivery in accordance with regional data protection regulations.
+              </small>
+            </span>
+          </label>
+
+          <label class="declaration-item">
+            <input type="checkbox" formControlName="accuracyDeclaration" />
+            <span>
+              <strong>Accuracy of Information</strong>
+              <small>
+                I certify that all information provided in this registration form, including farm
+                size, crop yields, and financial history, is true and accurate to the best of my
+                knowledge. I understand that providing false information may lead to
+                disqualification.
+              </small>
+            </span>
+          </label>
+
+          <label class="declaration-item">
+            <input type="checkbox" formControlName="creditVerificationConsent" />
+            <span>
+              <strong>Third-Party Credit Verification</strong>
+              <small>
+                I consent to AgriFinance Global conducting credit background checks and verifying my
+                existing agricultural contracts with third-party suppliers and cooperatives as part
+                of the onboarding process.
+              </small>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      @if (localSubmitError()) {
+        <p class="form-feedback form-feedback-error" role="alert">{{ localSubmitError() }}</p>
+      }
+
+      @if (stateErrors().length) {
+        <ul class="form-feedback form-feedback-error" role="alert">
+          @for (error of stateErrors(); track error) {
+            <li>{{ error }}</li>
+          }
+        </ul>
+      } @else if (stateMessage()) {
+        <p class="form-feedback" role="status">{{ stateMessage() }}</p>
+      }
+
+      <div class="step-actions">
+        <button type="button" class="secondary-action" matStepperPrevious>Back</button>
+        <button
+          type="button"
+          class="primary-action"
+          [disabled]="isCreating() || isDetailLoading()"
+          (click)="onSubmit()"
+        >
+          {{ submitButtonText() }}
+        </button>
+      </div>
+    </mat-step>
+  </mat-stepper>
+</div>

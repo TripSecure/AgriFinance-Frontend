@@ -80,8 +80,13 @@
       />
 
       <mat-icon class="file-input-icon" aria-hidden="true">{{ icon }}</mat-icon>
+      <strong class="file-input-label">{{ label }}</strong>
       <p class="file-input-title">
-        Drag and drop {{ placeholder || 'files' }}<br />or
+        Drag and drop
+        @if (placeholder.trim()) {
+          {{ ' ' + placeholder }}
+        }
+        <br />or
         <span class="file-input-browse">browse files</span>
       </p>
 
@@ -158,6 +163,7 @@
       [iconDisplay]="'input'"
       [showIcon]="true"
       inputId="icondisplay"
+      appendTo="body"
     />
   </div>
 } @else if (type === 'checkbox') {

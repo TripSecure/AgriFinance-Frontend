@@ -7,12 +7,13 @@ import { LoadLoggedInUser } from '../pages/auth/services/auth/auth.actions';
 import { AuthProfile } from '../pages/auth/services/auth/auth.state.model';
 import { AuthState } from '../pages/auth/services/auth/auth.states';
 
-type DashboardRole = 'super_admin' | 'portfolio_officer' | 'extension_officer';
+type DashboardRole = 'super_admin' | 'portfolio_officer' | 'extension_officer' | 'input_provider';
 
 const dashboardRouteByRole: Record<DashboardRole, string> = {
   super_admin: '/dashboard/super-admin',
   portfolio_officer: '/dashboard/portfolio-officer',
   extension_officer: '/dashboard/extension-officer',
+  input_provider: '/dashboard/input-provider',
 };
 
 export const authGuard: CanActivateFn = (route, state) => {

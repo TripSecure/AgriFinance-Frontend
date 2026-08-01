@@ -61,6 +61,7 @@ export class FormInputComponent {
   @Input() allowMultiple = true;
   @Input() uploadRole = '';
   @Input() uploadDocumentType = '';
+  @Input() uploadEndpoint = '';
   @Input() uploadStatus: FileUploadStatus = 'idle';
   @Input() uploadedFileName = '';
   @Input() uploadError = '';
@@ -219,7 +220,7 @@ export class FormInputComponent {
     forkJoin(
       files.map((file) =>
         this.kycDocumentUploadService
-          .uploadDocument(file, documentType, this.uploadRole)
+          .uploadDocument(file, documentType, this.uploadRole, this.uploadEndpoint)
           .pipe(take(1)),
       ),
     ).subscribe({
@@ -228,7 +229,7 @@ export class FormInputComponent {
           return;
         }
 
-        const paths = responses.map((response) => response.data.path);
+        const paths = responses.map((response) => response.data.url ?? response.data.path);
         control.setValue(this.allowMultiple ? paths : paths[0]);
         control.updateValueAndValidity();
         this.uploadStatus = 'uploaded';

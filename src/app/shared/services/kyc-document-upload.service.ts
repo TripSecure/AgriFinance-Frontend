@@ -8,6 +8,7 @@ export type KycDocumentUploadResponse = {
   message: string;
   data: {
     path: string;
+    url?: string;
   };
 };
 
@@ -21,6 +22,7 @@ export class KycDocumentUploadService {
     file: File,
     documentType: string,
     role: string,
+    uploadEndpoint = '',
   ): Observable<KycDocumentUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
@@ -28,7 +30,7 @@ export class KycDocumentUploadService {
     formData.append('role', role);
 
     return this.http.post<KycDocumentUploadResponse>(
-      `${environment.api}/uploads/kyc-document`,
+      uploadEndpoint || `${environment.api}/uploads/kyc-document`,
       formData,
     );
   }

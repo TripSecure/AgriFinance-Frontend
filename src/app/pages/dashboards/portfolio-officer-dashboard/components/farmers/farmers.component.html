@@ -1,0 +1,129 @@
+<div class="content">
+  <div class="title d-flex align-items-center justify-content-between mb-4">
+    <h3>Farmers</h3>
+    <div class="filters__add">
+      <span aria-hidden="true"></span>
+      <button type="button" class="add-farmer-button" (click)="onAddFarmer()">
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+        <span>Add farmer</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="filters__search">
+      <label for="farmersSearch" class="d-block">Search</label>
+      <div class="filters__search__input-form">
+        <div class="d-flex align-items-center justify-content-center">
+          <span class="material-symbols-outlined">search</span>
+          <input
+            id="farmersSearch"
+            (input)="onSearch($any($event.target)?.value ?? '')"
+            type="text"
+            placeholder="Search"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="filters__actions">
+      <label for="farmerStatusFilter">Filter by status</label>
+      <button
+        id="farmerStatusFilter"
+        type="button"
+        [matMenuTriggerFor]="statusMenu"
+        class="filters__actions__input-form"
+      >
+        <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
+        <span class="material-symbols-outlined">keyboard_arrow_down</span>
+      </button>
+      <mat-menu #statusMenu="matMenu">
+        <button type="button" mat-menu-item (click)="onStatusFilter('')">
+          <span class="material-symbols-outlined">list</span>
+          <span>All statuses</span>
+        </button>
+        @for (option of statusOptions; track option.value) {
+          <button type="button" mat-menu-item (click)="onStatusFilter(option.value)">
+            <span class="material-symbols-outlined">{{ option.icon }}</span>
+            <span>{{ option.label }}</span>
+          </button>
+        }
+      </mat-menu>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="ps-3 py-2 d-flex align-items-center gap-3">
+      <div class="data-head">Total farmers</div>
+      <div
+        class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
+      >
+        {{ farmersData().totalCount }}
+      </div>
+    </div>
+
+    <p-table
+      #farmersTable
+      [value]="farmers()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="farmersData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadFarmers($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="fullName" id="farmerName">
+            Name <p-sortIcon field="fullName"></p-sortIcon>
+          </th>
+          <th pSortableColumn="email" id="farmerContact">
+            Contact <p-sortIcon field="email"></p-sortIcon>
+          </th>
+          <th pSortableColumn="community" id="farmerLocation">
+            Location <p-sortIcon field="community"></p-sortIcon>
+          </th>
+          <th pSortableColumn="status" id="farmerStatus">
+            Status <p-sortIcon field="status"></p-sortIcon>
+          </th>
+          <th pSortableColumn="createdAt" id="farmerCreated">
+            Date created <p-sortIcon field="createdAt"></p-sortIcon>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-farmer>
+        <tr
+          class="farmer-row"
+          role="link"
+          tabindex="0"
+          [attr.aria-label]="'Edit ' + getFarmerName(farmer)"
+          (click)="onFarmerSelected(farmer)"
+          (keydown)="onFarmerRowKeydown($event, farmer)"
+        >
+          <td>{{ getFarmerName(farmer) }}</td>
+          <td>{{ getFarmerContact(farmer) }}</td>
+          <td>{{ getFarmerLocation(farmer) }}</td>
+          <td>
+            <span
+              class="status-pill"
+              [class.status-pill--active]="isActive(farmer)"
+              [class.status-pill--inactive]="isInactive(farmer)"
+              [class.status-pill--pending]="isPending(farmer)"
+            >
+              {{ formatLabel(getFarmerStatus(farmer)) }}
+            </span>
+          </td>
+          <td>{{ farmer?.createdAt || farmer?.dateCreated || '-' }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="5" class="empty-state">No farmers found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

@@ -12,6 +12,7 @@ import { authInterceptor } from './interceptors/auth.interceptor';
 import { AuthState } from './pages/auth/services/auth/auth.states';
 import { RegistrationState } from './pages/auth/register/services/registration.state';
 import { UsersState } from './pages/dashboards/super-admin-dashboard/components/users/users.state';
+import { FarmersState } from './pages/dashboards/portfolio-officer-dashboard/components/farmers/farmers.state';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,10 +25,9 @@ export const appConfig: ApplicationConfig = {
       },
     }),
     provideStore(
-      [AuthState, RegistrationState, UsersState],
+      [AuthState, RegistrationState, UsersState, FarmersState],
       withNgxsReduxDevtoolsPlugin(),
       withNgxsFormPlugin(),
     ),
   ],
 };
-

@@ -64,7 +64,7 @@ export interface LoginOtpRequestCredentials {
   password: string;
 }
 export interface LoginWithOtpCredentials extends LoginOtpRequestCredentials {
-  otpCode: string;
+  otpCode?: string;
 }
 export interface UserWithPhone {
   phoneNumber: string;

@@ -1,5 +1,4 @@
 <div class="dashboard">
-
   <div class="main d-flex">
     <aside>
       <nav>
@@ -9,7 +8,7 @@
         </div>
 
         <a
-          [routerLink]="['home']"
+          [routerLink]="['farmers']"
           routerLinkActive="active-link"
           [routerLinkActiveOptions]="{ exact: true }"
         >
@@ -24,13 +23,13 @@
           <span class="material-symbols-outlined">verified_user</span>
           Insurance
         </a>
-        <a [routerLink]="['insurance']" routerLinkActive="active-link">
+        <a [routerLink]="['extension-officers']" routerLinkActive="active-link">
           <span class="material-symbols-outlined">supervisor_account</span>
           Ext Officers
         </a>
-        <a [routerLink]="['risk-scores']" routerLinkActive="active-link">
+        <a [routerLink]="['input-service-providers']" routerLinkActive="active-link">
           <span class="material-symbols-outlined">supervisor_account</span>
-         IS Providers
+          IS Providers
         </a>
         <a [routerLink]="['transactions']" routerLinkActive="active-link">
           <span class="material-symbols-outlined">assessment</span>
@@ -39,15 +38,12 @@
       </nav>
     </aside>
     <div class="w-100">
-         <nav>
-    <app-navbar />
-  </nav>
-  <div class="content">
-    <router-outlet />
-  </div>
+      <nav>
+        <app-navbar />
+      </nav>
+      <div class="content">
+        <router-outlet />
+      </div>
     </div>
   </div>
 </div>
-
-
-

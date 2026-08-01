@@ -3,14 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngxs/store';
-import {
-  LoginWithOtp,
-  PersistState,
-  RequestLoginOtp,
-  ResetLoginOtpRequest,
-} from '../services/auth/auth.actions';
+import { LoginWithOtp, PersistState } from '../services/auth/auth.actions';
 import { AuthState } from '../services/auth/auth.states';
-import { NumbersOnlyDirective } from '../../../directives/numbers-only.directive';
 import { ToastrService } from '../../../shared/toastr/toastr.service';
 
 interface LoginFormValue {
@@ -24,7 +18,7 @@ type LoginControlName = 'identity' | 'password' | 'otpCode';
 
 @Component({
   selector: 'app-login',
-  imports: [NgOptimizedImage, RouterLink, ReactiveFormsModule, NumbersOnlyDirective],
+  imports: [NgOptimizedImage, RouterLink, ReactiveFormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,21 +36,14 @@ export class LoginComponent {
   };
 
   protected readonly showPassword = signal(false);
-  protected readonly isOtpStep = this.store.selectSignal(AuthState.isLoginOtpRequested);
   protected readonly authLoading = this.store.selectSignal(AuthState.isLoading);
   protected readonly authErrors = this.store.selectSignal(AuthState.getErrors);
   protected readonly authMessage = this.store.selectSignal(AuthState.message);
-  protected readonly loginTitle = computed(() =>
-    this.isOtpStep() ? 'Enter verification code' : 'Welcome back',
+  protected readonly loginTitle = computed(() => 'Welcome back');
+  protected readonly loginHelpText = computed(
+    () => 'Enter your phone number or email and password.',
   );
-  protected readonly loginHelpText = computed(() =>
-    this.isOtpStep()
-      ? 'We sent a 6-digit code to your account. Enter it below to complete sign in.'
-      : 'Enter your phone number or email and password. We will send a verification code to finish sign in.',
-  );
-  protected readonly submitButtonText = computed(() =>
-    this.isOtpStep() ? 'Sign In' : 'Send Verification Code',
-  );
+  protected readonly submitButtonText = computed(() => 'Sign In');
   protected readonly loginForm = this.formBuilder.group({
     identity: ['', Validators.required],
     password: ['', Validators.required],
@@ -84,45 +71,12 @@ export class LoginComponent {
   }
 
   protected signIn(): void {
-    if (this.isOtpStep()) {
-      this.submitLoginWithOtp();
-      return;
-    }
-
-    this.requestOtp();
-  }
-
-  protected editLoginDetails(): void {
-    this.store.dispatch(new ResetLoginOtpRequest()).subscribe();
-    this.loginControls.otpCode.reset('');
-    this.loginControls.otpCode.markAsUntouched();
-  }
-
-  private requestOtp(): void {
     if (!this.markControlsAsTouched(['identity', 'password'])) {
       return;
     }
 
     const { identity, password } = this.buildLoginValue();
-    this.store.dispatch(new RequestLoginOtp({ identity, password })).subscribe(() => {
-      if (this.store.selectSnapshot(AuthState.isLoginOtpRequested)) {
-        this.loginControls.otpCode.reset('');
-        this.loginControls.otpCode.markAsUntouched();
-        this.toastr.triggerToastr('info', this.getAuthFeedbackMessage('Verification code sent.'));
-        return;
-      }
-
-      this.showAuthError('Unable to send the verification code.');
-    });
-  }
-
-  private submitLoginWithOtp(): void {
-    if (!this.markControlsAsTouched(['otpCode'])) {
-      return;
-    }
-
-    const { identity, password, otpCode } = this.buildLoginValue();
-    this.store.dispatch(new LoginWithOtp({ identity, password, otpCode })).subscribe(() => {
+    this.store.dispatch(new LoginWithOtp({ identity, password })).subscribe(() => {
       if (this.store.selectSnapshot(AuthState.isAuthenticated)) {
         this.store.dispatch(new PersistState()).subscribe();
         this.toastr.triggerToastr('success', this.getAuthFeedbackMessage('Login successful.'));
@@ -130,7 +84,7 @@ export class LoginComponent {
         return;
       }
 
-      this.showAuthError('Login failed. Check the code and try again.');
+      this.showAuthError('Login failed. Check your details and try again.');
     });
   }
 

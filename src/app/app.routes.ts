@@ -1,6 +1,4 @@
 import { Routes } from '@angular/router';
-import { InputProviderDashboardComponent } from './pages/dashboards/input-provider-dashboard/input-provider-dashboard.component';
-import { SuperAdminDashboardComponent } from './pages/dashboards/super-admin-dashboard/super-admin-dashboard.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
