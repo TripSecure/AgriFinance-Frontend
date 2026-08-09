@@ -1,14 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   ElementRef,
-  EventEmitter,
   inject,
+  input,
   Input,
-  Output,
+  output,
   QueryList,
   signal,
   Signal,
@@ -25,8 +24,14 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { DatePicker } from 'primeng/datepicker';
 import { forkJoin, take } from 'rxjs';
 import { KycDocumentUploadService } from '../services/kyc-document-upload.service';
+import { extractErrorMessage } from '../request.utils';
 
 type FileUploadStatus = 'idle' | 'uploading' | 'uploaded' | 'error';
+
+export interface SelectOption {
+  id: string | number;
+  name: string;
+}
 
 @Component({
   selector: 'app-form-input',
@@ -50,40 +55,42 @@ export class FormInputComponent {
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private uploadRequestId = 0;
 
-  @Input() label!: string;
-  @Input({ required: true }) name!: string;
-  @Input() type!: string;
-  @Input() placeholder!: string;
-  @Input() title!: string;
-  @Input() formText = '';
-  @Input() icon = 'credit_card';
-  @Input() accept = 'image/*';
-  @Input() allowMultiple = true;
-  @Input() uploadRole = '';
-  @Input() uploadDocumentType = '';
-  @Input() uploadEndpoint = '';
+  readonly label = input('');
+  readonly name = input.required<string>();
+  readonly type = input('');
+  readonly placeholder = input('');
+  readonly title = input('');
+  readonly formText = input('');
+  readonly icon = input('credit_card');
+  readonly accept = input('image/*');
+  readonly allowMultiple = input(true);
+  readonly uploadRole = input('');
+  readonly uploadDocumentType = input('');
+  readonly uploadEndpoint = input('');
+  readonly shouldPatchFileControl = input(true);
+  readonly formGroup = input<FormGroup>(new FormGroup({}));
+  readonly isSelect = input(false);
+  readonly isOption = input(false);
+  readonly isCheckbox = input(false);
+  readonly visible = input(false);
+
+  readonly isMultiSelect = input(false);
+  readonly isRequired = input(false);
+  readonly checks = input<string[]>([]);
+  readonly selections = input<string[]>([]);
+  @Input() options!: Signal<SelectOption[]>;
+
+  // Mutated internally by the upload flow below, so these stay as plain (non-signal) inputs.
   @Input() uploadStatus: FileUploadStatus = 'idle';
   @Input() uploadedFileName = '';
   @Input() uploadError = '';
-  @Input() shouldPatchFileControl = true;
-  @Input() formGroup: FormGroup = new FormGroup({});
-  @Input() isSelect = false;
-  @Input() isOption = false;
-  @Input() isCheckbox = false;
-  @Input() visible = false;
-
-  @Input() isMultiSelect = false;
-  @Input() isRequired = false;
-  @Input() checks!: any;
-  @Input() selections: any[] = [];
-  @Input() options!: Signal<any[]>;
 
   otpArray = new Array(4).fill('');
   otp: string[] = new Array(4).fill('');
   @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
   @ViewChildren('otpInput') otpInputs!: QueryList<ElementRef>;
-  @Output() otpChange = new EventEmitter<string>();
-  @Output() fileSelected = new EventEmitter<File[]>();
+  readonly otpChange = output<string>();
+  readonly fileSelected = output<File[]>();
 
   selectedOption: WritableSignal<string> = signal('');
   selectedFileNames = signal<string[]>([]);
@@ -137,8 +144,8 @@ export class FormInputComponent {
     this.browseFiles();
   }
 
-  onInput(event: any, index: number) {
-    const input = event.target;
+  onInput(event: Event, index: number) {
+    const input = event.target as HTMLInputElement;
     const value = input.value.replace(/\D/g, '');
 
     if (value) {
@@ -181,26 +188,26 @@ export class FormInputComponent {
 
   private setSelectedFiles(fileList: FileList | null): void {
     const files = Array.from(fileList ?? []);
-    const selectedFiles = this.allowMultiple ? files : files.slice(0, 1);
-    const control = this.formGroup.get(this.name);
+    const selectedFiles = this.allowMultiple() ? files : files.slice(0, 1);
+    const control = this.formGroup().get(this.name());
 
     this.selectedFileNames.set(selectedFiles.map((file) => file.name));
     this.fileSelected.emit(selectedFiles);
     control?.markAsDirty();
     control?.markAsTouched();
 
-    if (this.uploadRole) {
+    if (this.uploadRole()) {
       this.uploadSelectedFiles(selectedFiles);
       return;
     }
 
-    if (this.shouldPatchFileControl) {
+    if (this.shouldPatchFileControl()) {
       control?.setValue(selectedFiles);
     }
   }
 
   private uploadSelectedFiles(files: File[]): void {
-    const control = this.formGroup.get(this.name);
+    const control = this.formGroup().get(this.name());
 
     if (!files.length || !control) {
       return;
@@ -212,15 +219,15 @@ export class FormInputComponent {
     this.uploadedFileName = '';
     this.uploadError = '';
     this.changeDetectorRef.markForCheck();
-    control.setValue(this.allowMultiple ? [] : '');
+    control.setValue(this.allowMultiple() ? [] : '');
     this.changeDetectorRef.markForCheck();
 
-    const documentType = this.uploadDocumentType || this.name;
+    const documentType = this.uploadDocumentType() || this.name();
 
     forkJoin(
       files.map((file) =>
         this.kycDocumentUploadService
-          .uploadDocument(file, documentType, this.uploadRole, this.uploadEndpoint)
+          .uploadDocument(file, documentType, this.uploadRole(), this.uploadEndpoint())
           .pipe(take(1)),
       ),
     ).subscribe({
@@ -230,7 +237,7 @@ export class FormInputComponent {
         }
 
         const paths = responses.map((response) => response.data.url ?? response.data.path);
-        control.setValue(this.allowMultiple ? paths : paths[0]);
+        control.setValue(this.allowMultiple() ? paths : paths[0]);
         control.updateValueAndValidity();
         this.uploadStatus = 'uploaded';
         this.uploadedFileName = paths.map((path) => this.getPathFileName(path)).join(', ');
@@ -242,12 +249,12 @@ export class FormInputComponent {
           return;
         }
 
-        control.setValue(this.allowMultiple ? [] : '');
+        control.setValue(this.allowMultiple() ? [] : '');
         this.changeDetectorRef.markForCheck();
         control.updateValueAndValidity();
         this.uploadStatus = 'error';
         this.uploadedFileName = '';
-        this.uploadError = this.getUploadErrorMessage(error);
+        this.uploadError = extractErrorMessage(error, 'Upload failed. Choose the file again.');
         this.changeDetectorRef.markForCheck();
       },
     });
@@ -255,22 +262,5 @@ export class FormInputComponent {
 
   private getPathFileName(path: string): string {
     return path.split('/').pop() || path;
-  }
-
-  private getUploadErrorMessage(error: unknown): string {
-    if (error instanceof HttpErrorResponse && this.hasMessage(error.error)) {
-      return error.error.message;
-    }
-
-    return 'Upload failed. Choose the file again.';
-  }
-
-  private hasMessage(value: unknown): value is { message: string } {
-    return (
-      typeof value === 'object' &&
-      value !== null &&
-      'message' in value &&
-      typeof value.message === 'string'
-    );
   }
 }

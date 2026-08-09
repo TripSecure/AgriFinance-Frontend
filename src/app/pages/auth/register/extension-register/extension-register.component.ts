@@ -1,12 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { Router, RouterLink } from '@angular/router';
-import { Store } from '@ngxs/store';
+import { RouterLink } from '@angular/router';
 import { FormInputComponent } from '../../../../shared/form-input/form-input.component';
-import { SubmitRegistration } from '../services/registration.actions';
-import { getInvalidControlLabels } from '../services/registration-form-validation';
-import { RegistrationState } from '../services/registration.state';
+import { RegistrationFormBase } from '../registration-form.base';
 import { ExtensionOfficerRegistrationPayload } from '../services/registration.state.model';
 
 type DocumentUploadControls = {
@@ -35,15 +32,7 @@ type RoleRegistrationControls = {
   styleUrl: '../register.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ExtensionRegisterComponent {
-  private readonly store = inject(Store);
-  private readonly router = inject(Router);
-
-  protected readonly registrationLoading = this.store.selectSignal(RegistrationState.isLoading);
-  protected readonly registrationMessage = this.store.selectSignal(RegistrationState.message);
-  protected readonly registrationErrors = this.store.selectSignal(RegistrationState.errors);
-  protected readonly localSubmitError = signal<string | null>(null);
-
+export class ExtensionRegisterComponent extends RegistrationFormBase<ExtensionOfficerRegistrationPayload> {
   protected readonly pageTitle = 'Extension Officer Registration';
   protected readonly uploadRole = 'extension_officer';
   protected readonly regionDistricts = [
@@ -87,29 +76,7 @@ export class ExtensionRegisterComponent {
   });
   protected readonly documentUploadForm = this.registrationForm.controls.documentUpload;
 
-  protected onSubmit(): void {
-    this.registrationForm.markAllAsTouched();
-
-    if (this.registrationForm.invalid) {
-      this.localSubmitError.set(this.getInvalidFormMessage());
-      return;
-    }
-
-    this.localSubmitError.set(null);
-    this.store.dispatch(new SubmitRegistration(this.buildPayload())).subscribe({
-      next: () => {
-        if (this.store.selectSnapshot(RegistrationState.isSuccessful)) {
-          void this.router.navigate(['/auth/login']);
-        }
-      },
-    });
-  }
-
-  protected saveDraft(): void {
-    console.log('extension draft', this.registrationForm.getRawValue());
-  }
-
-  private buildPayload(): ExtensionOfficerRegistrationPayload {
+  protected buildPayload(): ExtensionOfficerRegistrationPayload {
     const value = this.registrationForm.getRawValue();
 
     return {
@@ -130,14 +97,5 @@ export class ExtensionRegisterComponent {
       },
       documentUpload: value.documentUpload,
     };
-  }
-
-  private getInvalidFormMessage(): string {
-    const invalidFields = getInvalidControlLabels(this.registrationForm);
-    const visibleFields = invalidFields.slice(0, 6);
-    const remainingCount = invalidFields.length - visibleFields.length;
-    const remainingMessage = remainingCount > 0 ? ` and ${remainingCount} more` : '';
-
-    return `Please complete: ${visibleFields.join(', ')}${remainingMessage}.`;
   }
 }

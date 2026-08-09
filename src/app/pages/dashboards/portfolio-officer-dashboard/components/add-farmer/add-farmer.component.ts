@@ -236,6 +236,7 @@ export class AddFarmerComponent implements OnInit {
     }
 
     this.farmerId.set(farmerId);
+    this.isLinear.set(false);
     this.store.dispatch(new GetPortfolioFarmerDetails(farmerId)).subscribe({
       next: () => {
         const farmer = this.store.selectSnapshot(FarmersState.selectedFarmer);

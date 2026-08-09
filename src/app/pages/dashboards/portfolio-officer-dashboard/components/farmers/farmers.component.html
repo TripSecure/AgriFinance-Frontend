@@ -64,7 +64,7 @@
 
     <p-table
       #farmersTable
-      [value]="farmers()"
+      [value]="farmerRows()"
       [paginator]="true"
       [rows]="10"
       [rowsPerPageOptions]="[10, 20, 30]"
@@ -93,29 +93,29 @@
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="body" let-farmer>
+      <ng-template pTemplate="body" let-row>
         <tr
           class="farmer-row"
           role="link"
           tabindex="0"
-          [attr.aria-label]="'Edit ' + getFarmerName(farmer)"
-          (click)="onFarmerSelected(farmer)"
-          (keydown)="onFarmerRowKeydown($event, farmer)"
+          [attr.aria-label]="'Edit ' + row.name"
+          (click)="onFarmerSelected(row.farmer)"
+          (keydown)="onFarmerRowKeydown($event, row.farmer)"
         >
-          <td>{{ getFarmerName(farmer) }}</td>
-          <td>{{ getFarmerContact(farmer) }}</td>
-          <td>{{ getFarmerLocation(farmer) }}</td>
+          <td>{{ row.name }}</td>
+          <td>{{ row.contact }}</td>
+          <td>{{ row.location }}</td>
           <td>
             <span
               class="status-pill"
-              [class.status-pill--active]="isActive(farmer)"
-              [class.status-pill--inactive]="isInactive(farmer)"
-              [class.status-pill--pending]="isPending(farmer)"
+              [class.status-pill--active]="row.isActive"
+              [class.status-pill--inactive]="row.isInactive"
+              [class.status-pill--pending]="row.isPending"
             >
-              {{ formatLabel(getFarmerStatus(farmer)) }}
+              {{ row.statusLabel }}
             </span>
           </td>
-          <td>{{ farmer?.createdAt || farmer?.dateCreated || '-' }}</td>
+          <td>{{ row.createdAt }}</td>
         </tr>
       </ng-template>
 

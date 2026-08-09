@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { LoginWithOtp, PersistState } from '../services/auth/auth.actions';
+import { LoginWithOtp, PersistState, SetRememberDevice } from '../services/auth/auth.actions';
 import { AuthState } from '../services/auth/auth.states';
 import { ToastrService } from '../../../shared/toastr/toastr.service';
 
@@ -75,17 +75,19 @@ export class LoginComponent {
       return;
     }
 
-    const { identity, password } = this.buildLoginValue();
-    this.store.dispatch(new LoginWithOtp({ identity, password })).subscribe(() => {
-      if (this.store.selectSnapshot(AuthState.isAuthenticated)) {
-        this.store.dispatch(new PersistState()).subscribe();
-        this.toastr.triggerToastr('success', this.getAuthFeedbackMessage('Login successful.'));
-        void this.router.navigateByUrl(this.getPostLoginUrl());
-        return;
-      }
+    const { identity, password, rememberDevice } = this.buildLoginValue();
+    this.store
+      .dispatch([new SetRememberDevice(rememberDevice), new LoginWithOtp({ identity, password })])
+      .subscribe(() => {
+        if (this.store.selectSnapshot(AuthState.isAuthenticated)) {
+          this.store.dispatch(new PersistState()).subscribe();
+          this.toastr.triggerToastr('success', this.getAuthFeedbackMessage('Login successful.'));
+          void this.router.navigateByUrl(this.getPostLoginUrl());
+          return;
+        }
 
-      this.showAuthError('Login failed. Check your details and try again.');
-    });
+        this.showAuthError('Login failed. Check your details and try again.');
+      });
   }
 
   private showAuthError(fallbackMessage: string): void {

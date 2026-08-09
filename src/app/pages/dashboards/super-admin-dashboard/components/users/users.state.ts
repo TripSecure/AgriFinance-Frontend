@@ -1,8 +1,9 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../../../../environment/environment';
+import { buildListParams, normalizeListResponse } from '../../../../../shared/request.utils';
 
 export type UserReviewAction = 'approved' | 'rejected' | 'suspended';
 
@@ -171,22 +172,24 @@ export class UsersState {
   getUsers(ctx: StateContext<UsersStateModel>, { params }: GetUsers) {
     ctx.patchState({ isLoading: true });
 
-    return this.http.get<UsersResponse>(`${environment.api}/admin/users`, { params: this.toHttpParams(params) }).pipe(
-      tap({
-        next: (response) => {
-          const data = this.normalizeUsersData(response.data);
-          ctx.patchState({
-            users: data.results,
-            totalPages: data.totalPages,
-            pageIndex: data.pageIndex,
-            pageSize: data.pageSize,
-            totalCount: data.totalCount,
-            isLoading: false,
-          });
-        },
-        error: () => ctx.patchState({ isLoading: false }),
-      }),
-    );
+    return this.http
+      .get<UsersResponse>(`${environment.api}/admin/users`, { params: buildListParams(params) })
+      .pipe(
+        tap({
+          next: (response) => {
+            const data = normalizeListResponse(response.data);
+            ctx.patchState({
+              users: data.results,
+              totalPages: data.totalPages,
+              pageIndex: data.pageIndex,
+              pageSize: data.pageSize,
+              totalCount: data.totalCount,
+              isLoading: false,
+            });
+          },
+          error: () => ctx.patchState({ isLoading: false }),
+        }),
+      );
   }
 
   @Action(GetUserDetails)
@@ -260,57 +263,6 @@ export class UsersState {
     }
 
     return action === 'rejected' ? 'Rejected by super admin.' : 'Suspended by super admin.';
-  }
-
-  private toHttpParams(params?: UsersQueryParams): HttpParams {
-    let httpParams = new HttpParams();
-
-    if (!params) {
-      return httpParams;
-    }
-
-    const pageSize = params.rows ?? 10;
-    const pageIndex = Math.floor((params.first ?? 0) / pageSize) + 1;
-
-    httpParams = httpParams.set('pageIndex', String(pageIndex));
-    httpParams = httpParams.set('pageSize', String(pageSize));
-
-    if (params.globalFilter) {
-      httpParams = httpParams.set('search', params.globalFilter);
-    }
-
-    if (params.status) {
-      httpParams = httpParams.set('status', params.status);
-    }
-
-    if (params.sortField) {
-      httpParams = httpParams.set('sortBy', params.sortField);
-      httpParams = httpParams.set('sortOrder', params.sortOrder === -1 ? 'desc' : 'asc');
-    }
-
-    return httpParams;
-  }
-
-  private normalizeUsersData(data: UsersData | User[]): Required<Pick<UsersData, 'totalPages' | 'pageIndex' | 'pageSize' | 'totalCount'>> & { results: User[] } {
-    if (Array.isArray(data)) {
-      return {
-        results: data,
-        totalPages: 1,
-        pageIndex: 1,
-        pageSize: data.length,
-        totalCount: data.length,
-      };
-    }
-
-    const results = data.results ?? data.items ?? data.data ?? [];
-
-    return {
-      results,
-      totalPages: data.totalPages ?? 1,
-      pageIndex: data.pageIndex ?? 1,
-      pageSize: data.pageSize ?? results.length,
-      totalCount: data.totalCount ?? results.length,
-    };
   }
 
   private normalizeUserDetail(data: unknown): User | null {

@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Farmer, FarmersQueryParams, FarmersState, GetPortfolioFarmers } from './farmers.state';
 
@@ -10,6 +12,18 @@ interface StatusFilterOption {
   label: string;
   value: string;
   icon: string;
+}
+
+export interface FarmerRow {
+  farmer: Farmer;
+  name: string;
+  contact: string;
+  location: string;
+  statusLabel: string;
+  createdAt: string;
+  isActive: boolean;
+  isInactive: boolean;
+  isPending: boolean;
 }
 
 const statusFilterOptions: readonly StatusFilterOption[] = [
@@ -29,7 +43,8 @@ export class FarmersComponent {
   private readonly store = inject(Store);
   protected readonly router = inject(Router);
 
-  protected readonly farmers = this.store.selectSignal(FarmersState.farmers);
+  private readonly farmers = this.store.selectSignal(FarmersState.farmers);
+  protected readonly farmerRows = computed(() => this.farmers().map((farmer) => this.toRow(farmer)));
   protected readonly farmersData = this.store.selectSignal(FarmersState.farmersConfigs);
   protected readonly isLoading = this.store.selectSignal(FarmersState.isLoading);
   protected readonly statusOptions = statusFilterOptions;
@@ -38,14 +53,24 @@ export class FarmersComponent {
   private searchTerm = '';
   protected selectedStatus = '';
 
+  private readonly searchInput$ = new Subject<string>();
+
+  constructor() {
+    this.searchInput$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((value) => {
+        this.searchTerm = value;
+        this.dispatchFarmersLoad({ ...this.lastEvent, first: 0 });
+      });
+  }
+
   protected loadFarmers(event: TableLazyLoadEvent = {}): void {
     this.lastEvent = event;
     this.dispatchFarmersLoad();
   }
 
   protected onSearch(value: string): void {
-    this.searchTerm = value.trim();
-    this.dispatchFarmersLoad({ ...this.lastEvent, first: 0 });
+    this.searchInput$.next(value.trim());
   }
 
   protected onStatusFilter(status: string): void {
@@ -74,41 +99,6 @@ export class FarmersComponent {
     this.onFarmerSelected(farmer);
   }
 
-  protected getFarmerName(farmer: Farmer): string {
-    return (
-      farmer.fullName ||
-      farmer.full_name ||
-      [farmer.firstName, farmer.lastName].filter(Boolean).join(' ') ||
-      '-'
-    );
-  }
-
-  protected getFarmerContact(farmer: Farmer): string {
-    return farmer.email || farmer.phone || farmer.phoneNumber || '-';
-  }
-
-  protected getFarmerLocation(farmer: Farmer): string {
-    return farmer.community || farmer.location || farmer.region || '-';
-  }
-
-  protected getFarmerStatus(farmer: Farmer): string {
-    return farmer.approvalStatus || farmer.status || 'pending';
-  }
-
-  protected isActive(farmer: Farmer): boolean {
-    return this.getFarmerStatus(farmer).toLowerCase() === 'active';
-  }
-
-  protected isInactive(farmer: Farmer): boolean {
-    return ['inactive', 'denied', 'rejected', 'suspended'].includes(
-      this.getFarmerStatus(farmer).toLowerCase(),
-    );
-  }
-
-  protected isPending(farmer: Farmer): boolean {
-    return !this.isActive(farmer) && !this.isInactive(farmer);
-  }
-
   protected formatLabel(value: string): string {
     return (
       value
@@ -117,6 +107,28 @@ export class FarmersComponent {
         .trim()
         .replace(/\b\w/g, (letter) => letter.toUpperCase()) || '-'
     );
+  }
+
+  private toRow(farmer: Farmer): FarmerRow {
+    const status = (farmer.approvalStatus || farmer.status || 'pending').toLowerCase();
+    const isActive = status === 'active';
+    const isInactive = ['inactive', 'denied', 'rejected', 'suspended'].includes(status);
+
+    return {
+      farmer,
+      name:
+        farmer.fullName ||
+        farmer.full_name ||
+        [farmer.firstName, farmer.lastName].filter(Boolean).join(' ') ||
+        '-',
+      contact: farmer.email || farmer.phone || farmer.phoneNumber || '-',
+      location: farmer.community || farmer.location || farmer.region || '-',
+      statusLabel: this.formatLabel(status),
+      createdAt: farmer.createdAt || farmer.dateCreated || '-',
+      isActive,
+      isInactive,
+      isPending: !isActive && !isInactive,
+    };
   }
 
   private dispatchFarmersLoad(event: TableLazyLoadEvent = this.lastEvent): void {

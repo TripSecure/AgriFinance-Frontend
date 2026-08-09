@@ -1,9 +1,15 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../../../environment/environment';
+import {
+  buildListParams,
+  extractErrorMessage,
+  extractResponseErrors,
+  normalizeListResponse,
+} from '../../../../../shared/request.utils';
 
 export interface Farmer extends Record<string, unknown> {
   id: string;
@@ -225,11 +231,11 @@ export class FarmersState {
 
     return this.http
       .get<FarmersResponse>(`${environment.api}/portfolio/farmers`, {
-        params: this.toHttpParams(params),
+        params: buildListParams(params),
       })
       .pipe(
         tap((response) => {
-          const data = this.normalizeFarmersData(response.data);
+          const data = normalizeListResponse(response.data);
           ctx.patchState({
             farmers: data.results,
             totalPages: data.totalPages,
@@ -242,7 +248,7 @@ export class FarmersState {
         catchError((error: unknown) => {
           ctx.patchState({
             isLoading: false,
-            errors: [this.getErrorMessage(error, 'Unable to load farmers.')],
+            errors: [extractErrorMessage(error, 'Unable to load farmers.')],
           });
           return of(error);
         }),
@@ -267,7 +273,7 @@ export class FarmersState {
           ctx.patchState({
             selectedFarmer: null,
             isDetailLoading: false,
-            errors: [this.getErrorMessage(error, 'Unable to load farmer details.')],
+            errors: [extractErrorMessage(error, 'Unable to load farmer details.')],
           });
           return of(error);
         }),
@@ -283,7 +289,7 @@ export class FarmersState {
       .pipe(
         tap((response) => this.patchMutationResult(ctx, response, 'Farmer added successfully.')),
         catchError((error: unknown) => {
-          const message = this.getErrorMessage(
+          const message = extractErrorMessage(
             error,
             'Unable to add farmer. Please review the form and try again.',
           );
@@ -311,7 +317,9 @@ export class FarmersState {
           ctx.patchState({
             isCreating: false,
             message: response.message ?? (isSuccessful ? 'Farmer updated successfully.' : null),
-            errors: isSuccessful ? [] : this.getResponseErrors(response),
+            errors: isSuccessful
+              ? []
+              : extractResponseErrors(response, 'Unable to save farmer. Please review the form and try again.'),
             selectedFarmer: farmer ?? ctx.getState().selectedFarmer,
             farmers: farmer
               ? this.replaceFarmer(ctx.getState().farmers, farmer)
@@ -319,7 +327,7 @@ export class FarmersState {
           });
         }),
         catchError((error: unknown) => {
-          const message = this.getErrorMessage(
+          const message = extractErrorMessage(
             error,
             'Unable to update farmer. Please review the form and try again.',
           );
@@ -342,84 +350,14 @@ export class FarmersState {
     ctx.patchState({
       isCreating: false,
       message: response.message ?? (isSuccessful ? successMessage : null),
-      errors: isSuccessful ? [] : this.getResponseErrors(response),
+      errors: isSuccessful
+        ? []
+        : extractResponseErrors(response, 'Unable to save farmer. Please review the form and try again.'),
     });
   }
 
   private replaceFarmer(farmers: Farmer[], farmer: Farmer): Farmer[] {
     return farmers.map((item) => (item.id === farmer.id ? farmer : item));
-  }
-
-  private toHttpParams(params?: FarmersQueryParams): HttpParams {
-    let httpParams = new HttpParams();
-
-    if (!params) {
-      return httpParams;
-    }
-
-    const pageSize = params.rows ?? 10;
-    const pageIndex = Math.floor((params.first ?? 0) / pageSize) + 1;
-
-    httpParams = httpParams.set('pageIndex', String(pageIndex));
-    httpParams = httpParams.set('pageSize', String(pageSize));
-
-    if (params.globalFilter) {
-      httpParams = httpParams.set('search', params.globalFilter);
-    }
-
-    if (params.status) {
-      httpParams = httpParams.set('status', params.status);
-    }
-
-    if (params.sortField) {
-      httpParams = httpParams.set('sortBy', params.sortField);
-      httpParams = httpParams.set('sortOrder', params.sortOrder === -1 ? 'desc' : 'asc');
-    }
-
-    return httpParams;
-  }
-
-  private getErrorMessage(error: unknown, fallbackMessage: string): string {
-    if (error instanceof HttpErrorResponse) {
-      if (this.hasMessage(error.error)) {
-        return error.error.message;
-      }
-
-      if (typeof error.error === 'string') {
-        return error.error;
-      }
-
-      if (error.message) {
-        return error.message;
-      }
-    }
-
-    return fallbackMessage;
-  }
-
-  private getResponseErrors(response: FarmerMutationResponse): string[] {
-    if (Array.isArray(response.errors)) {
-      return response.errors.filter((error): error is string => typeof error === 'string');
-    }
-
-    if (typeof response.errors === 'string') {
-      return [response.errors];
-    }
-
-    if (response.message) {
-      return [response.message];
-    }
-
-    return ['Unable to save farmer. Please review the form and try again.'];
-  }
-
-  private hasMessage(value: unknown): value is { message: string } {
-    return (
-      typeof value === 'object' &&
-      value !== null &&
-      'message' in value &&
-      typeof value.message === 'string'
-    );
   }
 
   private normalizeFarmerDetail(data: unknown, fallbackId = ''): Farmer | null {
@@ -455,31 +393,5 @@ export class FarmersState {
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
-  }
-
-  private normalizeFarmersData(data: FarmersData | Farmer[]): Required<
-    Pick<FarmersData, 'totalPages' | 'pageIndex' | 'pageSize' | 'totalCount'>
-  > & {
-    results: Farmer[];
-  } {
-    if (Array.isArray(data)) {
-      return {
-        results: data,
-        totalPages: 1,
-        pageIndex: 1,
-        pageSize: data.length,
-        totalCount: data.length,
-      };
-    }
-
-    const results = data.results ?? data.items ?? data.data ?? [];
-
-    return {
-      results,
-      totalPages: data.totalPages ?? 1,
-      pageIndex: data.pageIndex ?? 1,
-      pageSize: data.pageSize ?? results.length,
-      totalCount: data.totalCount ?? results.length,
-    };
   }
 }

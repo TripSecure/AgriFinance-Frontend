@@ -36,11 +36,11 @@ export class ToastrService {
     this.toastrSubject.next(null);
   }
 
-  public IsLoading(): void {
+  public startLoading(): void {
     this.isLoading.set(true);
   }
 
-  public IsDone(): void {
+  public stopLoading(): void {
     this.isLoading.set(false);
     this.dismiss();
   }

@@ -6,10 +6,7 @@
       <img [src]="'images/initial_profile.png'" alt="Profile Picture" class="profile-image" />
     </div>
     <span class="options__info__name" [matMenuTriggerFor]="accountOptions">
-      <p class="user__name">
-        <!-- <span>{{ "Evans" }}</span>
-        <span>{{ "Eshun" }}</span> -->
-      </p>
+      <p class="user__name">{{ displayName() }}</p>
       <mat-icon>keyboard_arrow_down </mat-icon>
     </span>
     <mat-menu #accountOptions="matMenu">

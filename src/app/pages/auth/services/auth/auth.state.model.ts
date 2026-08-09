@@ -14,6 +14,7 @@ export interface AuthStateModel {
   lastLogin: string | null;
   errors: string[];
   message: string | null;
+  rememberDevice: boolean;
 }
 export interface AuthUser {
   id: string;
@@ -54,29 +55,14 @@ export const authInitialState: AuthStateModel = {
   loginOtpRequested: false,
   errors: [],
   message: null,
+  rememberDevice: false,
 };
-export interface SigninCredentials {
-  username: string;
-  password: string;
-}
 export interface LoginOtpRequestCredentials {
   identity: string;
   password: string;
 }
 export interface LoginWithOtpCredentials extends LoginOtpRequestCredentials {
   otpCode?: string;
-}
-export interface UserWithPhone {
-  phoneNumber: string;
-}
-
-export interface UserWithEmail {
-  email: string;
-}
-export interface VerificationRequest {
-  requestId: string;
-  prefix: string;
-  code: string;
 }
 
 export interface ApiResponseBase {

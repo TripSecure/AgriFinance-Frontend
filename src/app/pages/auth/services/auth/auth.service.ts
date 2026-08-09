@@ -7,10 +7,6 @@ import {
   LoginResponse,
   LoginWithOtpCredentials,
   OtpResponse,
-  SigninCredentials,
-  UserWithEmail,
-  UserWithPhone,
-  VerificationRequest,
 } from './auth.state.model';
 
 @Injectable({
@@ -31,22 +27,5 @@ export class AuthService {
     return this.http.get<CurrentSessionResponse>(`${environment.api}/auth/me`, {
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
     });
-  }
-
-  signinWithUsername(user: SigninCredentials) {
-    return this.http.post<LoginResponse>(`${environment.api}accounts/login`, user);
-  }
-  signinWithPhone(user: UserWithPhone) {
-    return this.http.post<OtpResponse>(`${environment.api}accounts/login/phone`, user);
-  }
-  signinWithEmail(user: UserWithEmail) {
-    return this.http.post<OtpResponse>(`${environment.api}accounts/login/email`, user);
-  }
-
-  verifyPhone(form: VerificationRequest) {
-    return this.http.post<LoginResponse>(`${environment.api}accounts/verify/phone/otp`, form);
-  }
-  verifyEmail(form: VerificationRequest) {
-    return this.http.post<LoginResponse>(`${environment.api}accounts/verify/email/otp`, form);
   }
 }

@@ -1,5 +1,4 @@
 // state/auth.state.ts
-import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { State, Action, StateContext, Selector, NgxsOnInit } from '@ngxs/store';
 import { of } from 'rxjs';
@@ -16,17 +15,18 @@ import {
 import { AuthService } from './auth.service';
 import {
   LoadLoggedInUser,
-  LoginWithEmail,
-  LoginWithPhone,
-  LoginWithUsername,
   Logout,
-  VerificationPhone,
-  VerificationEmail,
   PersistState,
   RequestLoginOtp,
   LoginWithOtp,
   ResetLoginOtpRequest,
+  SetRememberDevice,
 } from './auth.actions';
+import { extractErrorMessage, extractResponseErrors } from '../../../../shared/request.utils';
+
+const AUTHENTICATION_FAILED_MESSAGE = 'Authentication failed. Please try again.';
+
+const AUTH_STORAGE_KEY = 'authState';
 
 @State<AuthStateModel>({
   name: 'auth',
@@ -37,7 +37,7 @@ export class AuthState implements NgxsOnInit {
   private readonly authService = inject(AuthService);
 
   ngxsOnInit(ctx: StateContext<AuthStateModel>) {
-    const state = localStorage.getItem('authState');
+    const state = localStorage.getItem(AUTH_STORAGE_KEY) ?? sessionStorage.getItem(AUTH_STORAGE_KEY);
     if (state) {
       ctx.setState(JSON.parse(state));
     }
@@ -136,13 +136,13 @@ export class AuthState implements NgxsOnInit {
           ctx.patchState({
             loading: false,
             loginOtpRequested: false,
-            errors: this.getResponseErrors(response),
+            errors: extractResponseErrors(response, AUTHENTICATION_FAILED_MESSAGE),
             message: response.message,
           });
         }
       }),
       catchError((error: unknown) => {
-        const message = this.getErrorMessage(error, 'Unable to send the verification code.');
+        const message = extractErrorMessage(error, 'Unable to send the verification code.');
         ctx.patchState({
           loading: false,
           loginOtpRequested: false,
@@ -165,7 +165,7 @@ export class AuthState implements NgxsOnInit {
           ctx.patchState({
             isAuthenticated: false,
             loading: false,
-            errors: this.getResponseErrors(response),
+            errors: extractResponseErrors(response, AUTHENTICATION_FAILED_MESSAGE),
             message: response.message,
           });
           return of(response);
@@ -193,7 +193,7 @@ export class AuthState implements NgxsOnInit {
         return ctx.dispatch(new LoadLoggedInUser(accessToken ?? undefined));
       }),
       catchError((error: unknown) => {
-        const message = this.getErrorMessage(error, 'Login failed. Check the code and try again.');
+        const message = extractErrorMessage(error, 'Login failed. Check the code and try again.');
         ctx.patchState({
           loading: false,
           errors: [message],
@@ -225,13 +225,13 @@ export class AuthState implements NgxsOnInit {
         } else {
           ctx.patchState({
             loading: false,
-            errors: this.getResponseErrors(response),
+            errors: extractResponseErrors(response, AUTHENTICATION_FAILED_MESSAGE),
             message: response.message,
           });
         }
       }),
       catchError((error: unknown) => {
-        const message = this.getErrorMessage(error, 'Unable to load the logged-in user.');
+        const message = extractErrorMessage(error, 'Unable to load the logged-in user.');
         ctx.patchState({
           loading: false,
           errors: [message],
@@ -253,177 +253,30 @@ export class AuthState implements NgxsOnInit {
     });
   }
 
-  @Action(LoginWithUsername)
-  signIn(ctx: StateContext<AuthStateModel>, action: LoginWithUsername) {
-    ctx.patchState({ loading: true, errors: [], message: null });
-
-    return this.authService.signinWithUsername(action.payload).pipe(
-      tap((response: LoginResponse) => {
-        if (this.isSuccessfulResponse(response)) {
-          const accessToken = this.getAccessToken(response);
-          const decodedToken = accessToken ? this.decodeJWT(accessToken) : {};
-          ctx.patchState({
-            isAuthenticated: true,
-            token: accessToken,
-            expiry: response.data.expiry ?? null,
-            loading: false,
-            message: response.message,
-            errors: [],
-            userId:
-              this.getProfileUserId(response.data.profile) ??
-              this.getTokenClaim(decodedToken, 'UserId'),
-            profile: response.data.profile ?? null,
-            lastLogin: response.data.lastLogin ?? null,
-          });
-        } else {
-          ctx.patchState({
-            isAuthenticated: false,
-            loading: false,
-            errors: this.getResponseErrors(response),
-            message: response.message,
-          });
-        }
-      }),
-      catchError((error: unknown) => {
-        const message = this.getErrorMessage(error, 'Login failed. Please try again.');
-        ctx.patchState({
-          loading: false,
-          errors: [message],
-          message,
-          isAuthenticated: false,
-        });
-        return of(error);
-      }),
-    );
-  }
-
-  @Action(LoginWithPhone)
-  signInPhone(ctx: StateContext<AuthStateModel>, action: LoginWithPhone) {
-    ctx.patchState({ loading: true, errors: [], message: null });
-
-    return this.authService.signinWithPhone(action.payload).pipe(
-      tap((response: OtpResponse) => {
-        if (this.isSuccessfulResponse(response)) {
-          ctx.patchState({
-            requestId: response.data?.requestId ?? null,
-            prefix: response.data?.prefix ?? null,
-            loading: false,
-            message: response.message,
-            errors: [],
-          });
-        } else {
-          ctx.patchState({
-            loading: false,
-            errors: this.getResponseErrors(response),
-            message: response.message,
-          });
-        }
-      }),
-    );
-  }
-
-  @Action(LoginWithEmail)
-  signInEmail(ctx: StateContext<AuthStateModel>, action: LoginWithEmail) {
-    ctx.patchState({ loading: true, errors: [], message: null });
-
-    return this.authService.signinWithEmail(action.payload).pipe(
-      tap((response: OtpResponse) => {
-        if (this.isSuccessfulResponse(response)) {
-          ctx.patchState({
-            requestId: response.data?.requestId ?? null,
-            prefix: response.data?.prefix ?? null,
-            loading: false,
-            message: response.message,
-            errors: [],
-          });
-        } else {
-          ctx.patchState({
-            loading: false,
-            errors: this.getResponseErrors(response),
-            message: response.message,
-          });
-        }
-      }),
-    );
-  }
-
-  @Action(VerificationPhone)
-  verifyPhone(ctx: StateContext<AuthStateModel>, action: VerificationPhone) {
-    ctx.patchState({ loading: true, errors: [], message: null });
-
-    return this.authService.verifyPhone(action.payload).pipe(
-      tap((response: LoginResponse) => {
-        if (this.isSuccessfulResponse(response)) {
-          const accessToken = this.getAccessToken(response);
-          const decodedToken = accessToken ? this.decodeJWT(accessToken) : {};
-          ctx.patchState({
-            isAuthenticated: true,
-            token: accessToken,
-            expiry: response.data.expiry ?? null,
-            loading: false,
-            message: response.message,
-            errors: [],
-            userId:
-              this.getProfileUserId(response.data.profile) ??
-              this.getTokenClaim(decodedToken, 'UserId'),
-            profile: response.data.profile ?? null,
-            lastLogin: this.getTokenClaim(decodedToken, 'LastLoggedIn'),
-          });
-        } else {
-          ctx.patchState({
-            isAuthenticated: false,
-            loading: false,
-            errors: this.getResponseErrors(response),
-            message: response.message,
-          });
-        }
-      }),
-    );
-  }
-
-  @Action(VerificationEmail)
-  verifyEmail(ctx: StateContext<AuthStateModel>, action: VerificationEmail) {
-    ctx.patchState({ loading: true, errors: [], message: null });
-
-    return this.authService.verifyEmail(action.payload).pipe(
-      tap((response: LoginResponse) => {
-        if (this.isSuccessfulResponse(response)) {
-          const accessToken = this.getAccessToken(response);
-          const decodedToken = accessToken ? this.decodeJWT(accessToken) : {};
-          ctx.patchState({
-            isAuthenticated: true,
-            token: accessToken,
-            expiry: response.data.expiry ?? null,
-            loading: false,
-            message: response.message,
-            errors: [],
-            userId:
-              this.getProfileUserId(response.data.profile) ??
-              this.getTokenClaim(decodedToken, 'UserId'),
-            profile: response.data.profile ?? null,
-            lastLogin: this.getTokenClaim(decodedToken, 'LastLoggedIn'),
-          });
-        } else {
-          ctx.patchState({
-            isAuthenticated: false,
-            loading: false,
-            errors: this.getResponseErrors(response),
-            message: response.message,
-          });
-        }
-      }),
-    );
-  }
-
   @Action(Logout)
   signOut(ctx: StateContext<AuthStateModel>) {
     ctx.setState(authInitialState);
-    localStorage.clear();
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+  }
+
+  @Action(SetRememberDevice)
+  setRememberDevice(ctx: StateContext<AuthStateModel>, action: SetRememberDevice) {
+    ctx.patchState({ rememberDevice: action.rememberDevice });
   }
 
   @Action(PersistState)
   saveState(ctx: StateContext<AuthStateModel>) {
-    localStorage.setItem('authState', JSON.stringify(ctx.getState()));
+    const state = ctx.getState();
+    const serialized = JSON.stringify(state);
+
+    if (state.rememberDevice) {
+      localStorage.setItem(AUTH_STORAGE_KEY, serialized);
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    } else {
+      sessionStorage.setItem(AUTH_STORAGE_KEY, serialized);
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    }
   }
 
   public decodeJWT(token: string): Record<string, unknown> {
@@ -461,58 +314,4 @@ export class AuthState implements NgxsOnInit {
     return typeof value === 'string' ? value : null;
   }
 
-  private getResponseErrors(response: {
-    errors?: unknown;
-    error?: unknown;
-    message?: string | null;
-  }): string[] {
-    if (Array.isArray(response.errors)) {
-      return response.errors.filter((error): error is string => typeof error === 'string');
-    }
-
-    if (typeof response.errors === 'string') {
-      return [response.errors];
-    }
-
-    if (typeof response.error === 'string') {
-      return [response.error];
-    }
-
-    if (this.hasMessage(response.error)) {
-      return [response.error.message];
-    }
-
-    if (response.message) {
-      return [response.message];
-    }
-
-    return ['Authentication failed. Please try again.'];
-  }
-
-  private getErrorMessage(error: unknown, fallbackMessage: string): string {
-    if (error instanceof HttpErrorResponse) {
-      if (this.hasMessage(error.error)) {
-        return error.error.message;
-      }
-
-      if (typeof error.error === 'string') {
-        return error.error;
-      }
-
-      if (error.message) {
-        return error.message;
-      }
-    }
-
-    return fallbackMessage;
-  }
-
-  private hasMessage(value: unknown): value is { message: string } {
-    return (
-      typeof value === 'object' &&
-      value !== null &&
-      'message' in value &&
-      typeof value.message === 'string'
-    );
-  }
 }

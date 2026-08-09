@@ -1,40 +1,40 @@
-@if (isSelect) {
-  <div class="form_field input-field" [formGroup]="formGroup">
-    <label for="priority">{{ label }}</label>
+@if (isSelect()) {
+  <div class="form_field input-field" [formGroup]="formGroup()">
+    <label for="priority">{{ label() }}</label>
 
     <select
       class="form-select text-primary"
       aria-label="Default select example"
-      [formControlName]="name"
+      [formControlName]="name()"
       (change)="onChange($event)"
     >
       @for (option of options(); track $index) {
-        <option [value]="option['id']">{{ option['name'] }}</option>
+        <option [value]="option.id">{{ option.name }}</option>
       }
     </select>
   </div>
-} @else if (isOption) {
-  <div class="form_field input-field" [formGroup]="formGroup">
-    <label for="priority">{{ label }}</label>
+} @else if (isOption()) {
+  <div class="form_field input-field" [formGroup]="formGroup()">
+    <label for="priority">{{ label() }}</label>
 
     <select
       class="form-select text-primary"
       aria-label="Default select example"
-      [formControlName]="name"
+      [formControlName]="name()"
     >
-      @if (selections.length) {
-        @for (option of selections; track $index) {
+      @if (selections().length) {
+        @for (option of selections(); track $index) {
           <option [value]="option">{{ option | titlecase }}</option>
         }
       }
     </select>
   </div>
-} @else if (isCheckbox) {
-  <section class="checkbox-block" [formGroup]="formGroup">
-    <label>{{ label }}</label>
+} @else if (isCheckbox()) {
+  <section class="checkbox-block" [formGroup]="formGroup()">
+    <label>{{ label() }}</label>
     <div class="check">
-      @if (checks.length) {
-        @for (option of checks; track $index) {
+      @if (checks().length) {
+        @for (option of checks(); track $index) {
           <p>
             <mat-checkbox formControlName="name">{{ option | titlecase }}</mat-checkbox>
           </p>
@@ -42,11 +42,11 @@
       }
     </div>
   </section>
-} @else if (type === 'file') {
-  <div class="file-input-field" [formGroup]="formGroup">
-    <label [for]="name"
-      >{{ label }}
-      @if (isRequired) {
+} @else if (type() === 'file') {
+  <div class="file-input-field" [formGroup]="formGroup()">
+    <label [for]="name()"
+      >{{ label() }}
+      @if (isRequired()) {
         <span class="required">*</span>
       }
     </label>
@@ -59,8 +59,8 @@
       [class.file-dropzone-uploading]="uploadStatus === 'uploading'"
       [class.file-dropzone-error]="uploadStatus === 'error'"
       [attr.aria-busy]="uploadStatus === 'uploading'"
-      [attr.aria-describedby]="formText ? name + '-help' : null"
-      [attr.aria-label]="label + '. Drag and drop files here or browse files.'"
+      [attr.aria-describedby]="formText() ? name() + '-help' : null"
+      [attr.aria-label]="label() + '. Drag and drop files here or browse files.'"
       (click)="browseFiles()"
       (keydown)="onFileKeydown($event)"
       (dragover)="onFileDragOver($event)"
@@ -70,28 +70,28 @@
       <input
         #fileInput
         class="file-input-native"
-        [id]="name"
-        [name]="name"
+        [id]="name()"
+        [name]="name()"
         type="file"
-        [accept]="accept"
-        [multiple]="allowMultiple"
+        [accept]="accept()"
+        [multiple]="allowMultiple()"
         (click)="$event.stopPropagation()"
         (change)="onFileInputChange($event)"
       />
 
-      <mat-icon class="file-input-icon" aria-hidden="true">{{ icon }}</mat-icon>
-      <strong class="file-input-label">{{ label }}</strong>
+      <mat-icon class="file-input-icon" aria-hidden="true">{{ icon() }}</mat-icon>
+      <strong class="file-input-label">{{ label() }}</strong>
       <p class="file-input-title">
         Drag and drop
-        @if (placeholder.trim()) {
-          {{ ' ' + placeholder }}
+        @if (placeholder().trim()) {
+          {{ ' ' + placeholder() }}
         }
         <br />or
         <span class="file-input-browse">browse files</span>
       </p>
 
-      @if (formText) {
-        <p class="file-input-help" [id]="name + '-help'">{{ formText }}</p>
+      @if (formText()) {
+        <p class="file-input-help" [id]="name() + '-help'">{{ formText() }}</p>
       }
 
       @if (uploadStatus === 'uploading') {
@@ -118,67 +118,67 @@
       }
     </div>
   </div>
-} @else if (type === 'email') {
-  <div class="input-field" [formGroup]="formGroup">
+} @else if (type() === 'email') {
+  <div class="input-field" [formGroup]="formGroup()">
     <label
-      >{{ label }}
-      @if (isRequired) {
+      >{{ label() }}
+      @if (isRequired()) {
         <span class="required">*</span>
       }
     </label>
-    <input [name]="name" [type]="type" [placeholder]="placeholder" [formControlName]="name" />
+    <input [name]="name()" [type]="type()" [placeholder]="placeholder()" [formControlName]="name()" />
   </div>
-} @else if (type === 'number') {
-  <div class="input-field" [formGroup]="formGroup">
+} @else if (type() === 'number') {
+  <div class="input-field" [formGroup]="formGroup()">
     <label
-      >{{ label }}
-      @if (isRequired) {
+      >{{ label() }}
+      @if (isRequired()) {
         <span class="required">*</span>
       }
     </label>
-    <input [name]="name" type="number" [placeholder]="placeholder" [formControlName]="name" />
+    <input [name]="name()" type="number" [placeholder]="placeholder()" [formControlName]="name()" />
   </div>
-} @else if (type === 'textform') {
-  <div [formGroup]="formGroup">
-    <label>{{ label }}</label>
+} @else if (type() === 'textform') {
+  <div [formGroup]="formGroup()">
+    <label>{{ label() }}</label>
     <textarea
-      [placeholder]="placeholder"
+      [placeholder]="placeholder()"
       class="form-control"
-      [name]="name"
-      [formControlName]="name"
+      [name]="name()"
+      [formControlName]="name()"
       rows="4"
     ></textarea>
   </div>
-} @else if (type === 'date') {
-  <div [formGroup]="formGroup">
+} @else if (type() === 'date') {
+  <div [formGroup]="formGroup()">
     <label
-      >{{ label }}
-      @if (isRequired) {
+      >{{ label() }}
+      @if (isRequired()) {
         <span class="required">*</span>
       }
     </label>
     <p-datepicker
       class="w-100"
-      [formControlName]="name"
+      [formControlName]="name()"
       [iconDisplay]="'input'"
       [showIcon]="true"
       inputId="icondisplay"
       appendTo="body"
     />
   </div>
-} @else if (type === 'checkbox') {
-  <label class="checkbox-field" [formGroup]="formGroup">
-    <input [name]="name" type="checkbox" [formControlName]="name" />
-    <span>{{ label }}</span>
+} @else if (type() === 'checkbox') {
+  <label class="checkbox-field" [formGroup]="formGroup()">
+    <input [name]="name()" type="checkbox" [formControlName]="name()" />
+    <span>{{ label() }}</span>
   </label>
 } @else {
-  <div class="input-field" [formGroup]="formGroup">
+  <div class="input-field" [formGroup]="formGroup()">
     <label
-      >{{ label }}
-      @if (isRequired) {
+      >{{ label() }}
+      @if (isRequired()) {
         <span class="required">*</span>
       }
     </label>
-    <input [name]="name" [type]="type" [placeholder]="placeholder" [formControlName]="name" />
+    <input [name]="name()" [type]="type()" [placeholder]="placeholder()" [formControlName]="name()" />
   </div>
 }

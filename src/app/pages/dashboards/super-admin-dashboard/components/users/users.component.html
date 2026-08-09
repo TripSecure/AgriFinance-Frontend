@@ -54,7 +54,7 @@
     </div>
     <p-table
       #usersTable
-      [value]="users()"
+      [value]="userRows()"
       [paginator]="true"
       [rows]="10"
       [rowsPerPageOptions]="[10, 20, 30]"
@@ -81,36 +81,36 @@
           <th id="actions">Action</th>
         </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-user>
+      <ng-template pTemplate="body" let-row>
         <tr
           class="user-row"
           tabindex="0"
           role="link"
-          [attr.aria-label]="'View details for ' + getUserName(user)"
-          (click)="onUserRowClick(user)"
-          (keydown)="onUserRowKeydown($event, user)"
+          [attr.aria-label]="'View details for ' + row.name"
+          (click)="onUserRowClick(row.user)"
+          (keydown)="onUserRowKeydown($event, row.user)"
         >
-          <td>{{ getUserName(user) }}</td>
-          <td>{{ getUserContact(user) }}</td>
-          <td>{{ getUserRole(user) }}</td>
+          <td>{{ row.name }}</td>
+          <td>{{ row.contact }}</td>
+          <td>{{ row.role }}</td>
           <td>
             <span
               class="status-pill"
-              [class.status-pill--approved]="isApproved(user)"
-              [class.status-pill--rejected]="isRejected(user)"
-              [class.status-pill--pending]="isPending(user)"
+              [class.status-pill--approved]="row.isApproved"
+              [class.status-pill--rejected]="row.isRejected"
+              [class.status-pill--pending]="row.isPending"
             >
-              {{ formatLabel(getUserStatus(user)) }}
+              {{ row.statusLabel }}
             </span>
           </td>
-          <td>{{ user?.createdAt || user?.dateCreated || '-' }}</td>
+          <td>{{ row.createdAt }}</td>
           <td>
             <button
               type="button"
               class="action-button"
               [matMenuTriggerFor]="approvalMenu"
-              [matMenuTriggerData]="{ user: user }"
-              [disabled]="isActionInProgress(user)"
+              [matMenuTriggerData]="{ user: row.user }"
+              [disabled]="row.isActionInProgress"
               aria-label="Open user approval actions"
               (click)="$event.stopPropagation()"
             >

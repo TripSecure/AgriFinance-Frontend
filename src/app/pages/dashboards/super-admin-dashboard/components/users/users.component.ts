@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Store } from '@ngxs/store';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ConfirmModalComponent } from '../../../../../shared/confirm-modal/confirm-modal.component';
 import { ToastrService } from '../../../../../shared/toastr/toastr.service';
@@ -16,6 +18,19 @@ import {
   UsersState,
   userApprovalOptions,
 } from './users.state';
+
+export interface UserRow {
+  user: User;
+  name: string;
+  contact: string;
+  role: string;
+  statusLabel: string;
+  createdAt: string;
+  isApproved: boolean;
+  isRejected: boolean;
+  isPending: boolean;
+  isActionInProgress: boolean;
+}
 
 @Component({
   selector: 'app-users',
@@ -30,15 +45,27 @@ export class UsersComponent {
   private readonly toastr = inject(ToastrService);
   private readonly router = inject(Router);
 
-  protected readonly users = this.store.selectSignal(UsersState.users);
+  private readonly users = this.store.selectSignal(UsersState.users);
+  private readonly approvingUserId = this.store.selectSignal(UsersState.approvingUserId);
+  protected readonly userRows = computed(() => this.users().map((user) => this.toRow(user)));
   protected readonly usersData = this.store.selectSignal(UsersState.usersConfigs);
   protected readonly isLoading = this.store.selectSignal(UsersState.isLoading);
-  protected readonly approvingUserId = this.store.selectSignal(UsersState.approvingUserId);
   protected readonly approvalOptions = userApprovalOptions;
 
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
   protected selectedStatus = '';
+
+  private readonly searchInput$ = new Subject<string>();
+
+  constructor() {
+    this.searchInput$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((value) => {
+        this.searchTerm = value;
+        this.dispatchUsersLoad({ ...this.lastEvent, first: 0 });
+      });
+  }
 
   protected loadUsers(event: TableLazyLoadEvent = {}): void {
     this.lastEvent = event;
@@ -46,8 +73,7 @@ export class UsersComponent {
   }
 
   protected onSearch(value: string): void {
-    this.searchTerm = value.trim();
-    this.dispatchUsersLoad({ ...this.lastEvent, first: 0 });
+    this.searchInput$.next(value.trim());
   }
 
   protected onStatusFilter(status: string): void {
@@ -93,43 +119,6 @@ export class UsersComponent {
       });
   }
 
-  protected getUserName(user: User): string {
-    return (
-      user.fullName ||
-      user.full_name ||
-      [user.firstName, user.lastName].filter(Boolean).join(' ') ||
-      '-'
-    );
-  }
-
-  protected getUserDialogSubject(user: User): string {
-    return this.getUserName(user) || this.getUserContact(user) || 'this user';
-  }
-
-  protected getUserContact(user: User): string {
-    return user.email || user.phone || user.phoneNumber || '-';
-  }
-
-  protected getUserRole(user: User): string {
-    return this.formatLabel(user.role || '-');
-  }
-
-  protected getUserStatus(user: User): string {
-    return user.approvalStatus || user.status || 'pending';
-  }
-
-  protected isApproved(user: User): boolean {
-    return this.getUserStatus(user).toLowerCase() === 'approved';
-  }
-
-  protected isRejected(user: User): boolean {
-    return ['denied', 'rejected', 'suspended'].includes(this.getUserStatus(user).toLowerCase());
-  }
-
-  protected isPending(user: User): boolean {
-    return !this.isApproved(user) && !this.isRejected(user);
-  }
-
   protected formatLabel(value: string): string {
     return value
       .replace(/[_-]/g, ' ')
@@ -138,8 +127,27 @@ export class UsersComponent {
       .replace(/\b\w/g, (letter) => letter.toUpperCase()) || '-';
   }
 
-  protected isActionInProgress(user: User): boolean {
-    return this.approvingUserId() === user.id;
+  private toRow(user: User): UserRow {
+    const status = (user.approvalStatus || user.status || 'pending').toLowerCase();
+    const isApproved = status === 'approved';
+    const isRejected = ['denied', 'rejected', 'suspended'].includes(status);
+
+    return {
+      user,
+      name:
+        user.fullName ||
+        user.full_name ||
+        [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+        '-',
+      contact: user.email || user.phone || user.phoneNumber || '-',
+      role: this.formatLabel(user.role || '-'),
+      statusLabel: this.formatLabel(status),
+      createdAt: user.createdAt || user.dateCreated || '-',
+      isApproved,
+      isRejected,
+      isPending: !isApproved && !isRejected,
+      isActionInProgress: this.approvingUserId() === user.id,
+    };
   }
 
   private dispatchUsersLoad(event: TableLazyLoadEvent = this.lastEvent): void {

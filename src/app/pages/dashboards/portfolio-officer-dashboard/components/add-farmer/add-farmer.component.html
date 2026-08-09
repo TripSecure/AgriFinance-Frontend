@@ -15,7 +15,12 @@
   }
 
   <mat-stepper [linear]="isLinear()" #stepper class="farmer-stepper">
-    <mat-step [stepControl]="personalDetailsForm">
+    <mat-step
+      [stepControl]="personalDetailsForm"
+      [editable]="isEditMode()"
+      [optional]="isEditMode()"
+      [completed]="isEditMode() || personalDetailsForm.valid"
+    >
       <ng-template matStepLabel>Personal Details</ng-template>
       <section class="form-section" aria-labelledby="personal-details-heading">
         <header class="form-section-header">
@@ -79,7 +84,12 @@
       </div>
     </mat-step>
 
-    <mat-step [stepControl]="documentUploadForm">
+    <mat-step
+      [stepControl]="documentUploadForm"
+      [editable]="isEditMode()"
+      [optional]="isEditMode()"
+      [completed]="isEditMode() || documentUploadForm.valid"
+    >
       <ng-template matStepLabel>Upload Documents</ng-template>
       <section class="form-section" aria-labelledby="document-upload-heading">
         <header class="form-section-header">
@@ -163,7 +173,12 @@
         <button type="button" class="primary-action" matStepperNext>Next</button>
       </div>
     </mat-step>
-    <mat-step [stepControl]="farmerDetailsForm">
+    <mat-step
+      [stepControl]="farmerDetailsForm"
+      [editable]="isEditMode()"
+      [optional]="isEditMode()"
+      [completed]="isEditMode() || farmerDetailsForm.valid"
+    >
       <ng-template matStepLabel>Farmer Details</ng-template>
       <section class="form-section" aria-labelledby="farmer-details-heading">
         <header class="form-section-header">
@@ -244,7 +259,12 @@
       </div>
     </mat-step>
 
-    <mat-step [stepControl]="productionDetailsForm">
+    <mat-step
+      [stepControl]="productionDetailsForm"
+      [editable]="isEditMode()"
+      [optional]="isEditMode()"
+      [completed]="isEditMode() || productionDetailsForm.valid"
+    >
       <ng-template matStepLabel>Production</ng-template>
       <section class="form-section" aria-labelledby="production-heading">
         <header class="form-section-header">
@@ -309,7 +329,12 @@
       </div>
     </mat-step>
 
-    <mat-step [stepControl]="financialInformationForm">
+    <mat-step
+      [stepControl]="financialInformationForm"
+      [editable]="isEditMode()"
+      [optional]="isEditMode()"
+      [completed]="isEditMode() || financialInformationForm.valid"
+    >
       <ng-template matStepLabel>Financials</ng-template>
       <section class="form-section" aria-labelledby="financials-heading">
         <header class="form-section-header">
@@ -374,7 +399,12 @@
       </div>
     </mat-step>
 
-    <mat-step [stepControl]="declarationsForm">
+    <mat-step
+      [stepControl]="declarationsForm"
+      [editable]="isEditMode()"
+      [optional]="isEditMode()"
+      [completed]="isEditMode() || declarationsForm.valid"
+    >
       <ng-template matStepLabel>Consent</ng-template>
       <section class="form-section declaration-section" aria-labelledby="declarations-heading">
         <header class="declaration-header">
