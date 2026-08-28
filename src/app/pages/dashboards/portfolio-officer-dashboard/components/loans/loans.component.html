@@ -1,0 +1,115 @@
+<div class="content">
+  <div class="title d-flex align-items-center justify-content-between mb-4">
+    <h3>Loans</h3>
+  </div>
+
+  <div class="filters">
+    <div class="filters__search">
+      <label for="portfolioLoansSearch" class="d-block">Search</label>
+      <div class="filters__search__input-form">
+        <div class="d-flex align-items-center justify-content-center">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          <input
+            id="portfolioLoansSearch"
+            (input)="onSearch($any($event.target)?.value ?? '')"
+            type="text"
+            placeholder="Search"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="filters__actions">
+      <label for="portfolioLoanStatusFilter">Filter by status</label>
+      <button
+        id="portfolioLoanStatusFilter"
+        type="button"
+        [matMenuTriggerFor]="statusMenu"
+        class="filters__actions__input-form"
+      >
+        <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+      </button>
+      <mat-menu #statusMenu="matMenu">
+        <button type="button" mat-menu-item (click)="onStatusFilter('')">
+          <span class="material-symbols-outlined" aria-hidden="true">list</span>
+          <span>All statuses</span>
+        </button>
+        @for (option of statusOptions; track option.value) {
+          <button type="button" mat-menu-item (click)="onStatusFilter(option.value)">
+            <span class="material-symbols-outlined" aria-hidden="true">{{ option.icon }}</span>
+            <span>{{ option.label }}</span>
+          </button>
+        }
+      </mat-menu>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="ps-3 py-2 d-flex align-items-center gap-3">
+      <div class="data-head">Total loans</div>
+      <div
+        class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
+      >
+        {{ loansData().totalCount }}
+      </div>
+    </div>
+
+    <p-table
+      #loansTable
+      [value]="loanRows()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="loansData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadLoans($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th id="portfolioLoanFarmer">Farmer</th>
+          <th id="portfolioLoanCrop">Crop</th>
+          <th id="portfolioLoanStatus">Status</th>
+          <th id="portfolioLoanRequested">Requested</th>
+          <th id="portfolioLoanEligible">Eligible</th>
+          <th id="portfolioLoanApproved">Approved</th>
+          <th id="portfolioLoanRisk">Risk</th>
+          <th id="portfolioLoanServices">Services</th>
+          <th id="portfolioLoanInsurance">Insurance</th>
+          <th id="portfolioLoanActivity">Last activity</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.farmerName }}</td>
+          <td>{{ row.crop }}</td>
+          <td>
+            <span
+              class="status-pill"
+              [class.status-pill--active]="row.isSuccess"
+              [class.status-pill--inactive]="row.isDanger"
+              [class.status-pill--pending]="row.isWarning"
+            >
+              {{ row.statusLabel }}
+            </span>
+          </td>
+          <td>{{ row.requestedAmount }}</td>
+          <td>{{ row.eligibleAmount }}</td>
+          <td>{{ row.approvedAmount }}</td>
+          <td>{{ row.riskScore }}</td>
+          <td>{{ row.servicesCount }}</td>
+          <td>{{ row.insuranceLabel }}</td>
+          <td>{{ row.lastActivity }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="10" class="empty-state">No loan applications found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

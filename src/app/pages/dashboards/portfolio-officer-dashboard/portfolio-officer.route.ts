@@ -58,6 +58,18 @@ export const portfolioOfficerRoutes: Routes = [
           ),
         title: 'Input Service Providers',
       },
+      {
+        path: 'loans',
+        loadComponent: () =>
+          import('./components/loans/loans.component').then((m) => m.LoansComponent),
+        title: 'Loans',
+      },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./components/visits-reports/visits-reports.component').then((m) => m.VisitsReportsComponent),
+        title: 'Monitoring Visits',
+      },
     ],
   },
 ];
