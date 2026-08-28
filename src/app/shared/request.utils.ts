@@ -14,6 +14,15 @@ export interface PagedData<T> {
   pageIndex?: number;
   pageSize?: number;
   totalCount?: number;
+  pagination?: {
+    totalPages?: number;
+    page?: number;
+    pageIndex?: number;
+    pageSize?: number;
+    limit?: number;
+    total?: number;
+    totalCount?: number;
+  };
   results?: T[];
   items?: T[];
   data?: T[];
@@ -68,13 +77,14 @@ export const normalizeListResponse = <T>(data: PagedData<T> | T[]): NormalizedPa
   }
 
   const results = data.results ?? data.items ?? data.data ?? [];
+  const pagination = data.pagination;
 
   return {
     results,
-    totalPages: data.totalPages ?? 1,
-    pageIndex: data.pageIndex ?? 1,
-    pageSize: data.pageSize ?? results.length,
-    totalCount: data.totalCount ?? results.length,
+    totalPages: data.totalPages ?? pagination?.totalPages ?? 1,
+    pageIndex: data.pageIndex ?? pagination?.pageIndex ?? pagination?.page ?? 1,
+    pageSize: data.pageSize ?? pagination?.pageSize ?? pagination?.limit ?? results.length,
+    totalCount: data.totalCount ?? pagination?.totalCount ?? pagination?.total ?? results.length,
   };
 };
 

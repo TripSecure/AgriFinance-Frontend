@@ -7,6 +7,8 @@ import { LoginWithOtp, PersistState, SetRememberDevice } from '../services/auth/
 import { AuthState } from '../services/auth/auth.states';
 import { ToastrService } from '../../../shared/toastr/toastr.service';
 
+const DEFAULT_LOGIN_OTP = '000000';
+
 interface LoginFormValue {
   identity: string;
   password: string;
@@ -32,7 +34,7 @@ export class LoginComponent {
   private readonly loginErrorMessages: Record<LoginControlName, string> = {
     identity: 'Enter your phone number or email.',
     password: 'Enter your password.',
-    otpCode: 'Enter your 6-digit verification code.',
+    otpCode: 'Enter your verification code.',
   };
 
   protected readonly showPassword = signal(false);
@@ -40,14 +42,12 @@ export class LoginComponent {
   protected readonly authErrors = this.store.selectSignal(AuthState.getErrors);
   protected readonly authMessage = this.store.selectSignal(AuthState.message);
   protected readonly loginTitle = computed(() => 'Welcome back');
-  protected readonly loginHelpText = computed(
-    () => 'Enter your phone number or email and password.',
-  );
+  protected readonly loginHelpText = computed(() => 'Enter your phone number or email and password.');
   protected readonly submitButtonText = computed(() => 'Sign In');
   protected readonly loginForm = this.formBuilder.group({
     identity: ['', Validators.required],
     password: ['', Validators.required],
-    otpCode: ['', [Validators.required, Validators.pattern('[0-9]{6}')]],
+    otpCode: [DEFAULT_LOGIN_OTP, [Validators.required, Validators.pattern('[0-9]{6}')]],
     rememberDevice: false,
   });
   protected readonly loginControls = this.loginForm.controls;
@@ -71,13 +71,16 @@ export class LoginComponent {
   }
 
   protected signIn(): void {
-    if (!this.markControlsAsTouched(['identity', 'password'])) {
+    if (!this.markControlsAsTouched(['identity', 'password', 'otpCode'])) {
       return;
     }
 
     const { identity, password, rememberDevice } = this.buildLoginValue();
     this.store
-      .dispatch([new SetRememberDevice(rememberDevice), new LoginWithOtp({ identity, password })])
+      .dispatch([
+        new SetRememberDevice(rememberDevice),
+        new LoginWithOtp({ identity, password, otpCode: DEFAULT_LOGIN_OTP }),
+      ])
       .subscribe(() => {
         if (this.store.selectSnapshot(AuthState.isAuthenticated)) {
           this.store.dispatch(new PersistState()).subscribe();

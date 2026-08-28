@@ -1,0 +1,109 @@
+<div class="content">
+  <div class="title d-flex align-items-center justify-content-between mb-4">
+    <h3>My Farmers</h3>
+  </div>
+
+  <div class="filters">
+    <div class="filters__search">
+      <label for="extensionFarmersSearch" class="d-block">Search</label>
+      <div class="filters__search__input-form">
+        <div class="d-flex align-items-center justify-content-center">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          <input
+            id="extensionFarmersSearch"
+            (input)="onSearch($any($event.target)?.value ?? '')"
+            type="text"
+            placeholder="Search"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="filters__actions">
+      <label for="assignmentStatusFilter">Filter by assignment status</label>
+      <button
+        id="assignmentStatusFilter"
+        type="button"
+        [matMenuTriggerFor]="statusMenu"
+        class="filters__actions__input-form"
+      >
+        <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+      </button>
+      <mat-menu #statusMenu="matMenu">
+        <button type="button" mat-menu-item (click)="onStatusFilter('')">
+          <span class="material-symbols-outlined" aria-hidden="true">list</span>
+          <span>All statuses</span>
+        </button>
+        @for (option of statusOptions; track option.value) {
+          <button type="button" mat-menu-item (click)="onStatusFilter(option.value)">
+            <span class="material-symbols-outlined" aria-hidden="true">{{ option.icon }}</span>
+            <span>{{ option.label }}</span>
+          </button>
+        }
+      </mat-menu>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="ps-3 py-2 d-flex align-items-center gap-3">
+      <div class="data-head">Total assigned farms</div>
+      <div
+        class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
+      >
+        {{ farmersData().totalCount }}
+      </div>
+    </div>
+
+    <p-table
+      #farmersTable
+      [value]="farmerRows()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="farmersData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadFarmers($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th id="extensionFarmerName">Name</th>
+          <th id="extensionFarmerContact">Contact</th>
+          <th id="extensionFarmerCrop">Crop</th>
+          <th id="extensionFarmerLocation">Location</th>
+          <th id="extensionFarmSize">Farm size</th>
+          <th id="extensionAssignmentStatus">Assignment status</th>
+          <th id="extensionLatestVisit">Latest visit</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.name }}</td>
+          <td>{{ row.contact }}</td>
+          <td>{{ row.crop }}</td>
+          <td>{{ row.location }}</td>
+          <td>{{ row.size }}</td>
+          <td>
+            <span
+              class="status-pill"
+              [class.status-pill--active]="row.isActive"
+              [class.status-pill--inactive]="row.isInactive"
+              [class.status-pill--pending]="row.isPending"
+            >
+              {{ row.assignmentStatusLabel }}
+            </span>
+          </td>
+          <td>{{ row.latestVisit }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="7" class="empty-state">No assigned farmers found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

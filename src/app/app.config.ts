@@ -13,6 +13,8 @@ import { AuthState } from './pages/auth/services/auth/auth.states';
 import { RegistrationState } from './pages/auth/register/services/registration.state';
 import { UsersState } from './pages/dashboards/super-admin-dashboard/components/users/users.state';
 import { FarmersState } from './pages/dashboards/portfolio-officer-dashboard/components/farmers/farmers.state';
+import { ExtensionFarmersState } from './pages/dashboards/extension-officer-dashboard/components/farmers/farmers.state';
+import { FarmVisitsState } from './pages/dashboards/extension-officer-dashboard/components/farm-visits/farm-visits.state';
 import { environment } from '../environment/environment';
 
 const ngxsFeatures: EnvironmentProviders[] = [
@@ -33,6 +35,16 @@ export const appConfig: ApplicationConfig = {
         },
       },
     }),
-    provideStore([AuthState, RegistrationState, UsersState, FarmersState], ...ngxsFeatures),
+    provideStore(
+      [
+        AuthState,
+        RegistrationState,
+        UsersState,
+        FarmersState,
+        ExtensionFarmersState,
+        FarmVisitsState,
+      ],
+      ...ngxsFeatures,
+    ),
   ],
 };

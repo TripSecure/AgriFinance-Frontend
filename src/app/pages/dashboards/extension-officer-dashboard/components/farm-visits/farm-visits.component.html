@@ -1,0 +1,135 @@
+<div class="content">
+  <div class="title d-flex align-items-center justify-content-between mb-4">
+    <h3>Farm Visits</h3>
+  </div>
+
+  <div class="filters">
+    <div class="filters__search">
+      <label for="farmVisitsSearch" class="d-block">Search</label>
+      <div class="filters__search__input-form">
+        <div class="d-flex align-items-center justify-content-center">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          <input
+            id="farmVisitsSearch"
+            (input)="onSearch($any($event.target)?.value ?? '')"
+            type="text"
+            placeholder="Search"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="filters__actions">
+      <label for="visitStatusFilter">Filter by status</label>
+      <button
+        id="visitStatusFilter"
+        type="button"
+        [matMenuTriggerFor]="statusMenu"
+        class="filters__actions__input-form"
+      >
+        <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+      </button>
+      <mat-menu #statusMenu="matMenu">
+        <button type="button" mat-menu-item (click)="onStatusFilter('')">
+          <span class="material-symbols-outlined" aria-hidden="true">list</span>
+          <span>All statuses</span>
+        </button>
+        @for (option of statusOptions; track option.value) {
+          <button type="button" mat-menu-item (click)="onStatusFilter(option.value)">
+            <span class="material-symbols-outlined" aria-hidden="true">{{ option.icon }}</span>
+            <span>{{ option.label }}</span>
+          </button>
+        }
+      </mat-menu>
+    </div>
+
+    <div class="filters__actions">
+      <label for="visitTimeframeFilter">Filter by timeframe</label>
+      <button
+        id="visitTimeframeFilter"
+        type="button"
+        [matMenuTriggerFor]="timeframeMenu"
+        class="filters__actions__input-form"
+      >
+        <span>{{ selectedTimeframeLabel() }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+      </button>
+      <mat-menu #timeframeMenu="matMenu">
+        @for (option of timeframeOptions; track option.value) {
+          <button type="button" mat-menu-item (click)="onTimeframeFilter(option.value)">
+            <span>{{ option.label }}</span>
+          </button>
+        }
+      </mat-menu>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="ps-3 py-2 d-flex align-items-center gap-3">
+      <div class="data-head">Total visits</div>
+      <div
+        class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
+      >
+        {{ visitsData().totalCount }}
+      </div>
+    </div>
+
+    <p-table
+      #visitsTable
+      [value]="visitRows()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="visitsData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadVisits($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th id="visitFarmerName">Farmer</th>
+          <th id="visitFarmerContact">Contact</th>
+          <th id="visitFarm">Farm</th>
+          <th id="visitCrop">Crop</th>
+          <th id="visitDate">Visit date</th>
+          <th id="visitStatus">Status</th>
+          <th id="visitActivity">Last activity</th>
+          <th id="visitAlert">Alert</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.farmerName }}</td>
+          <td>{{ row.contact }}</td>
+          <td>{{ row.farm }}</td>
+          <td>{{ row.crop }}</td>
+          <td>{{ row.visitDate }}</td>
+          <td>
+            <span
+              class="status-pill"
+              [class.status-pill--active]="row.isApproved"
+              [class.status-pill--inactive]="row.isRejected"
+              [class.status-pill--pending]="row.isPending"
+            >
+              {{ row.statusLabel }}
+            </span>
+          </td>
+          <td>{{ row.latestActivity }}</td>
+          <td>
+            <span class="alert-label" [class.alert-label--raised]="row.visit.alertGenerated">
+              {{ row.alertLabel }}
+            </span>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="8" class="empty-state">No farm visits found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

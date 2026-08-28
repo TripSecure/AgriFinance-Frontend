@@ -19,6 +19,18 @@ export const extensionOfficerRoutes: Routes = [
           import('./components/dashboard/dashboard.component').then((m) => m.DashboardComponent),
         title: 'Home',
       },
+      {
+        path: 'farmers',
+        loadComponent: () =>
+          import('./components/farmers/farmers.component').then((m) => m.FarmersComponent),
+        title: 'Farmers',
+      },
+      {
+        path: 'visits',
+        loadComponent: () =>
+          import('./components/farm-visits/farm-visits.component').then((m) => m.FarmVisitsComponent),
+        title: 'Farm Visits',
+      }
     ],
   },
 ];
