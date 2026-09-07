@@ -4,6 +4,7 @@ import { State, Action, StateContext, Selector, NgxsOnInit } from '@ngxs/store';
 import { of } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import {
+  ApiResponseBase,
   authInitialState,
   AuthProfile,
   AuthStateModel,
@@ -19,7 +20,9 @@ import {
   PersistState,
   RequestLoginOtp,
   LoginWithOtp,
+  RequestPasswordResetOtp,
   ResetLoginOtpRequest,
+  ResetPassword,
   SetRememberDevice,
 } from './auth.actions';
 import { extractErrorMessage, extractResponseErrors } from '../../../../shared/request.utils';
@@ -251,6 +254,80 @@ export class AuthState implements NgxsOnInit {
       errors: [],
       message: null,
     });
+  }
+
+  @Action(RequestPasswordResetOtp)
+  requestPasswordResetOtp(ctx: StateContext<AuthStateModel>, action: RequestPasswordResetOtp) {
+    ctx.patchState({
+      loading: true,
+      errors: [],
+      message: null,
+    });
+
+    return this.authService.requestPasswordResetOtp(action.payload).pipe(
+      tap((response: OtpResponse) => {
+        if (this.isSuccessfulResponse(response)) {
+          ctx.patchState({
+            requestId: response.data?.requestId ?? null,
+            prefix: response.data?.prefix ?? null,
+            loading: false,
+            message: response.message,
+            errors: [],
+          });
+        } else {
+          ctx.patchState({
+            loading: false,
+            errors: extractResponseErrors(response, 'Failed to send password reset code.'),
+            message: response.message,
+          });
+        }
+      }),
+      catchError((error: unknown) => {
+        const message = extractErrorMessage(error, 'Unable to send password reset code.');
+        ctx.patchState({
+          loading: false,
+          errors: [message],
+          message,
+        });
+        return of(error);
+      }),
+    );
+  }
+
+  @Action(ResetPassword)
+  resetPassword(ctx: StateContext<AuthStateModel>, action: ResetPassword) {
+    ctx.patchState({
+      loading: true,
+      errors: [],
+      message: null,
+    });
+
+    return this.authService.resetPassword(action.payload).pipe(
+      tap((response: ApiResponseBase) => {
+        if (this.isSuccessfulResponse(response)) {
+          ctx.patchState({
+            loading: false,
+            message: response.message || 'Password reset successfully.',
+            errors: [],
+          });
+        } else {
+          ctx.patchState({
+            loading: false,
+            errors: extractResponseErrors(response, 'Failed to reset password.'),
+            message: response.message,
+          });
+        }
+      }),
+      catchError((error: unknown) => {
+        const message = extractErrorMessage(error, 'Unable to reset password. Please try again.');
+        ctx.patchState({
+          loading: false,
+          errors: [message],
+          message,
+        });
+        return of(error);
+      }),
+    );
   }
 
   @Action(Logout)

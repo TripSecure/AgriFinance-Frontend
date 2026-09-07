@@ -23,18 +23,22 @@ export class Logout {
   static readonly type = '[Auth] Logout';
 }
 
-// For forgot password
-export class ForgotPassword {
-  static readonly type = '[Auth] Forgot Password';
-  constructor(public email: string) {}
+// For forgot password / request OTP
+export class RequestPasswordResetOtp {
+  static readonly type = '[Auth] Request Password Reset OTP';
+  constructor(public payload: { identity: string }) {}
 }
 
 // For reset password
 export class ResetPassword {
   static readonly type = '[Auth] Reset Password';
   constructor(
-    public token: string,
-    public newPassword: string,
+    public payload: {
+      identity: string;
+      otpCode: string;
+      newPassword: string;
+      confirmPassword?: string;
+    },
   ) {}
 }
 

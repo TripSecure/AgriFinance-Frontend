@@ -98,3 +98,19 @@ export interface OtpResponse extends ApiResponseBase {
     prefix: string;
   } | null;
 }
+
+export interface PasswordResetOtpPayload {
+  identity: string;
+}
+
+export interface PasswordResetPayload {
+  identity: string;
+  otpCode: string;
+  newPassword: string;
+  confirmPassword?: string;
+}
+
+export interface PasswordResetResponse extends ApiResponseBase {
+  data?: unknown;
+}
+
