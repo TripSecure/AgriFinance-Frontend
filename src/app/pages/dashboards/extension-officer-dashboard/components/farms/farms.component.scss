@@ -82,7 +82,7 @@
       }
 
       &__input-form {
-        min-width: 190px;
+        min-width: 210px;
         background: #ffffff;
         border: 1px solid #d0d5dd;
         box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
@@ -275,8 +275,7 @@ p-table {
   color: #101828;
 }
 
-.status-pill,
-.alert-label {
+.status-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -302,11 +301,6 @@ p-table {
     background-color: #fffaeb;
     color: #b54708;
   }
-}
-
-.alert-label--raised {
-  background-color: #fef3f2;
-  color: #b42318;
 }
 
 .empty-state {

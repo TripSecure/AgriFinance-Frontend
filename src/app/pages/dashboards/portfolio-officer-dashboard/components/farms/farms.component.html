@@ -1,29 +1,29 @@
 <div class="content">
   <div class="title mb-4">
-    <h3>Loans</h3>
-    <p>Track loan applications, risk evaluations, approval stages, and disbursement statuses.</p>
+    <h3>Farms</h3>
+    <p>Monitor farm locations, cultivated crop types, acreage, and assigned extension officers.</p>
   </div>
 
   <div class="filters">
     <div class="filters__search">
-      <label for="portfolioLoansSearch" class="d-block">Search</label>
+      <label for="farmsSearch" class="d-block">Search</label>
       <div class="filters__search__input-form">
         <div class="d-flex align-items-center justify-content-center">
           <span class="material-symbols-outlined" aria-hidden="true">search</span>
           <input
-            id="portfolioLoansSearch"
+            id="farmsSearch"
             (input)="onSearch($any($event.target)?.value ?? '')"
             type="text"
-            placeholder="Search"
+            placeholder="Search farms"
           />
         </div>
       </div>
     </div>
 
     <div class="filters__actions">
-      <label for="portfolioLoanStatusFilter">Filter by status</label>
+      <label for="farmsStatusFilter">Filter by status</label>
       <button
-        id="portfolioLoanStatusFilter"
+        id="farmsStatusFilter"
         type="button"
         [matMenuTriggerFor]="statusMenu"
         class="filters__actions__input-form"
@@ -48,67 +48,61 @@
 
   <div class="table-wrapper">
     <div class="ps-3 py-2 d-flex align-items-center gap-3">
-      <div class="data-head">Total loans</div>
+      <div class="data-head">Total Farms</div>
       <div
         class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
       >
-        {{ loansData().totalCount }}
+        {{ farmsData().totalCount }}
       </div>
     </div>
 
     <p-table
-      #loansTable
-      [value]="loanRows()"
+      #farmsTable
+      [value]="farmRows()"
       [paginator]="true"
       [rows]="10"
       [rowsPerPageOptions]="[10, 20, 30]"
       [lazy]="true"
-      [totalRecords]="loansData().totalCount"
+      [totalRecords]="farmsData().totalCount"
       [loading]="isLoading()"
-      (onLazyLoad)="loadLoans($event)"
+      (onLazyLoad)="loadFarms($event)"
     >
       <ng-template pTemplate="header">
         <tr>
-          <th id="portfolioLoanFarmer">Farmer</th>
-          <th id="portfolioLoanCrop">Crop</th>
-          <th id="portfolioLoanStatus">Status</th>
-          <th id="portfolioLoanRequested">Requested</th>
-          <th id="portfolioLoanEligible">Eligible</th>
-          <th id="portfolioLoanApproved">Approved</th>
-          <th id="portfolioLoanRisk">Risk</th>
-          <th id="portfolioLoanServices">Services</th>
-          <th id="portfolioLoanInsurance">Insurance</th>
-          <th id="portfolioLoanActivity">Last activity</th>
+          <th id="farmLocation">Farm Location / Name</th>
+          <th id="farmFarmer">Farmer</th>
+          <th id="farmCrop">Crop Type</th>
+          <th id="farmSize">Size</th>
+          <th id="farmOfficer">Assigned Officer</th>
+          <th id="farmStatus">Status</th>
+          <th id="farmRegistered">Registered Date</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-row>
         <tr>
+          <td>{{ row.farmLocation }}</td>
           <td>{{ row.farmerName }}</td>
-          <td>{{ row.crop }}</td>
+          <td>{{ row.cropType }}</td>
+          <td>{{ row.size }}</td>
+          <td>{{ row.assignedOfficer }}</td>
           <td>
             <span
               class="status-pill"
-              [class.status-pill--active]="row.isSuccess"
-              [class.status-pill--inactive]="row.isDanger"
-              [class.status-pill--pending]="row.isWarning"
+              [class.status-pill--active]="row.isActive"
+              [class.status-pill--inactive]="row.isInactive"
+              [class.status-pill--pending]="row.isPending"
             >
               {{ row.statusLabel }}
             </span>
           </td>
-          <td>{{ row.requestedAmount }}</td>
-          <td>{{ row.eligibleAmount }}</td>
-          <td>{{ row.approvedAmount }}</td>
-          <td>{{ row.riskScore }}</td>
-          <td>{{ row.servicesCount }}</td>
-          <td>{{ row.insuranceLabel }}</td>
-          <td>{{ row.lastActivity }}</td>
+          <td>{{ row.registeredDate }}</td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [colSpan]="10" class="empty-state">No loan applications found.</td>
+          <td [colSpan]="7" class="empty-state">No farms found.</td>
         </tr>
       </ng-template>
     </p-table>

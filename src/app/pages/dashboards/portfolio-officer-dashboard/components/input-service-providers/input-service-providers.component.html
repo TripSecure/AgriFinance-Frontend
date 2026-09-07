@@ -1,1 +1,112 @@
-<p>input-service-providers works!</p>
+<div class="content">
+  <div class="title mb-4">
+    <h3>Input Service Providers</h3>
+    <p>Manage input suppliers, equipment providers, service offerings, and operational jurisdictions.</p>
+  </div>
+
+  <div class="filters">
+    <div class="filters__search">
+      <label for="inputProvidersSearch" class="d-block">Search</label>
+      <div class="filters__search__input-form">
+        <div class="d-flex align-items-center justify-content-center">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          <input
+            id="inputProvidersSearch"
+            (input)="onSearch($any($event.target)?.value ?? '')"
+            type="text"
+            placeholder="Search providers"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="filters__actions">
+      <label for="inputProvidersStatusFilter">Filter by status</label>
+      <button
+        id="inputProvidersStatusFilter"
+        type="button"
+        [matMenuTriggerFor]="statusMenu"
+        class="filters__actions__input-form"
+      >
+        <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+      </button>
+      <mat-menu #statusMenu="matMenu">
+        <button type="button" mat-menu-item (click)="onStatusFilter('')">
+          <span class="material-symbols-outlined" aria-hidden="true">list</span>
+          <span>All statuses</span>
+        </button>
+        @for (option of statusOptions; track option.value) {
+          <button type="button" mat-menu-item (click)="onStatusFilter(option.value)">
+            <span class="material-symbols-outlined" aria-hidden="true">{{ option.icon }}</span>
+            <span>{{ option.label }}</span>
+          </button>
+        }
+      </mat-menu>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="ps-3 py-2 d-flex align-items-center gap-3">
+      <div class="data-head">Total Providers</div>
+      <div
+        class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
+      >
+        {{ providersData().totalCount }}
+      </div>
+    </div>
+
+    <p-table
+      #providersTable
+      [value]="providerRows()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="providersData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadProviders($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th id="providerBusinessName">Business Name</th>
+          <th id="providerContactPerson">Contact Person</th>
+          <th id="providerContact">Contact</th>
+          <th id="providerServices">Service Types</th>
+          <th id="providerCoverage">Coverage / Region</th>
+          <th id="providerFulfilledOrders">Fulfilled Orders</th>
+          <th id="providerStatus">Status</th>
+          <th id="providerLastActivity">Last Activity</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.businessName }}</td>
+          <td>{{ row.contactPerson }}</td>
+          <td>{{ row.contact }}</td>
+          <td>{{ row.serviceTypes }}</td>
+          <td>{{ row.regions }}</td>
+          <td>{{ row.fulfilledOrders }}</td>
+          <td>
+            <span
+              class="status-pill"
+              [class.status-pill--active]="row.isActive"
+              [class.status-pill--inactive]="row.isInactive"
+              [class.status-pill--pending]="row.isPending"
+            >
+              {{ row.statusLabel }}
+            </span>
+          </td>
+          <td>{{ row.lastActivity }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="8" class="empty-state">No input service providers found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

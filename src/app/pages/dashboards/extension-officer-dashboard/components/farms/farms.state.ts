@@ -6,38 +6,53 @@ import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../../../environment/environment';
 import { extractErrorMessage, normalizeListResponse } from '../../../../../shared/request.utils';
 
-export interface ExtensionFarmer extends Record<string, unknown> {
+export interface AssignedFarmFarmer {
   id: string;
   fullName?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
   phone?: string | null;
-  phoneNumber?: string | null;
-  email?: string | null;
-  community?: string | null;
-  location?: string | null;
-  region?: string | null;
   primaryCrop?: string | null;
-  cropTypes?: string[];
-  farmsCount?: number;
-  totalFarms?: number;
   status?: string | null;
-  approvalStatus?: string | null;
-  lastVisitDate?: string | null;
-  lastActivityLabel?: string | null;
+}
+
+export interface AssignedFarmAssignment {
+  officerId?: string | null;
+  officerName?: string | null;
+  officerRegion?: string | null;
+  status?: string | null;
+  notes?: string | null;
+}
+
+export interface AssignedFarmLatestVisit {
+  id: string;
+  visitDate?: string | null;
+  status?: string | null;
+  submittedAt?: string | null;
+  reviewedAt?: string | null;
+}
+
+export interface AssignedFarm extends Record<string, unknown> {
+  id: string;
+  farmer?: AssignedFarmFarmer | null;
+  locationLabel?: string | null;
+  gpsLocation?: Record<string, unknown>;
+  sizeHectares?: number | null;
+  cropType?: string | null;
+  assignment?: AssignedFarmAssignment | null;
+  latestVisit?: AssignedFarmLatestVisit | null;
+  status?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
 
-interface ExtensionFarmersResponse {
+interface ExtensionFarmsResponse {
   message?: string;
   success?: boolean;
   isSuccessful?: boolean;
-  data: ExtensionFarmersData | ExtensionFarmer[];
+  data: ExtensionFarmsData | AssignedFarm[];
   errors?: unknown;
 }
 
-interface ExtensionFarmersData {
+interface ExtensionFarmsData {
   totalPages?: number;
   pageIndex?: number;
   pageSize?: number;
@@ -49,38 +64,39 @@ interface ExtensionFarmersData {
     limit?: number;
     total?: number;
   };
-  results?: ExtensionFarmer[];
-  items?: ExtensionFarmer[];
-  data?: ExtensionFarmer[];
+  results?: AssignedFarm[];
+  items?: AssignedFarm[];
+  data?: AssignedFarm[];
 }
 
-export interface ExtensionFarmersQueryParams {
+export interface ExtensionFarmsQueryParams {
   first?: number;
   rows?: number;
   globalFilter?: string;
-  status?: string;
-  cropType?: string;
+  sortField?: string;
+  sortOrder?: number;
+  assignmentStatus?: string;
 }
 
-export interface ExtensionFarmersStateModel {
+export interface ExtensionFarmsStateModel {
   totalPages: number;
   pageIndex: number;
   pageSize: number;
   totalCount: number;
   isLoading: boolean;
   errors: string[];
-  farmers: ExtensionFarmer[];
+  farms: AssignedFarm[];
 }
 
-export class GetExtensionFarmers {
-  static readonly type = '[Extension Farmers] Get Assigned Farmers';
-  constructor(public params?: ExtensionFarmersQueryParams) {}
+export class GetExtensionFarms {
+  static readonly type = '[Extension Farms] Get Assigned Farms';
+  constructor(public params?: ExtensionFarmsQueryParams) {}
 }
 
-@State<ExtensionFarmersStateModel>({
-  name: 'extensionFarmers',
+@State<ExtensionFarmsStateModel>({
+  name: 'extensionFarms',
   defaults: {
-    farmers: [],
+    farms: [],
     totalPages: 0,
     pageIndex: 0,
     pageSize: 10,
@@ -90,43 +106,43 @@ export class GetExtensionFarmers {
   },
 })
 @Injectable()
-export class ExtensionFarmersState {
+export class ExtensionFarmsState {
   private readonly http = inject(HttpClient);
 
   @Selector()
-  static isLoading(state: ExtensionFarmersStateModel): boolean {
+  static isLoading(state: ExtensionFarmsStateModel): boolean {
     return state.isLoading;
   }
 
   @Selector()
-  static errors(state: ExtensionFarmersStateModel): string[] {
+  static errors(state: ExtensionFarmsStateModel): string[] {
     return state.errors;
   }
 
   @Selector()
-  static farmers(state: ExtensionFarmersStateModel): ExtensionFarmer[] {
-    return state.farmers;
+  static farms(state: ExtensionFarmsStateModel): AssignedFarm[] {
+    return state.farms;
   }
 
   @Selector()
-  static farmersConfigs(state: ExtensionFarmersStateModel) {
+  static farmsConfigs(state: ExtensionFarmsStateModel) {
     const { totalPages, pageIndex, pageSize, totalCount } = state;
     return { totalPages, pageIndex, pageSize, totalCount };
   }
 
-  @Action(GetExtensionFarmers)
-  getFarmers(ctx: StateContext<ExtensionFarmersStateModel>, { params }: GetExtensionFarmers) {
+  @Action(GetExtensionFarms)
+  getFarms(ctx: StateContext<ExtensionFarmsStateModel>, { params }: GetExtensionFarms) {
     ctx.patchState({ isLoading: true, errors: [] });
 
     return this.http
-      .get<ExtensionFarmersResponse>(`${environment.api}/extension/farmers`, {
+      .get<ExtensionFarmsResponse>(`${environment.api}/extension/farms`, {
         params: this.buildParams(params),
       })
       .pipe(
         tap((response) => {
           const data = normalizeListResponse(response.data);
           ctx.patchState({
-            farmers: data.results,
+            farms: data.results,
             totalPages: data.totalPages,
             pageIndex: data.pageIndex,
             pageSize: data.pageSize,
@@ -137,14 +153,14 @@ export class ExtensionFarmersState {
         catchError((error: unknown) => {
           ctx.patchState({
             isLoading: false,
-            errors: [extractErrorMessage(error, 'Unable to load assigned farmers.')],
+            errors: [extractErrorMessage(error, 'Unable to load assigned farms.')],
           });
           return of(error);
         }),
       );
   }
 
-  private buildParams(params?: ExtensionFarmersQueryParams): HttpParams {
+  private buildParams(params?: ExtensionFarmsQueryParams): HttpParams {
     let httpParams = new HttpParams();
 
     if (!params) {
@@ -161,12 +177,8 @@ export class ExtensionFarmersState {
       httpParams = httpParams.set('search', params.globalFilter);
     }
 
-    if (params.status) {
-      httpParams = httpParams.set('status', params.status);
-    }
-
-    if (params.cropType) {
-      httpParams = httpParams.set('cropType', params.cropType);
+    if (params.assignmentStatus) {
+      httpParams = httpParams.set('assignmentStatus', params.assignmentStatus);
     }
 
     return httpParams;

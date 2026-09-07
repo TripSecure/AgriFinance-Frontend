@@ -6,38 +6,62 @@ import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../../../environment/environment';
 import { extractErrorMessage, normalizeListResponse } from '../../../../../shared/request.utils';
 
-export interface ExtensionFarmer extends Record<string, unknown> {
+export interface PortfolioFarmFarmer {
   id: string;
   fullName?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
+  name?: string | null;
   phone?: string | null;
-  phoneNumber?: string | null;
-  email?: string | null;
-  community?: string | null;
-  location?: string | null;
-  region?: string | null;
   primaryCrop?: string | null;
-  cropTypes?: string[];
-  farmsCount?: number;
-  totalFarms?: number;
   status?: string | null;
-  approvalStatus?: string | null;
+}
+
+export interface PortfolioFarmAssignment {
+  officerId?: string | null;
+  officerName?: string | null;
+  officerRegion?: string | null;
+  status?: string | null;
+  notes?: string | null;
+}
+
+export interface PortfolioFarmLatestVisit {
+  id?: string;
+  visitDate?: string | null;
+  status?: string | null;
+  yieldEstimate?: number | null;
+}
+
+export interface PortfolioFarm extends Record<string, unknown> {
+  id: string;
+  farmerId?: string | null;
+  farmer?: PortfolioFarmFarmer | null;
+  locationLabel?: string | null;
+  location?: string | null;
+  farmName?: string | null;
+  region?: string | null;
+  community?: string | null;
+  cropType?: string | null;
+  primaryCrop?: string | null;
+  sizeHectares?: number | null;
+  sizeAcres?: number | null;
+  status?: string | null;
+  assignment?: PortfolioFarmAssignment | null;
+  assignedOfficerName?: string | null;
+  latestVisit?: PortfolioFarmLatestVisit | null;
   lastVisitDate?: string | null;
   lastActivityLabel?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
 
-interface ExtensionFarmersResponse {
+interface PortfolioFarmsResponse {
   message?: string;
   success?: boolean;
   isSuccessful?: boolean;
-  data: ExtensionFarmersData | ExtensionFarmer[];
+  data: PortfolioFarmsData | PortfolioFarm[];
   errors?: unknown;
 }
 
-interface ExtensionFarmersData {
+interface PortfolioFarmsData {
   totalPages?: number;
   pageIndex?: number;
   pageSize?: number;
@@ -49,12 +73,12 @@ interface ExtensionFarmersData {
     limit?: number;
     total?: number;
   };
-  results?: ExtensionFarmer[];
-  items?: ExtensionFarmer[];
-  data?: ExtensionFarmer[];
+  results?: PortfolioFarm[];
+  items?: PortfolioFarm[];
+  data?: PortfolioFarm[];
 }
 
-export interface ExtensionFarmersQueryParams {
+export interface PortfolioFarmsQueryParams {
   first?: number;
   rows?: number;
   globalFilter?: string;
@@ -62,25 +86,25 @@ export interface ExtensionFarmersQueryParams {
   cropType?: string;
 }
 
-export interface ExtensionFarmersStateModel {
+export interface PortfolioFarmsStateModel {
   totalPages: number;
   pageIndex: number;
   pageSize: number;
   totalCount: number;
   isLoading: boolean;
   errors: string[];
-  farmers: ExtensionFarmer[];
+  farms: PortfolioFarm[];
 }
 
-export class GetExtensionFarmers {
-  static readonly type = '[Extension Farmers] Get Assigned Farmers';
-  constructor(public params?: ExtensionFarmersQueryParams) {}
+export class GetPortfolioFarms {
+  static readonly type = '[Portfolio Farms] Get Farms';
+  constructor(public params?: PortfolioFarmsQueryParams) {}
 }
 
-@State<ExtensionFarmersStateModel>({
-  name: 'extensionFarmers',
+@State<PortfolioFarmsStateModel>({
+  name: 'portfolioFarms',
   defaults: {
-    farmers: [],
+    farms: [],
     totalPages: 0,
     pageIndex: 0,
     pageSize: 10,
@@ -90,43 +114,43 @@ export class GetExtensionFarmers {
   },
 })
 @Injectable()
-export class ExtensionFarmersState {
+export class PortfolioFarmsState {
   private readonly http = inject(HttpClient);
 
   @Selector()
-  static isLoading(state: ExtensionFarmersStateModel): boolean {
+  static isLoading(state: PortfolioFarmsStateModel): boolean {
     return state.isLoading;
   }
 
   @Selector()
-  static errors(state: ExtensionFarmersStateModel): string[] {
+  static errors(state: PortfolioFarmsStateModel): string[] {
     return state.errors;
   }
 
   @Selector()
-  static farmers(state: ExtensionFarmersStateModel): ExtensionFarmer[] {
-    return state.farmers;
+  static farms(state: PortfolioFarmsStateModel): PortfolioFarm[] {
+    return state.farms;
   }
 
   @Selector()
-  static farmersConfigs(state: ExtensionFarmersStateModel) {
+  static farmsConfigs(state: PortfolioFarmsStateModel) {
     const { totalPages, pageIndex, pageSize, totalCount } = state;
     return { totalPages, pageIndex, pageSize, totalCount };
   }
 
-  @Action(GetExtensionFarmers)
-  getFarmers(ctx: StateContext<ExtensionFarmersStateModel>, { params }: GetExtensionFarmers) {
+  @Action(GetPortfolioFarms)
+  getFarms(ctx: StateContext<PortfolioFarmsStateModel>, { params }: GetPortfolioFarms) {
     ctx.patchState({ isLoading: true, errors: [] });
 
     return this.http
-      .get<ExtensionFarmersResponse>(`${environment.api}/extension/farmers`, {
+      .get<PortfolioFarmsResponse>(`${environment.api}/portfolio/farms`, {
         params: this.buildParams(params),
       })
       .pipe(
         tap((response) => {
           const data = normalizeListResponse(response.data);
           ctx.patchState({
-            farmers: data.results,
+            farms: data.results,
             totalPages: data.totalPages,
             pageIndex: data.pageIndex,
             pageSize: data.pageSize,
@@ -137,14 +161,14 @@ export class ExtensionFarmersState {
         catchError((error: unknown) => {
           ctx.patchState({
             isLoading: false,
-            errors: [extractErrorMessage(error, 'Unable to load assigned farmers.')],
+            errors: [extractErrorMessage(error, 'Unable to load farms.')],
           });
           return of(error);
         }),
       );
   }
 
-  private buildParams(params?: ExtensionFarmersQueryParams): HttpParams {
+  private buildParams(params?: PortfolioFarmsQueryParams): HttpParams {
     let httpParams = new HttpParams();
 
     if (!params) {

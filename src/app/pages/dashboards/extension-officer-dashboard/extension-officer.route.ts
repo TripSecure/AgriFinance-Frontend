@@ -26,11 +26,17 @@ export const extensionOfficerRoutes: Routes = [
         title: 'Farmers',
       },
       {
+        path: 'farms',
+        loadComponent: () =>
+          import('./components/farms/farms.component').then((m) => m.FarmsComponent),
+        title: 'Farms',
+      },
+      {
         path: 'visits',
         loadComponent: () =>
           import('./components/farm-visits/farm-visits.component').then((m) => m.FarmVisitsComponent),
         title: 'Farm Visits',
-      }
+      },
     ],
   },
 ];

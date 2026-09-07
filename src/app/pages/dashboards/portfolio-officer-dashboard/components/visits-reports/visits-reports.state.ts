@@ -6,38 +6,61 @@ import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../../../environment/environment';
 import { extractErrorMessage, normalizeListResponse } from '../../../../../shared/request.utils';
 
-export interface ExtensionFarmer extends Record<string, unknown> {
-  id: string;
+export interface PortfolioMonitoringVisitFarm {
+  id?: string;
+  locationLabel?: string | null;
+  cropType?: string | null;
+  sizeHectares?: number | null;
+}
+
+export interface PortfolioMonitoringVisitFarmer {
+  id?: string;
   fullName?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
+  name?: string | null;
   phone?: string | null;
-  phoneNumber?: string | null;
-  email?: string | null;
-  community?: string | null;
-  location?: string | null;
+}
+
+export interface PortfolioMonitoringVisitOfficer {
+  id?: string;
+  fullName?: string | null;
+  name?: string | null;
   region?: string | null;
-  primaryCrop?: string | null;
-  cropTypes?: string[];
-  farmsCount?: number;
-  totalFarms?: number;
+  staffId?: string | null;
+}
+
+export interface PortfolioMonitoringVisit extends Record<string, unknown> {
+  id: string;
+  farm?: PortfolioMonitoringVisitFarm | null;
+  farmer?: PortfolioMonitoringVisitFarmer | null;
+  officer?: PortfolioMonitoringVisitOfficer | null;
+  farmerName?: string | null;
+  officerName?: string | null;
+  farmLocation?: string | null;
+  cropType?: string | null;
+  visitDate?: string | null;
+  instructions?: string | null;
+  yieldEstimate?: number | null;
+  riskNotes?: string | null;
+  alertGenerated?: boolean;
   status?: string | null;
   approvalStatus?: string | null;
-  lastVisitDate?: string | null;
+  submittedAt?: string | null;
+  reviewedAt?: string | null;
+  reviewNotes?: string | null;
   lastActivityLabel?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
 
-interface ExtensionFarmersResponse {
+interface MonitoringVisitsResponse {
   message?: string;
   success?: boolean;
   isSuccessful?: boolean;
-  data: ExtensionFarmersData | ExtensionFarmer[];
+  data: MonitoringVisitsData | PortfolioMonitoringVisit[];
   errors?: unknown;
 }
 
-interface ExtensionFarmersData {
+interface MonitoringVisitsData {
   totalPages?: number;
   pageIndex?: number;
   pageSize?: number;
@@ -49,38 +72,38 @@ interface ExtensionFarmersData {
     limit?: number;
     total?: number;
   };
-  results?: ExtensionFarmer[];
-  items?: ExtensionFarmer[];
-  data?: ExtensionFarmer[];
+  results?: PortfolioMonitoringVisit[];
+  items?: PortfolioMonitoringVisit[];
+  data?: PortfolioMonitoringVisit[];
 }
 
-export interface ExtensionFarmersQueryParams {
+export interface MonitoringVisitsQueryParams {
   first?: number;
   rows?: number;
   globalFilter?: string;
   status?: string;
-  cropType?: string;
+  timeframeDays?: number;
 }
 
-export interface ExtensionFarmersStateModel {
+export interface PortfolioMonitoringVisitsStateModel {
   totalPages: number;
   pageIndex: number;
   pageSize: number;
   totalCount: number;
   isLoading: boolean;
   errors: string[];
-  farmers: ExtensionFarmer[];
+  visits: PortfolioMonitoringVisit[];
 }
 
-export class GetExtensionFarmers {
-  static readonly type = '[Extension Farmers] Get Assigned Farmers';
-  constructor(public params?: ExtensionFarmersQueryParams) {}
+export class GetPortfolioMonitoringVisits {
+  static readonly type = '[Portfolio Monitoring Visits] Get Monitoring Visits';
+  constructor(public params?: MonitoringVisitsQueryParams) {}
 }
 
-@State<ExtensionFarmersStateModel>({
-  name: 'extensionFarmers',
+@State<PortfolioMonitoringVisitsStateModel>({
+  name: 'portfolioMonitoringVisits',
   defaults: {
-    farmers: [],
+    visits: [],
     totalPages: 0,
     pageIndex: 0,
     pageSize: 10,
@@ -90,43 +113,49 @@ export class GetExtensionFarmers {
   },
 })
 @Injectable()
-export class ExtensionFarmersState {
+export class PortfolioMonitoringVisitsState {
   private readonly http = inject(HttpClient);
 
   @Selector()
-  static isLoading(state: ExtensionFarmersStateModel): boolean {
+  static isLoading(state: PortfolioMonitoringVisitsStateModel): boolean {
     return state.isLoading;
   }
 
   @Selector()
-  static errors(state: ExtensionFarmersStateModel): string[] {
+  static errors(state: PortfolioMonitoringVisitsStateModel): string[] {
     return state.errors;
   }
 
   @Selector()
-  static farmers(state: ExtensionFarmersStateModel): ExtensionFarmer[] {
-    return state.farmers;
+  static visits(state: PortfolioMonitoringVisitsStateModel): PortfolioMonitoringVisit[] {
+    return state.visits;
   }
 
   @Selector()
-  static farmersConfigs(state: ExtensionFarmersStateModel) {
+  static visitsConfigs(state: PortfolioMonitoringVisitsStateModel) {
     const { totalPages, pageIndex, pageSize, totalCount } = state;
     return { totalPages, pageIndex, pageSize, totalCount };
   }
 
-  @Action(GetExtensionFarmers)
-  getFarmers(ctx: StateContext<ExtensionFarmersStateModel>, { params }: GetExtensionFarmers) {
+  @Action(GetPortfolioMonitoringVisits)
+  getVisits(
+    ctx: StateContext<PortfolioMonitoringVisitsStateModel>,
+    { params }: GetPortfolioMonitoringVisits,
+  ) {
     ctx.patchState({ isLoading: true, errors: [] });
 
     return this.http
-      .get<ExtensionFarmersResponse>(`${environment.api}/extension/farmers`, {
-        params: this.buildParams(params),
-      })
+      .get<MonitoringVisitsResponse>(
+        `${environment.api}/portfolio/monitoring-visits`,
+        {
+          params: this.buildParams(params),
+        },
+      )
       .pipe(
         tap((response) => {
           const data = normalizeListResponse(response.data);
           ctx.patchState({
-            farmers: data.results,
+            visits: data.results,
             totalPages: data.totalPages,
             pageIndex: data.pageIndex,
             pageSize: data.pageSize,
@@ -137,14 +166,14 @@ export class ExtensionFarmersState {
         catchError((error: unknown) => {
           ctx.patchState({
             isLoading: false,
-            errors: [extractErrorMessage(error, 'Unable to load assigned farmers.')],
+            errors: [extractErrorMessage(error, 'Unable to load monitoring visits.')],
           });
           return of(error);
         }),
       );
   }
 
-  private buildParams(params?: ExtensionFarmersQueryParams): HttpParams {
+  private buildParams(params?: MonitoringVisitsQueryParams): HttpParams {
     let httpParams = new HttpParams();
 
     if (!params) {
@@ -165,8 +194,8 @@ export class ExtensionFarmersState {
       httpParams = httpParams.set('status', params.status);
     }
 
-    if (params.cropType) {
-      httpParams = httpParams.set('cropType', params.cropType);
+    if (params.timeframeDays) {
+      httpParams = httpParams.set('timeframeDays', String(params.timeframeDays));
     }
 
     return httpParams;

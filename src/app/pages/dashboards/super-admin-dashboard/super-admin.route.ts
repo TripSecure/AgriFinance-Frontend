@@ -31,6 +31,19 @@ export const superAdminRoutes: Routes = [
           ),
         title: 'User Details',
       },
+      {
+        path: 'audit-log',
+        loadComponent: () =>
+          import('./components/audit-logs/audit-logs.component').then(
+            (m) => m.AuditLogsComponent,
+          ),
+        title: 'Audit Log',
+      },
+      {
+        path: 'audit-logs',
+        redirectTo: 'audit-log',
+        pathMatch: 'full',
+      },
     ],
   },
 ];

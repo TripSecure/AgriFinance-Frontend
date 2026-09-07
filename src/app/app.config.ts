@@ -12,10 +12,16 @@ import { authInterceptor } from './interceptors/auth.interceptor';
 import { AuthState } from './pages/auth/services/auth/auth.states';
 import { RegistrationState } from './pages/auth/register/services/registration.state';
 import { UsersState } from './pages/dashboards/super-admin-dashboard/components/users/users.state';
+import { AuditLogsState } from './pages/dashboards/super-admin-dashboard/components/audit-logs/audit-logs.state';
 import { FarmersState } from './pages/dashboards/portfolio-officer-dashboard/components/farmers/farmers.state';
 import { PortfolioLoansState } from './pages/dashboards/portfolio-officer-dashboard/components/loans/loans.state';
 import { ExtensionFarmersState } from './pages/dashboards/extension-officer-dashboard/components/farmers/farmers.state';
+import { ExtensionFarmsState } from './pages/dashboards/extension-officer-dashboard/components/farms/farms.state';
 import { FarmVisitsState } from './pages/dashboards/extension-officer-dashboard/components/farm-visits/farm-visits.state';
+import { PortfolioExtensionOfficersState } from './pages/dashboards/portfolio-officer-dashboard/components/extension-officers/extension-officers.state';
+import { PortfolioInputProvidersState } from './pages/dashboards/portfolio-officer-dashboard/components/input-service-providers/input-service-providers.state';
+import { PortfolioMonitoringVisitsState } from './pages/dashboards/portfolio-officer-dashboard/components/visits-reports/visits-reports.state';
+import { PortfolioFarmsState } from './pages/dashboards/portfolio-officer-dashboard/components/farms/farms.state';
 import { environment } from '../environment/environment';
 
 const ngxsFeatures: EnvironmentProviders[] = [
@@ -41,10 +47,16 @@ export const appConfig: ApplicationConfig = {
         AuthState,
         RegistrationState,
         UsersState,
+        AuditLogsState,
         FarmersState,
         PortfolioLoansState,
         ExtensionFarmersState,
+        ExtensionFarmsState,
         FarmVisitsState,
+        PortfolioExtensionOfficersState,
+        PortfolioInputProvidersState,
+        PortfolioMonitoringVisitsState,
+        PortfolioFarmsState,
       ],
       ...ngxsFeatures,
     ),

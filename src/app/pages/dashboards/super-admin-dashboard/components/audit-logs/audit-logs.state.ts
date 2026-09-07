@@ -6,38 +6,46 @@ import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../../../environment/environment';
 import { extractErrorMessage, normalizeListResponse } from '../../../../../shared/request.utils';
 
-export interface ExtensionFarmer extends Record<string, unknown> {
-  id: string;
+export interface AuditLogActor {
+  id?: string | null;
   fullName?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  phone?: string | null;
-  phoneNumber?: string | null;
+  name?: string | null;
   email?: string | null;
-  community?: string | null;
-  location?: string | null;
-  region?: string | null;
-  primaryCrop?: string | null;
-  cropTypes?: string[];
-  farmsCount?: number;
-  totalFarms?: number;
+  role?: string | null;
+}
+
+export interface AuditLog extends Record<string, unknown> {
+  id: string;
+  action?: string | null;
+  actor?: AuditLogActor | null;
+  actorName?: string | null;
+  actorEmail?: string | null;
+  performedBy?: string | null;
+  userId?: string | null;
+  resource?: string | null;
+  resourceType?: string | null;
+  entityType?: string | null;
+  resourceId?: string | null;
+  entityId?: string | null;
+  details?: string | Record<string, unknown> | null;
+  description?: string | null;
+  ipAddress?: string | null;
+  ip?: string | null;
   status?: string | null;
-  approvalStatus?: string | null;
-  lastVisitDate?: string | null;
-  lastActivityLabel?: string | null;
   createdAt?: string | null;
+  timestamp?: string | null;
   updatedAt?: string | null;
 }
 
-interface ExtensionFarmersResponse {
+interface AuditLogsResponse {
   message?: string;
   success?: boolean;
   isSuccessful?: boolean;
-  data: ExtensionFarmersData | ExtensionFarmer[];
+  data: AuditLogsData | AuditLog[];
   errors?: unknown;
 }
 
-interface ExtensionFarmersData {
+interface AuditLogsData {
   totalPages?: number;
   pageIndex?: number;
   pageSize?: number;
@@ -49,38 +57,39 @@ interface ExtensionFarmersData {
     limit?: number;
     total?: number;
   };
-  results?: ExtensionFarmer[];
-  items?: ExtensionFarmer[];
-  data?: ExtensionFarmer[];
+  results?: AuditLog[];
+  items?: AuditLog[];
+  data?: AuditLog[];
 }
 
-export interface ExtensionFarmersQueryParams {
+export interface AuditLogsQueryParams {
   first?: number;
   rows?: number;
   globalFilter?: string;
   status?: string;
-  cropType?: string;
+  action?: string;
+  resource?: string;
 }
 
-export interface ExtensionFarmersStateModel {
+export interface AuditLogsStateModel {
   totalPages: number;
   pageIndex: number;
   pageSize: number;
   totalCount: number;
   isLoading: boolean;
   errors: string[];
-  farmers: ExtensionFarmer[];
+  logs: AuditLog[];
 }
 
-export class GetExtensionFarmers {
-  static readonly type = '[Extension Farmers] Get Assigned Farmers';
-  constructor(public params?: ExtensionFarmersQueryParams) {}
+export class GetAuditLogs {
+  static readonly type = '[Audit Logs] Get Audit Logs';
+  constructor(public params?: AuditLogsQueryParams) {}
 }
 
-@State<ExtensionFarmersStateModel>({
-  name: 'extensionFarmers',
+@State<AuditLogsStateModel>({
+  name: 'auditLogs',
   defaults: {
-    farmers: [],
+    logs: [],
     totalPages: 0,
     pageIndex: 0,
     pageSize: 10,
@@ -90,43 +99,43 @@ export class GetExtensionFarmers {
   },
 })
 @Injectable()
-export class ExtensionFarmersState {
+export class AuditLogsState {
   private readonly http = inject(HttpClient);
 
   @Selector()
-  static isLoading(state: ExtensionFarmersStateModel): boolean {
+  static isLoading(state: AuditLogsStateModel): boolean {
     return state.isLoading;
   }
 
   @Selector()
-  static errors(state: ExtensionFarmersStateModel): string[] {
+  static errors(state: AuditLogsStateModel): string[] {
     return state.errors;
   }
 
   @Selector()
-  static farmers(state: ExtensionFarmersStateModel): ExtensionFarmer[] {
-    return state.farmers;
+  static logs(state: AuditLogsStateModel): AuditLog[] {
+    return state.logs;
   }
 
   @Selector()
-  static farmersConfigs(state: ExtensionFarmersStateModel) {
+  static logsConfigs(state: AuditLogsStateModel) {
     const { totalPages, pageIndex, pageSize, totalCount } = state;
     return { totalPages, pageIndex, pageSize, totalCount };
   }
 
-  @Action(GetExtensionFarmers)
-  getFarmers(ctx: StateContext<ExtensionFarmersStateModel>, { params }: GetExtensionFarmers) {
+  @Action(GetAuditLogs)
+  getAuditLogs(ctx: StateContext<AuditLogsStateModel>, { params }: GetAuditLogs) {
     ctx.patchState({ isLoading: true, errors: [] });
 
     return this.http
-      .get<ExtensionFarmersResponse>(`${environment.api}/extension/farmers`, {
+      .get<AuditLogsResponse>(`${environment.api}/admin/audit-logs`, {
         params: this.buildParams(params),
       })
       .pipe(
         tap((response) => {
           const data = normalizeListResponse(response.data);
           ctx.patchState({
-            farmers: data.results,
+            logs: data.results,
             totalPages: data.totalPages,
             pageIndex: data.pageIndex,
             pageSize: data.pageSize,
@@ -137,14 +146,14 @@ export class ExtensionFarmersState {
         catchError((error: unknown) => {
           ctx.patchState({
             isLoading: false,
-            errors: [extractErrorMessage(error, 'Unable to load assigned farmers.')],
+            errors: [extractErrorMessage(error, 'Unable to load audit logs.')],
           });
           return of(error);
         }),
       );
   }
 
-  private buildParams(params?: ExtensionFarmersQueryParams): HttpParams {
+  private buildParams(params?: AuditLogsQueryParams): HttpParams {
     let httpParams = new HttpParams();
 
     if (!params) {
@@ -165,8 +174,12 @@ export class ExtensionFarmersState {
       httpParams = httpParams.set('status', params.status);
     }
 
-    if (params.cropType) {
-      httpParams = httpParams.set('cropType', params.cropType);
+    if (params.action) {
+      httpParams = httpParams.set('action', params.action);
+    }
+
+    if (params.resource) {
+      httpParams = httpParams.set('resource', params.resource);
     }
 
     return httpParams;

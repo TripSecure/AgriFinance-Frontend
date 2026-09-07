@@ -65,6 +65,12 @@ export const portfolioOfficerRoutes: Routes = [
         title: 'Loans',
       },
       {
+        path: 'farms',
+        loadComponent: () =>
+          import('./components/farms/farms.component').then((m) => m.FarmsComponent),
+        title: 'Farms',
+      },
+      {
         path: 'reports',
         loadComponent: () =>
           import('./components/visits-reports/visits-reports.component').then((m) => m.VisitsReportsComponent),

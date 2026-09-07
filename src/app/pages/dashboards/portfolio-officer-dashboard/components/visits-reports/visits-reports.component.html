@@ -1,1 +1,123 @@
-<p>visits-reports works!</p>
+<div class="content">
+  <div class="title mb-4">
+    <h3>Monitoring Visits & Reports</h3>
+    <p>Review field inspection reports, harvest yield estimates, and risk flags across farm visits.</p>
+  </div>
+
+  <div class="filters">
+    <div class="filters__search">
+      <label for="visitsReportsSearch" class="d-block">Search</label>
+      <div class="filters__search__input-form">
+        <div class="d-flex align-items-center justify-content-center">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          <input
+            id="visitsReportsSearch"
+            (input)="onSearch($any($event.target)?.value ?? '')"
+            type="text"
+            placeholder="Search reports"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="filters__actions">
+      <label for="visitsReportsStatusFilter">Filter by status</label>
+      <button
+        id="visitsReportsStatusFilter"
+        type="button"
+        [matMenuTriggerFor]="statusMenu"
+        class="filters__actions__input-form"
+      >
+        <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+      </button>
+      <mat-menu #statusMenu="matMenu">
+        <button type="button" mat-menu-item (click)="onStatusFilter('')">
+          <span class="material-symbols-outlined" aria-hidden="true">list</span>
+          <span>All statuses</span>
+        </button>
+        @for (option of statusOptions; track option.value) {
+          <button type="button" mat-menu-item (click)="onStatusFilter(option.value)">
+            <span class="material-symbols-outlined" aria-hidden="true">{{ option.icon }}</span>
+            <span>{{ option.label }}</span>
+          </button>
+        }
+      </mat-menu>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="ps-3 py-2 d-flex align-items-center gap-3">
+      <div class="data-head">Total Visits Logged</div>
+      <div
+        class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
+      >
+        {{ visitsData().totalCount }}
+      </div>
+    </div>
+
+    <p-table
+      #visitsTable
+      [value]="visitRows()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="visitsData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadVisits($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th id="reportFarmer">Farmer</th>
+          <th id="reportFarmLocation">Farm Location</th>
+          <th id="reportCrop">Crop</th>
+          <th id="reportOfficer">Extension Officer</th>
+          <th id="reportVisitDate">Visit Date</th>
+          <th id="reportYield">Yield Estimate</th>
+          <th id="reportRisk">Risk Assessment</th>
+          <th id="reportStatus">Status</th>
+          <th id="reportLastActivity">Last Activity</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.farmerName }}</td>
+          <td>{{ row.farmLocation }}</td>
+          <td>{{ row.crop }}</td>
+          <td>{{ row.officerName }}</td>
+          <td>{{ row.visitDate }}</td>
+          <td>{{ row.yieldEstimate }}</td>
+          <td>
+            <span
+              class="status-pill"
+              [class.status-pill--active]="row.isSuccess"
+              [class.status-pill--inactive]="row.isDanger"
+              [class.status-pill--pending]="row.isWarning"
+            >
+              {{ row.riskAssessment }}
+            </span>
+          </td>
+          <td>
+            <span
+              class="status-pill"
+              [class.status-pill--active]="row.isSuccess"
+              [class.status-pill--inactive]="row.isDanger"
+              [class.status-pill--pending]="row.isWarning"
+            >
+              {{ row.statusLabel }}
+            </span>
+          </td>
+          <td>{{ row.lastActivity }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="9" class="empty-state">No monitoring visits found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

@@ -1,5 +1,4 @@
 <div class="dashboard">
-
   <div class="main d-flex">
     <aside>
       <nav>
@@ -20,27 +19,23 @@
           <span class="material-symbols-outlined">people</span>
           My Farmers
         </a>
+        <a [routerLink]="['farms']" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">yard</span>
+          Farms
+        </a>
         <a [routerLink]="['visits']" routerLinkActive="active-link">
           <span class="material-symbols-outlined">calendar_month</span>
           Visit Schedule
         </a>
-        <a [routerLink]="['insurance']" routerLinkActive="active-link">
-          <span class="material-symbols-outlined">notifications</span>
-          warning
-        </a>
-       
       </nav>
     </aside>
     <div class="w-100">
-         <nav>
-    <app-navbar />
-  </nav>
-  <div class="content">
-    <router-outlet />
-  </div>
+      <nav>
+        <app-navbar />
+      </nav>
+      <div class="content">
+        <router-outlet />
+      </div>
     </div>
   </div>
 </div>
-
-
-

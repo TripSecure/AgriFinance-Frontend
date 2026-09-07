@@ -6,38 +6,60 @@ import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../../../environment/environment';
 import { extractErrorMessage, normalizeListResponse } from '../../../../../shared/request.utils';
 
-export interface ExtensionFarmer extends Record<string, unknown> {
-  id: string;
+export interface ExtensionOfficerPersonal {
   fullName?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
   phone?: string | null;
-  phoneNumber?: string | null;
   email?: string | null;
-  community?: string | null;
-  location?: string | null;
+}
+
+export interface ExtensionOfficerEmployment {
+  staffId?: string | null;
+  regionDistrict?: string | null;
+  supervisorName?: string | null;
+}
+
+export interface ExtensionOfficerMetrics {
+  assignedFarmersCount?: number;
+  completedVisitsCount?: number;
+  pendingVisitsCount?: number;
+  totalVisitsCount?: number;
+}
+
+export interface ExtensionOfficerActivityItem extends Record<string, unknown> {
+  id: string;
+  officerId?: string | null;
+  name?: string | null;
+  fullName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  staffId?: string | null;
   region?: string | null;
-  primaryCrop?: string | null;
-  cropTypes?: string[];
-  farmsCount?: number;
-  totalFarms?: number;
+  regionDistrict?: string | null;
   status?: string | null;
   approvalStatus?: string | null;
-  lastVisitDate?: string | null;
+  assignedFarmersCount?: number;
+  completedVisitsCount?: number;
+  pendingVisitsCount?: number;
+  totalVisitsCount?: number;
+  personalInformation?: ExtensionOfficerPersonal | null;
+  employmentDetails?: ExtensionOfficerEmployment | null;
+  metrics?: ExtensionOfficerMetrics | null;
+  lastActiveAt?: string | null;
+  lastActivityAt?: string | null;
   lastActivityLabel?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
 
-interface ExtensionFarmersResponse {
+interface ExtensionOfficersResponse {
   message?: string;
   success?: boolean;
   isSuccessful?: boolean;
-  data: ExtensionFarmersData | ExtensionFarmer[];
+  data: ExtensionOfficersData | ExtensionOfficerActivityItem[];
   errors?: unknown;
 }
 
-interface ExtensionFarmersData {
+interface ExtensionOfficersData {
   totalPages?: number;
   pageIndex?: number;
   pageSize?: number;
@@ -49,38 +71,38 @@ interface ExtensionFarmersData {
     limit?: number;
     total?: number;
   };
-  results?: ExtensionFarmer[];
-  items?: ExtensionFarmer[];
-  data?: ExtensionFarmer[];
+  results?: ExtensionOfficerActivityItem[];
+  items?: ExtensionOfficerActivityItem[];
+  data?: ExtensionOfficerActivityItem[];
 }
 
-export interface ExtensionFarmersQueryParams {
+export interface ExtensionOfficersQueryParams {
   first?: number;
   rows?: number;
   globalFilter?: string;
   status?: string;
-  cropType?: string;
+  region?: string;
 }
 
-export interface ExtensionFarmersStateModel {
+export interface PortfolioExtensionOfficersStateModel {
   totalPages: number;
   pageIndex: number;
   pageSize: number;
   totalCount: number;
   isLoading: boolean;
   errors: string[];
-  farmers: ExtensionFarmer[];
+  officers: ExtensionOfficerActivityItem[];
 }
 
-export class GetExtensionFarmers {
-  static readonly type = '[Extension Farmers] Get Assigned Farmers';
-  constructor(public params?: ExtensionFarmersQueryParams) {}
+export class GetPortfolioExtensionOfficers {
+  static readonly type = '[Portfolio Extension Officers] Get Officers Activity';
+  constructor(public params?: ExtensionOfficersQueryParams) {}
 }
 
-@State<ExtensionFarmersStateModel>({
-  name: 'extensionFarmers',
+@State<PortfolioExtensionOfficersStateModel>({
+  name: 'portfolioExtensionOfficers',
   defaults: {
-    farmers: [],
+    officers: [],
     totalPages: 0,
     pageIndex: 0,
     pageSize: 10,
@@ -90,43 +112,49 @@ export class GetExtensionFarmers {
   },
 })
 @Injectable()
-export class ExtensionFarmersState {
+export class PortfolioExtensionOfficersState {
   private readonly http = inject(HttpClient);
 
   @Selector()
-  static isLoading(state: ExtensionFarmersStateModel): boolean {
+  static isLoading(state: PortfolioExtensionOfficersStateModel): boolean {
     return state.isLoading;
   }
 
   @Selector()
-  static errors(state: ExtensionFarmersStateModel): string[] {
+  static errors(state: PortfolioExtensionOfficersStateModel): string[] {
     return state.errors;
   }
 
   @Selector()
-  static farmers(state: ExtensionFarmersStateModel): ExtensionFarmer[] {
-    return state.farmers;
+  static officers(state: PortfolioExtensionOfficersStateModel): ExtensionOfficerActivityItem[] {
+    return state.officers;
   }
 
   @Selector()
-  static farmersConfigs(state: ExtensionFarmersStateModel) {
+  static officersConfigs(state: PortfolioExtensionOfficersStateModel) {
     const { totalPages, pageIndex, pageSize, totalCount } = state;
     return { totalPages, pageIndex, pageSize, totalCount };
   }
 
-  @Action(GetExtensionFarmers)
-  getFarmers(ctx: StateContext<ExtensionFarmersStateModel>, { params }: GetExtensionFarmers) {
+  @Action(GetPortfolioExtensionOfficers)
+  getOfficers(
+    ctx: StateContext<PortfolioExtensionOfficersStateModel>,
+    { params }: GetPortfolioExtensionOfficers,
+  ) {
     ctx.patchState({ isLoading: true, errors: [] });
 
     return this.http
-      .get<ExtensionFarmersResponse>(`${environment.api}/extension/farmers`, {
-        params: this.buildParams(params),
-      })
+      .get<ExtensionOfficersResponse>(
+        `${environment.api}/portfolio/extension-officers/activity`,
+        {
+          params: this.buildParams(params),
+        },
+      )
       .pipe(
         tap((response) => {
           const data = normalizeListResponse(response.data);
           ctx.patchState({
-            farmers: data.results,
+            officers: data.results,
             totalPages: data.totalPages,
             pageIndex: data.pageIndex,
             pageSize: data.pageSize,
@@ -137,14 +165,14 @@ export class ExtensionFarmersState {
         catchError((error: unknown) => {
           ctx.patchState({
             isLoading: false,
-            errors: [extractErrorMessage(error, 'Unable to load assigned farmers.')],
+            errors: [extractErrorMessage(error, 'Unable to load extension officers activity.')],
           });
           return of(error);
         }),
       );
   }
 
-  private buildParams(params?: ExtensionFarmersQueryParams): HttpParams {
+  private buildParams(params?: ExtensionOfficersQueryParams): HttpParams {
     let httpParams = new HttpParams();
 
     if (!params) {
@@ -165,8 +193,8 @@ export class ExtensionFarmersState {
       httpParams = httpParams.set('status', params.status);
     }
 
-    if (params.cropType) {
-      httpParams = httpParams.set('cropType', params.cropType);
+    if (params.region) {
+      httpParams = httpParams.set('region', params.region);
     }
 
     return httpParams;

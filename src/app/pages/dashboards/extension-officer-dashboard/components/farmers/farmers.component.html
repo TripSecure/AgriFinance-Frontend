@@ -1,6 +1,7 @@
 <div class="content">
-  <div class="title d-flex align-items-center justify-content-between mb-4">
+  <div class="title mb-4">
     <h3>My Farmers</h3>
+    <p>View and support assigned farmers in your jurisdiction with scheduled field visits and agronomic guidance.</p>
   </div>
 
   <div class="filters">
@@ -13,16 +14,16 @@
             id="extensionFarmersSearch"
             (input)="onSearch($any($event.target)?.value ?? '')"
             type="text"
-            placeholder="Search"
+            placeholder="Search farmers"
           />
         </div>
       </div>
     </div>
 
     <div class="filters__actions">
-      <label for="assignmentStatusFilter">Filter by assignment status</label>
+      <label for="farmersStatusFilter">Filter by status</label>
       <button
-        id="assignmentStatusFilter"
+        id="farmersStatusFilter"
         type="button"
         [matMenuTriggerFor]="statusMenu"
         class="filters__actions__input-form"
@@ -47,7 +48,7 @@
 
   <div class="table-wrapper">
     <div class="ps-3 py-2 d-flex align-items-center gap-3">
-      <div class="data-head">Total assigned farms</div>
+      <div class="data-head">Total Assigned Farmers</div>
       <div
         class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
       >
@@ -68,13 +69,13 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th id="extensionFarmerName">Name</th>
+          <th id="extensionFarmerName">Farmer Name</th>
           <th id="extensionFarmerContact">Contact</th>
-          <th id="extensionFarmerCrop">Crop</th>
-          <th id="extensionFarmerLocation">Location</th>
-          <th id="extensionFarmSize">Farm size</th>
-          <th id="extensionAssignmentStatus">Assignment status</th>
-          <th id="extensionLatestVisit">Latest visit</th>
+          <th id="extensionFarmerLocation">Community / Location</th>
+          <th id="extensionFarmerCrop">Primary Crop</th>
+          <th id="extensionFarmerFarms">Farms</th>
+          <th id="extensionFarmerStatus">Status</th>
+          <th id="extensionFarmerLatestVisit">Latest Visit</th>
         </tr>
       </ng-template>
 
@@ -82,9 +83,9 @@
         <tr>
           <td>{{ row.name }}</td>
           <td>{{ row.contact }}</td>
-          <td>{{ row.crop }}</td>
           <td>{{ row.location }}</td>
-          <td>{{ row.size }}</td>
+          <td>{{ row.primaryCrop }}</td>
+          <td>{{ row.farmsCount }}</td>
           <td>
             <span
               class="status-pill"
@@ -92,10 +93,10 @@
               [class.status-pill--inactive]="row.isInactive"
               [class.status-pill--pending]="row.isPending"
             >
-              {{ row.assignmentStatusLabel }}
+              {{ row.statusLabel }}
             </span>
           </td>
-          <td>{{ row.latestVisit }}</td>
+          <td>{{ row.lastVisit }}</td>
         </tr>
       </ng-template>
 
