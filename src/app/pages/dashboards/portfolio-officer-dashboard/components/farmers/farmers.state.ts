@@ -15,6 +15,8 @@ export interface Farmer extends Record<string, unknown> {
   id: string;
   fullName?: string | null;
   full_name?: string | null;
+  farmerCode?: string | null;
+  farmer_code?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   nationalId?: string | null;

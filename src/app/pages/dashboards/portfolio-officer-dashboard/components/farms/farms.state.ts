@@ -79,11 +79,35 @@ interface PortfolioFarmsData {
 }
 
 export interface PortfolioFarmsQueryParams {
+  farmerId?: string;
   first?: number;
   rows?: number;
   globalFilter?: string;
   status?: string;
   cropType?: string;
+}
+
+export interface CreatePortfolioFarmPayload {
+  sizeHectares?: number;
+  sizeAcres?: number;
+  cropType?: string;
+  primaryCrop?: string;
+  secondaryCrop?: string;
+  farmerCode?: string;
+  region?: string;
+  farmAddressRegion?: string;
+  district?: string;
+  community?: string;
+  gpsAddress?: string;
+  farmAddress?: string;
+  gpsLatitude?: number;
+  gpsLongitude?: number;
+  gpsLocation?: {
+    latitude?: number;
+    longitude?: number;
+  };
+  cooperativeName?: string;
+  [key: string]: unknown;
 }
 
 export interface PortfolioFarmsStateModel {
@@ -92,6 +116,8 @@ export interface PortfolioFarmsStateModel {
   pageSize: number;
   totalCount: number;
   isLoading: boolean;
+  isCreating: boolean;
+  message: string | null;
   errors: string[];
   farms: PortfolioFarm[];
 }
@@ -99,6 +125,16 @@ export interface PortfolioFarmsStateModel {
 export class GetPortfolioFarms {
   static readonly type = '[Portfolio Farms] Get Farms';
   constructor(public params?: PortfolioFarmsQueryParams) {}
+}
+
+export class CreatePortfolioFarm {
+  static readonly type = '[Portfolio Farms] Create Farm';
+  constructor(public farmerId: string, public payload: CreatePortfolioFarmPayload) {}
+}
+
+export class DeletePortfolioFarm {
+  static readonly type = '[Portfolio Farms] Delete Farm';
+  constructor(public farmId: string, public farmerId?: string | null) {}
 }
 
 @State<PortfolioFarmsStateModel>({
@@ -110,6 +146,8 @@ export class GetPortfolioFarms {
     pageSize: 10,
     totalCount: 0,
     isLoading: false,
+    isCreating: false,
+    message: null,
     errors: [],
   },
 })
@@ -120,6 +158,16 @@ export class PortfolioFarmsState {
   @Selector()
   static isLoading(state: PortfolioFarmsStateModel): boolean {
     return state.isLoading;
+  }
+
+  @Selector()
+  static isCreating(state: PortfolioFarmsStateModel): boolean {
+    return state.isCreating;
+  }
+
+  @Selector()
+  static message(state: PortfolioFarmsStateModel): string | null {
+    return state.message;
   }
 
   @Selector()
@@ -142,8 +190,12 @@ export class PortfolioFarmsState {
   getFarms(ctx: StateContext<PortfolioFarmsStateModel>, { params }: GetPortfolioFarms) {
     ctx.patchState({ isLoading: true, errors: [] });
 
+    const endpoint = params?.farmerId
+      ? `${environment.api}/portfolio/farmers/${params.farmerId}/farms`
+      : `${environment.api}/portfolio/farms`;
+
     return this.http
-      .get<PortfolioFarmsResponse>(`${environment.api}/portfolio/farms`, {
+      .get<PortfolioFarmsResponse>(endpoint, {
         params: this.buildParams(params),
       })
       .pipe(
@@ -162,6 +214,69 @@ export class PortfolioFarmsState {
           ctx.patchState({
             isLoading: false,
             errors: [extractErrorMessage(error, 'Unable to load farms.')],
+          });
+          return of(error);
+        }),
+      );
+  }
+
+  @Action(CreatePortfolioFarm)
+  createFarm(ctx: StateContext<PortfolioFarmsStateModel>, { farmerId, payload }: CreatePortfolioFarm) {
+    ctx.patchState({ isCreating: true, message: null, errors: [] });
+
+    return this.http
+      .post<{ message?: string; success?: boolean; isSuccessful?: boolean; data?: unknown }>(
+        `${environment.api}/portfolio/farmers/${farmerId}/farms`,
+        payload,
+      )
+      .pipe(
+        tap((response) => {
+          ctx.patchState({
+            isCreating: false,
+            message: response.message ?? 'Farm added successfully.',
+            errors: [],
+          });
+        }),
+        catchError((error: unknown) => {
+          const message = extractErrorMessage(
+            error,
+            'Unable to add farm. Please review the form and try again.',
+          );
+          ctx.patchState({
+            isCreating: false,
+            message: null,
+            errors: [message],
+          });
+          return of(error);
+        }),
+      );
+  }
+
+  @Action(DeletePortfolioFarm)
+  deleteFarm(ctx: StateContext<PortfolioFarmsStateModel>, { farmId, farmerId }: DeletePortfolioFarm) {
+    ctx.patchState({ isLoading: true, errors: [] });
+
+    const endpoint = farmerId
+      ? `${environment.api}/portfolio/farmers/${farmerId}/farms/${farmId}`
+      : `${environment.api}/portfolio/farms/${farmId}`;
+
+    return this.http
+      .delete<{ message?: string; success?: boolean; isSuccessful?: boolean }>(endpoint)
+      .pipe(
+        tap((response) => {
+          const currentFarms = ctx.getState().farms.filter((farm) => farm.id !== farmId);
+          ctx.patchState({
+            farms: currentFarms,
+            totalCount: Math.max(0, ctx.getState().totalCount - 1),
+            isLoading: false,
+            message: response.message ?? 'Farm deleted successfully.',
+            errors: [],
+          });
+        }),
+        catchError((error: unknown) => {
+          ctx.patchState({
+            isLoading: false,
+            errors: [extractErrorMessage(error, 'Unable to delete farm.')],
           });
           return of(error);
         }),

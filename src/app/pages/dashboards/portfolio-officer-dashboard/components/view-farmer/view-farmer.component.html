@@ -1,0 +1,61 @@
+<div class="view-farmer-page">
+  <div
+    class="farmer-header d-flex flex-wrap align-items-center justify-content-between gap-3 mb-2 p-2"
+  >
+    <div class="d-flex align-items-center gap-3">
+      <div
+        class="d-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success fw-bold fs-5"
+        style="width: 3rem; height: 3rem"
+      >
+        <span class="material-symbols-outlined">person</span>
+      </div>
+      <div>
+        <h1 class="h4 fw-bold text-dark mb-0">
+          {{ farmerName() }}
+        </h1>
+        <div class="d-flex flex-wrap align-items-center gap-3 mt-1 text-body-secondary small">
+          <span class="d-flex align-items-center gap-1">
+            <span class="material-symbols-outlined fs-6">call</span>
+            {{ farmerContact() }}
+          </span>
+          <span class="text-body-tertiary">&bull;</span>
+          <span class="d-flex align-items-center gap-1">
+            <span class="material-symbols-outlined fs-6">location_on</span>
+            {{ farmerLocation() }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <span
+        class="d-inline-flex align-items-center px-3 py-2 rounded-pill border border-success-subtle bg-success-subtle text-success fw-semibold small"
+      >
+        {{ farmerStatus() }}
+      </span>
+    </div>
+  </div>
+
+  <div class="tabs-container">
+    <p-tabs [value]="activeTab()">
+      <p-tablist>
+        <p-tab value="farms" [routerLink]="['farms']" class="d-flex align-items-center gap-2">
+          <span class="material-symbols-outlined" aria-hidden="true">yard</span>
+          <span>Farms</span>
+        </p-tab>
+        <p-tab value="loans" [routerLink]="['loans']" class="d-flex align-items-center gap-2">
+          <span class="material-symbols-outlined" aria-hidden="true">request_quote</span>
+          <span>Loans</span>
+        </p-tab>
+        <p-tab value="reports" [routerLink]="['reports']" class="d-flex align-items-center gap-2">
+          <span class="material-symbols-outlined" aria-hidden="true">assessment</span>
+          <span>Reports</span>
+        </p-tab>
+      </p-tablist>
+    </p-tabs>
+  </div>
+
+  <div class="child-view-content mt-4">
+    <router-outlet />
+  </div>
+</div>

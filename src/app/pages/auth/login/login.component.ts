@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { LoginWithOtp, PersistState, SetRememberDevice } from '../services/auth/auth.actions';
+import { LoginWithOtp, PersistState, ResetLoginOtpRequest, SetRememberDevice } from '../services/auth/auth.actions';
 import { AuthState } from '../services/auth/auth.states';
 import { ToastrService } from '../../../shared/toastr/toastr.service';
 
@@ -51,6 +51,10 @@ export class LoginComponent {
     rememberDevice: false,
   });
   protected readonly loginControls = this.loginForm.controls;
+
+  constructor() {
+    this.store.dispatch(new ResetLoginOtpRequest());
+  }
 
   protected togglePasswordVisibility(): void {
     this.showPassword.update((isVisible) => !isVisible);

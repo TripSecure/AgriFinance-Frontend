@@ -1,9 +1,11 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 import { Store } from '@ngxs/store';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
@@ -25,7 +27,7 @@ export interface UserRow {
   contact: string;
   role: string;
   statusLabel: string;
-  createdAt: string;
+  createdAt: string | Date | null;
   isApproved: boolean;
   isRejected: boolean;
   isPending: boolean;
@@ -34,7 +36,7 @@ export interface UserRow {
 
 @Component({
   selector: 'app-users',
-  imports: [MatIconModule, MatMenuModule, TableModule],
+  imports: [DatePipe, MatIconModule, MenuModule, TableModule],
   templateUrl: './users.component.html',
   styleUrl: './users.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,6 +53,31 @@ export class UsersComponent {
   protected readonly usersData = this.store.selectSignal(UsersState.usersConfigs);
   protected readonly isLoading = this.store.selectSignal(UsersState.isLoading);
   protected readonly approvalOptions = userApprovalOptions;
+
+  protected selectedUserForAction: User | null = null;
+
+  protected readonly statusMenuItems: MenuItem[] = [
+    {
+      label: 'All statuses',
+      icon: 'list',
+      command: () => this.onStatusFilter(''),
+    },
+    ...userApprovalOptions.map((option) => ({
+      label: option.label,
+      icon: option.icon,
+      command: () => this.onStatusFilter(option.value),
+    })),
+  ];
+
+  protected readonly actionMenuItems: MenuItem[] = userApprovalOptions.map((option) => ({
+    label: option.label,
+    icon: option.icon,
+    command: () => {
+      if (this.selectedUserForAction) {
+        this.onApprovalRequest(this.selectedUserForAction, option);
+      }
+    },
+  }));
 
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
@@ -142,7 +169,7 @@ export class UsersComponent {
       contact: user.email || user.phone || user.phoneNumber || '-',
       role: this.formatLabel(user.role || '-'),
       statusLabel: this.formatLabel(status),
-      createdAt: user.createdAt || user.dateCreated || '-',
+      createdAt: user.createdAt || user.dateCreated || null,
       isApproved,
       isRejected,
       isPending: !isApproved && !isRejected,

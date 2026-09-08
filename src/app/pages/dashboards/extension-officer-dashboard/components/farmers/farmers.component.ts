@@ -1,6 +1,8 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatMenuModule } from '@angular/material/menu';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -25,7 +27,7 @@ interface ExtensionFarmerRow {
   primaryCrop: string;
   farmsCount: number;
   statusLabel: string;
-  lastVisit: string;
+  lastVisit: string | Date | null;
   isActive: boolean;
   isInactive: boolean;
   isPending: boolean;
@@ -41,7 +43,7 @@ const statusOptions: readonly StatusFilterOption[] = [
 
 @Component({
   selector: 'app-farmers',
-  imports: [MatMenuModule, TableModule],
+  imports: [DatePipe, MenuModule, TableModule],
   templateUrl: './farmers.component.html',
   styleUrl: './farmers.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,6 +56,19 @@ export class FarmersComponent {
   protected readonly farmersData = this.store.selectSignal(ExtensionFarmersState.farmersConfigs);
   protected readonly isLoading = this.store.selectSignal(ExtensionFarmersState.isLoading);
   protected readonly statusOptions = statusOptions;
+
+  protected readonly statusMenuItems: MenuItem[] = [
+    {
+      label: 'All statuses',
+      icon: 'list',
+      command: () => this.onStatusFilter(''),
+    },
+    ...statusOptions.map((option) => ({
+      label: option.label,
+      icon: option.icon,
+      command: () => this.onStatusFilter(option.value),
+    })),
+  ];
 
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
@@ -130,10 +145,7 @@ export class FarmersComponent {
       farmer.totalFarms ??
       1;
 
-    const lastVisit =
-      farmer.lastActivityLabel ||
-      this.formatDate(farmer.lastVisitDate || farmer.updatedAt || farmer.createdAt) ||
-      'No visits yet';
+    const lastVisit = farmer.lastVisitDate || farmer.updatedAt || farmer.createdAt || null;
 
     return {
       farmer,

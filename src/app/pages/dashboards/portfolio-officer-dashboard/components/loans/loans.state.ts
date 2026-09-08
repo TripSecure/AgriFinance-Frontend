@@ -30,6 +30,7 @@ export interface PortfolioLoanFulfillmentReadiness {
 
 export interface PortfolioLoanApplication extends Record<string, unknown> {
   id: string;
+  farmerId?: string | null;
   farmer?: PortfolioLoanFarmer | null;
   status?: PortfolioLoanStatus | null;
   requestedAmount?: number | null;
@@ -74,6 +75,7 @@ interface PortfolioLoansData {
 }
 
 export interface PortfolioLoansQueryParams {
+  farmerId?: string;
   first?: number;
   rows?: number;
   globalFilter?: string;
@@ -136,8 +138,12 @@ export class PortfolioLoansState {
   getLoans(ctx: StateContext<PortfolioLoansStateModel>, { params }: GetPortfolioLoans) {
     ctx.patchState({ isLoading: true, errors: [] });
 
+    const endpoint = params?.farmerId
+      ? `${environment.api}/portfolio/farmers/${params.farmerId}/loans`
+      : `${environment.api}/portfolio/loans`;
+
     return this.http
-      .get<PortfolioLoansResponse>(`${environment.api}/portfolio/loans`, {
+      .get<PortfolioLoansResponse>(endpoint, {
         params: this.buildParams(params),
       })
       .pipe(

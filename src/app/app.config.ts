@@ -1,5 +1,5 @@
 import { ApplicationConfig, EnvironmentProviders, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
 
 import { routes } from './app.routes';
 import { providePrimeNG } from 'primeng/config';
@@ -32,7 +32,11 @@ const ngxsFeatures: EnvironmentProviders[] = [
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+    ),
     provideHttpClient(withInterceptors([authInterceptor])),
     providePrimeNG({
       theme: {

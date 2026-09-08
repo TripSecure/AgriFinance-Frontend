@@ -45,7 +45,6 @@ body {
   height: 100%;
 }
 
-
 // External CSS and fonts (CSS imports - valid and not deprecated)
 @import url('https://fonts.googleapis.com/css2?family=Inter');
 @import 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,300,0,0';
@@ -79,4 +78,10 @@ body {
 body {
   margin: 0;
   font-family: Roboto, 'Inter', sans-serif;
+}
+::ng-deep {
+  .p-menu {
+    max-height: 10rem;
+    overflow-y: auto;
+  }
 }

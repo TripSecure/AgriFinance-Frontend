@@ -1,6 +1,8 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatMenuModule } from '@angular/material/menu';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -23,11 +25,11 @@ interface MonitoringVisitRow {
   farmLocation: string;
   crop: string;
   officerName: string;
-  visitDate: string;
+  visitDate: string | Date | null;
   yieldEstimate: string;
   riskAssessment: string;
   statusLabel: string;
-  lastActivity: string;
+  lastActivity: string | Date | null;
   isSuccess: boolean;
   isDanger: boolean;
   isWarning: boolean;
@@ -43,7 +45,7 @@ const visitStatusOptions: readonly ReportStatusFilterOption[] = [
 
 @Component({
   selector: 'app-visits-reports',
-  imports: [MatMenuModule, TableModule],
+  imports: [DatePipe, MenuModule, TableModule],
   templateUrl: './visits-reports.component.html',
   styleUrl: './visits-reports.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,6 +58,19 @@ export class VisitsReportsComponent {
   protected readonly visitsData = this.store.selectSignal(PortfolioMonitoringVisitsState.visitsConfigs);
   protected readonly isLoading = this.store.selectSignal(PortfolioMonitoringVisitsState.isLoading);
   protected readonly statusOptions = visitStatusOptions;
+
+  protected readonly statusMenuItems: MenuItem[] = [
+    {
+      label: 'All statuses',
+      icon: 'list',
+      command: () => this.onStatusFilter(''),
+    },
+    ...visitStatusOptions.map((option) => ({
+      label: option.label,
+      icon: option.icon,
+      command: () => this.onStatusFilter(option.value),
+    })),
+  ];
 
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
@@ -138,10 +153,9 @@ export class VisitsReportsComponent {
       ? 'Alert Generated'
       : visit.riskNotes || 'Normal';
 
+    const visitDate = visit.visitDate || null;
     const lastActivity =
-      visit.lastActivityLabel ||
-      this.formatDate(visit.reviewedAt || visit.submittedAt || visit.updatedAt || visit.createdAt) ||
-      '-';
+      visit.reviewedAt || visit.submittedAt || visit.updatedAt || visit.createdAt || null;
 
     return {
       visit,
@@ -149,7 +163,7 @@ export class VisitsReportsComponent {
       farmLocation,
       crop,
       officerName,
-      visitDate: this.formatDate(visit.visitDate) || '-',
+      visitDate,
       yieldEstimate,
       riskAssessment,
       statusLabel: this.formatLabel(rawStatus),

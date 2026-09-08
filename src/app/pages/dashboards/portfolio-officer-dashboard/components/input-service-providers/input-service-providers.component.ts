@@ -1,6 +1,8 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatMenuModule } from '@angular/material/menu';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -26,7 +28,7 @@ interface InputProviderRow {
   regions: string;
   fulfilledOrders: number;
   statusLabel: string;
-  lastActivity: string;
+  lastActivity: string | Date | null;
   isActive: boolean;
   isInactive: boolean;
   isPending: boolean;
@@ -42,7 +44,7 @@ const providerStatusOptions: readonly ProviderStatusFilterOption[] = [
 
 @Component({
   selector: 'app-input-service-providers',
-  imports: [MatMenuModule, TableModule],
+  imports: [DatePipe, MenuModule, TableModule],
   templateUrl: './input-service-providers.component.html',
   styleUrl: './input-service-providers.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,6 +57,19 @@ export class InputServiceProvidersComponent {
   protected readonly providersData = this.store.selectSignal(PortfolioInputProvidersState.providersConfigs);
   protected readonly isLoading = this.store.selectSignal(PortfolioInputProvidersState.isLoading);
   protected readonly statusOptions = providerStatusOptions;
+
+  protected readonly statusMenuItems: MenuItem[] = [
+    {
+      label: 'All statuses',
+      icon: 'list',
+      command: () => this.onStatusFilter(''),
+    },
+    ...providerStatusOptions.map((option) => ({
+      label: option.label,
+      icon: option.icon,
+      command: () => this.onStatusFilter(option.value),
+    })),
+  ];
 
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
@@ -138,9 +153,7 @@ export class InputServiceProvidersComponent {
       0;
 
     const lastActivity =
-      provider.lastActivityLabel ||
-      this.formatDate(provider.lastActiveAt || provider.lastActivityAt || provider.updatedAt) ||
-      '-';
+      provider.lastActiveAt || provider.lastActivityAt || provider.updatedAt || null;
 
     return {
       provider,

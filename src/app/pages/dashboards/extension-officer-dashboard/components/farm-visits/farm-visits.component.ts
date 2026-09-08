@@ -1,6 +1,8 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatMenuModule } from '@angular/material/menu';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -28,9 +30,9 @@ interface FarmVisitRow {
   contact: string;
   farm: string;
   crop: string;
-  visitDate: string;
+  visitDate: string | Date | null;
   statusLabel: string;
-  latestActivity: string;
+  latestActivity: string | Date | null;
   alertLabel: string;
   isApproved: boolean;
   isRejected: boolean;
@@ -53,7 +55,7 @@ const timeframeOptions: readonly TimeframeFilterOption[] = [
 
 @Component({
   selector: 'app-farm-visits',
-  imports: [MatMenuModule, TableModule],
+  imports: [DatePipe, MenuModule, TableModule],
   templateUrl: './farm-visits.component.html',
   styleUrl: './farm-visits.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,11 +64,29 @@ export class FarmVisitsComponent {
   private readonly store = inject(Store);
 
   private readonly visits = this.store.selectSignal(FarmVisitsState.visits);
-  protected readonly visitRows = computed(() => this.visits().map((visit) => this.toRow(visit)));
+  protected readonly visitRows = computed(() => this.visits().map((v) => this.toRow(v)));
   protected readonly visitsData = this.store.selectSignal(FarmVisitsState.visitsConfigs);
   protected readonly isLoading = this.store.selectSignal(FarmVisitsState.isLoading);
   protected readonly statusOptions = visitStatusOptions;
   protected readonly timeframeOptions = timeframeOptions;
+
+  protected readonly statusMenuItems: MenuItem[] = [
+    {
+      label: 'All statuses',
+      icon: 'list',
+      command: () => this.onStatusFilter(''),
+    },
+    ...visitStatusOptions.map((option) => ({
+      label: option.label,
+      icon: option.icon,
+      command: () => this.onStatusFilter(option.value),
+    })),
+  ];
+
+  protected readonly timeframeMenuItems: MenuItem[] = timeframeOptions.map((option) => ({
+    label: option.label,
+    command: () => this.onTimeframeFilter(option.value),
+  }));
 
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
@@ -122,15 +142,18 @@ export class FarmVisitsComponent {
     const isApproved = status === 'approved';
     const isRejected = status === 'rejected';
 
+    const visitDate = visit.visitDate || null;
+    const latestActivity = visit.updatedAt || visit.createdAt || null;
+
     return {
       visit,
       farmerName: visit.farmer?.fullName || '-',
       contact: visit.farmer?.phone || '-',
       farm: visit.farm?.locationLabel || '-',
       crop: visit.farm?.cropType || '-',
-      visitDate: this.formatDate(visit.visitDate),
+      visitDate,
       statusLabel: this.formatLabel(status),
-      latestActivity: visit.lastActivityLabel || this.formatDate(visit.updatedAt) || '-',
+      latestActivity,
       alertLabel: visit.alertGenerated ? 'Alert raised' : 'No alert',
       isApproved,
       isRejected,

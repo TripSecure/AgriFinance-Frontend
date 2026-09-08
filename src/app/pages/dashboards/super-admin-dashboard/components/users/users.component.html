@@ -23,35 +23,37 @@
       <button
         id="statusFilter"
         type="button"
-        [matMenuTriggerFor]="statusMenu"
+        (click)="statusMenu.toggle($event)"
         class="filters__actions__input-form"
       >
         <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
 
         <span class="material-symbols-outlined">keyboard_arrow_down</span>
       </button>
-      <mat-menu #statusMenu="matMenu">
-        <button type="button" mat-menu-item (click)="onStatusFilter('')">
-          <span class="material-symbols-outlined">list</span>
-          <span>All statuses</span>
-        </button>
-        @for (option of approvalOptions; track option.value) {
-          <button type="button" mat-menu-item (click)="onStatusFilter(option.value)">
-            <span class="material-symbols-outlined">{{ option.icon }}</span>
-            <span>{{ option.label }}</span>
+      <p-menu #statusMenu [model]="statusMenuItems" [popup]="true" [appendTo]="'body'">
+        <ng-template pTemplate="item" let-item>
+          <button
+            type="button"
+            class="p-menu-item-link w-100 d-flex align-items-center gap-2 border-0 bg-transparent text-start py-2 px-3 text-secondary"
+            (click)="item.command ? item.command($event) : null"
+          >
+            <span class="material-symbols-outlined">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
           </button>
-        }
-      </mat-menu>
+        </ng-template>
+      </p-menu>
     </div>
   </div>
   <div class="table-wrapper">
     <div class="ps-3 py-2 d-flex align-items-center gap-3">
       <div class="data-head">Total users</div>
-      <div
-        class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
-      >
-        {{ usersData().totalCount }}
-      </div>
+      @if (!isLoading()) {
+        <div
+          class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
+        >
+          {{ usersData().totalCount }}
+        </div>
+      }
     </div>
     <p-table
       #usersTable
@@ -104,16 +106,14 @@
               {{ row.statusLabel }}
             </span>
           </td>
-          <td>{{ row.createdAt }}</td>
+          <td>{{ (row.createdAt | date: 'medium') || '-' }}</td>
           <td>
             <button
               type="button"
               class="action-button"
-              [matMenuTriggerFor]="approvalMenu"
-              [matMenuTriggerData]="{ user: row.user }"
               [disabled]="row.isActionInProgress"
               aria-label="Open user approval actions"
-              (click)="$event.stopPropagation()"
+              (click)="$event.stopPropagation(); selectedUserForAction = row.user; actionMenu.toggle($event)"
             >
               <span class="material-symbols-outlined">more_vert</span>
             </button>
@@ -127,15 +127,18 @@
       </ng-template>
     </p-table>
 
-    <mat-menu #approvalMenu="matMenu">
-      <ng-template matMenuContent let-user="user">
-        @for (option of approvalOptions; track option.value) {
-          <button type="button" mat-menu-item (click)="onApprovalRequest(user, option)">
-            <span>{{ option.label }}</span>
-          </button>
-        }
+    <p-menu #actionMenu [model]="actionMenuItems" [popup]="true" [appendTo]="'body'">
+      <ng-template pTemplate="item" let-item>
+        <button
+          type="button"
+          class="p-menu-item-link w-100 d-flex align-items-center gap-2 border-0 bg-transparent text-start py-2 px-3 text-secondary"
+          (click)="item.command ? item.command($event) : null"
+        >
+          <span class="material-symbols-outlined">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </button>
       </ng-template>
-    </mat-menu>
+    </p-menu>
   </div>
 </div>
 

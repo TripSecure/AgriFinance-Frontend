@@ -42,7 +42,18 @@ export class AuthState implements NgxsOnInit {
   ngxsOnInit(ctx: StateContext<AuthStateModel>) {
     const state = localStorage.getItem(AUTH_STORAGE_KEY) ?? sessionStorage.getItem(AUTH_STORAGE_KEY);
     if (state) {
-      ctx.setState(JSON.parse(state));
+      try {
+        const parsed = JSON.parse(state) as Partial<AuthStateModel>;
+        ctx.setState({
+          ...authInitialState,
+          ...parsed,
+          loading: false,
+          errors: [],
+          message: null,
+        });
+      } catch {
+        ctx.setState(authInitialState);
+      }
     }
   }
 
@@ -248,6 +259,7 @@ export class AuthState implements NgxsOnInit {
   @Action(ResetLoginOtpRequest)
   resetLoginOtpRequest(ctx: StateContext<AuthStateModel>): void {
     ctx.patchState({
+      loading: false,
       loginOtpRequested: false,
       requestId: null,
       prefix: null,
@@ -344,7 +356,7 @@ export class AuthState implements NgxsOnInit {
 
   @Action(PersistState)
   saveState(ctx: StateContext<AuthStateModel>) {
-    const state = ctx.getState();
+    const state = { ...ctx.getState(), loading: false };
     const serialized = JSON.stringify(state);
 
     if (state.rememberDevice) {

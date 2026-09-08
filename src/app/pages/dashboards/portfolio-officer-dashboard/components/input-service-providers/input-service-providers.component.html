@@ -25,35 +25,37 @@
       <button
         id="inputProvidersStatusFilter"
         type="button"
-        [matMenuTriggerFor]="statusMenu"
+        (click)="statusMenu.toggle($event)"
         class="filters__actions__input-form"
       >
         <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
         <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
       </button>
-      <mat-menu #statusMenu="matMenu">
-        <button type="button" mat-menu-item (click)="onStatusFilter('')">
-          <span class="material-symbols-outlined" aria-hidden="true">list</span>
-          <span>All statuses</span>
-        </button>
-        @for (option of statusOptions; track option.value) {
-          <button type="button" mat-menu-item (click)="onStatusFilter(option.value)">
-            <span class="material-symbols-outlined" aria-hidden="true">{{ option.icon }}</span>
-            <span>{{ option.label }}</span>
+      <p-menu #statusMenu [model]="statusMenuItems" [popup]="true" [appendTo]="'body'">
+        <ng-template pTemplate="item" let-item>
+          <button
+            type="button"
+            class="p-menu-item-link w-100 d-flex align-items-center gap-2 border-0 bg-transparent text-start py-2 px-3 text-secondary"
+            (click)="item.command ? item.command($event) : null"
+          >
+            <span class="material-symbols-outlined">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
           </button>
-        }
-      </mat-menu>
+        </ng-template>
+      </p-menu>
     </div>
   </div>
 
   <div class="table-wrapper">
     <div class="ps-3 py-2 d-flex align-items-center gap-3">
       <div class="data-head">Total Providers</div>
-      <div
-        class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
-      >
-        {{ providersData().totalCount }}
-      </div>
+      @if (!isLoading()) {
+        <div
+          class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3"
+        >
+          {{ providersData().totalCount }}
+        </div>
+      }
     </div>
 
     <p-table
@@ -98,7 +100,7 @@
               {{ row.statusLabel }}
             </span>
           </td>
-          <td>{{ row.lastActivity }}</td>
+          <td>{{ (row.lastActivity | date: 'medium') || row.provider.lastActivityLabel || '-' }}</td>
         </tr>
       </ng-template>
 

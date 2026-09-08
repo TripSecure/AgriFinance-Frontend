@@ -1,6 +1,8 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatMenuModule } from '@angular/material/menu';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -25,7 +27,8 @@ interface AssignedFarmRow {
   location: string;
   size: string;
   assignmentStatusLabel: string;
-  latestVisit: string;
+  latestVisitDate: string | Date | null;
+  latestVisitStatus: string;
   isActive: boolean;
   isInactive: boolean;
   isPending: boolean;
@@ -41,7 +44,7 @@ const assignmentStatusOptions: readonly AssignmentStatusFilterOption[] = [
 
 @Component({
   selector: 'app-farms',
-  imports: [MatMenuModule, TableModule],
+  imports: [DatePipe, MenuModule, TableModule],
   templateUrl: './farms.component.html',
   styleUrl: './farms.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,6 +57,19 @@ export class FarmsComponent {
   protected readonly farmsData = this.store.selectSignal(ExtensionFarmsState.farmsConfigs);
   protected readonly isLoading = this.store.selectSignal(ExtensionFarmsState.isLoading);
   protected readonly statusOptions = assignmentStatusOptions;
+
+  protected readonly statusMenuItems: MenuItem[] = [
+    {
+      label: 'All statuses',
+      icon: 'list',
+      command: () => this.onStatusFilter(''),
+    },
+    ...assignmentStatusOptions.map((option) => ({
+      label: option.label,
+      icon: option.icon,
+      command: () => this.onStatusFilter(option.value),
+    })),
+  ];
 
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
@@ -99,6 +115,7 @@ export class FarmsComponent {
     const isActive = ['active', 'approved', 'assigned'].includes(assignmentStatus);
     const isInactive = ['inactive', 'rejected', 'suspended', 'archived'].includes(assignmentStatus);
     const isPending = !isActive && !isInactive;
+    const latestVisitDate = farm.latestVisit?.visitDate || (typeof farm['lastVisitDate'] === 'string' ? farm['lastVisitDate'] : null);
     const latestVisitStatus = farm.latestVisit?.status ? this.formatLabel(farm.latestVisit.status) : 'No visit';
 
     return {
@@ -109,7 +126,8 @@ export class FarmsComponent {
       location: farm.locationLabel || '-',
       size: this.formatFarmSize(farm.sizeHectares),
       assignmentStatusLabel: this.formatLabel(assignmentStatus),
-      latestVisit: latestVisitStatus,
+      latestVisitDate,
+      latestVisitStatus,
       isActive,
       isInactive,
       isPending,

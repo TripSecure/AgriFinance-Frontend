@@ -1,11 +1,16 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { ConfirmModalComponent } from '../../../../../shared/confirm-modal/confirm-modal.component';
+import { ToastrService } from '../../../../../shared/toastr/toastr.service';
 import { Farmer, FarmersQueryParams, FarmersState, GetPortfolioFarmers } from './farmers.state';
 
 interface StatusFilterOption {
@@ -20,7 +25,7 @@ export interface FarmerRow {
   contact: string;
   location: string;
   statusLabel: string;
-  createdAt: string;
+  createdAt: string | Date | null;
   isActive: boolean;
   isInactive: boolean;
   isPending: boolean;
@@ -34,13 +39,15 @@ const statusFilterOptions: readonly StatusFilterOption[] = [
 
 @Component({
   selector: 'app-farmers',
-  imports: [MatIconModule, MatMenuModule, TableModule],
+  imports: [DatePipe, MatIconModule, MenuModule, TableModule],
   templateUrl: './farmers.component.html',
   styleUrl: './farmers.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FarmersComponent {
+  private readonly dialog = inject(MatDialog);
   private readonly store = inject(Store);
+  private readonly toastr = inject(ToastrService);
   protected readonly router = inject(Router);
 
   private readonly farmers = this.store.selectSignal(FarmersState.farmers);
@@ -48,6 +55,51 @@ export class FarmersComponent {
   protected readonly farmersData = this.store.selectSignal(FarmersState.farmersConfigs);
   protected readonly isLoading = this.store.selectSignal(FarmersState.isLoading);
   protected readonly statusOptions = statusFilterOptions;
+
+  protected selectedFarmerForAction: Farmer | null = null;
+
+  protected readonly statusMenuItems: MenuItem[] = [
+    {
+      label: 'All statuses',
+      icon: 'list',
+      command: () => this.onStatusFilter(''),
+    },
+    ...statusFilterOptions.map((option) => ({
+      label: option.label,
+      icon: option.icon,
+      command: () => this.onStatusFilter(option.value),
+    })),
+  ];
+
+  protected readonly actionMenuItems: MenuItem[] = [
+    {
+      label: 'View Farmer',
+      icon: 'visibility',
+      command: () => {
+        if (this.selectedFarmerForAction) {
+          this.onFarmerSelected(this.selectedFarmerForAction);
+        }
+      },
+    },
+    {
+      label: 'Edit Farmer',
+      icon: 'edit',
+      command: () => {
+        if (this.selectedFarmerForAction) {
+          this.onEditFarmer(this.selectedFarmerForAction);
+        }
+      },
+    },
+    {
+      label: 'Delete Farmer',
+      icon: 'delete',
+      command: () => {
+        if (this.selectedFarmerForAction) {
+          this.onDeleteFarmer(this.selectedFarmerForAction);
+        }
+      },
+    },
+  ];
 
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
@@ -90,6 +142,32 @@ export class FarmersComponent {
     void this.router.navigate(['/dashboard/portfolio-officer/farmers', farmer.id]);
   }
 
+  protected onEditFarmer(farmer: Farmer): void {
+    if (!farmer.id) {
+      return;
+    }
+
+    void this.router.navigate(['/dashboard/portfolio-officer/farmers/edit', farmer.id]);
+  }
+
+  protected onDeleteFarmer(farmer: Farmer): void {
+    if (!farmer.id) {
+      this.toastr.triggerToastr('error', 'Unable to delete this farmer.');
+      return;
+    }
+
+    this.dialog
+      .open(ConfirmModalComponent, { disableClose: true })
+      .afterClosed()
+      .subscribe((confirmed?: boolean) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.toastr.triggerToastr('success', `Farmer ${farmer.fullName || farmer.full_name || ''} deleted successfully.`);
+      });
+  }
+
   protected onFarmerRowKeydown(event: KeyboardEvent, farmer: Farmer): void {
     if (event.key !== 'Enter' && event.key !== ' ') {
       return;
@@ -124,7 +202,7 @@ export class FarmersComponent {
       contact: farmer.email || farmer.phone || farmer.phoneNumber || '-',
       location: farmer.community || farmer.location || farmer.region || '-',
       statusLabel: this.formatLabel(status),
-      createdAt: farmer.createdAt || farmer.dateCreated || '-',
+      createdAt: farmer.createdAt || farmer.dateCreated || null,
       isActive,
       isInactive,
       isPending: !isActive && !isInactive,

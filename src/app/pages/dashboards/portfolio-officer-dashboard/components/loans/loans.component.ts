@@ -1,9 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatMenuModule } from '@angular/material/menu';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { ToastrService } from '../../../../../shared/toastr/toastr.service';
 import {
   GetPortfolioLoans,
   PortfolioLoanApplication,
@@ -28,7 +32,7 @@ interface PortfolioLoanRow {
   riskScore: string;
   servicesCount: string;
   insuranceLabel: string;
-  lastActivity: string;
+  lastActivity: string | Date | null;
   isSuccess: boolean;
   isDanger: boolean;
   isWarning: boolean;
@@ -49,19 +53,60 @@ const loanStatusOptions: readonly LoanStatusFilterOption[] = [
 
 @Component({
   selector: 'app-loans',
-  imports: [MatMenuModule, TableModule],
+  imports: [DatePipe, MenuModule, TableModule],
   templateUrl: './loans.component.html',
   styleUrl: './loans.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoansComponent {
   private readonly store = inject(Store);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly toastr = inject(ToastrService);
+
+  public readonly farmerId = input<string | undefined>();
 
   private readonly loans = this.store.selectSignal(PortfolioLoansState.loans);
   protected readonly loanRows = computed(() => this.loans().map((loan) => this.toRow(loan)));
   protected readonly loansData = this.store.selectSignal(PortfolioLoansState.loansConfigs);
   protected readonly isLoading = this.store.selectSignal(PortfolioLoansState.isLoading);
   protected readonly statusOptions = loanStatusOptions;
+
+  protected selectedLoanForAction: PortfolioLoanApplication | null = null;
+
+  protected readonly statusMenuItems: MenuItem[] = [
+    {
+      label: 'All statuses',
+      icon: 'list',
+      command: () => this.onStatusFilter(''),
+    },
+    ...loanStatusOptions.map((option) => ({
+      label: option.label,
+      icon: option.icon,
+      command: () => this.onStatusFilter(option.value),
+    })),
+  ];
+
+  protected readonly actionMenuItems: MenuItem[] = [
+    {
+      label: 'View Loan',
+      icon: 'visibility',
+      command: () => {
+        if (this.selectedLoanForAction) {
+          this.onViewLoan(this.selectedLoanForAction);
+        }
+      },
+    },
+    {
+      label: 'Edit Loan',
+      icon: 'edit',
+      command: () => {
+        if (this.selectedLoanForAction) {
+          this.onEditLoan(this.selectedLoanForAction);
+        }
+      },
+    },
+  ];
 
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
@@ -92,6 +137,34 @@ export class LoansComponent {
     this.dispatchLoansLoad({ ...this.lastEvent, first: 0 });
   }
 
+  protected onAddLoan(): void {
+    void this.router.navigate(['/dashboard/portfolio-officer/loans/add']);
+  }
+
+  protected onViewLoan(loan: PortfolioLoanApplication): void {
+    // if (loan.farmerId || loan.farmer?.id) {
+    //   const farmerId = loan.farmerId || loan.farmer?.id;
+    //   void this.router.navigate(['/dashboard/portfolio-officer/farmers', farmerId, 'loans']);
+    //   return;
+    // }
+    if (loan.id) {
+      void this.router.navigate(['/dashboard/portfolio-officer/loans', loan.id]);
+      return;
+    }
+    this.toastr.triggerToastr(
+      'info',
+      `Viewing loan: ${loan.id || loan.farmer?.fullName || 'Application'}`,
+    );
+  }
+
+  protected onEditLoan(loan: PortfolioLoanApplication): void {
+    if (loan.id) {
+      void this.router.navigate(['/dashboard/portfolio-officer/loans/edit', loan.id]);
+      return;
+    }
+    void this.router.navigate(['/dashboard/portfolio-officer/loans/add']);
+  }
+
   protected formatLabel(value: string): string {
     return (
       value
@@ -116,7 +189,7 @@ export class LoansComponent {
       riskScore: this.formatRiskScore(loan.riskProfile?.score, loan.riskProfile?.category),
       servicesCount: String(loan.selectedServiceCount ?? loan.selectedServices?.length ?? 0),
       insuranceLabel: loan.insuranceIncluded ? 'Included' : 'Not included',
-      lastActivity: loan.lastActivityLabel || this.formatDate(loan.lastActivityAt) || '-',
+      lastActivity: loan.lastActivityAt || loan.updatedAt || loan.submittedAt || null,
       isSuccess: tone === 'success',
       isDanger: tone === 'danger',
       isWarning: tone === 'warning',
@@ -135,7 +208,10 @@ export class LoansComponent {
     }).format(value);
   }
 
-  private formatRiskScore(score: number | null | undefined, category: string | null | undefined): string {
+  private formatRiskScore(
+    score: number | null | undefined,
+    category: string | null | undefined,
+  ): string {
     const scoreLabel = typeof score === 'number' && Number.isFinite(score) ? String(score) : null;
     const categoryLabel = category ? this.formatLabel(category) : null;
 
@@ -159,9 +235,23 @@ export class LoansComponent {
     }).format(date);
   }
 
+  private getEffectiveFarmerId(): string | undefined {
+    const inputId = this.farmerId();
+    if (inputId) {
+      return inputId;
+    }
+
+    return (
+      this.route.snapshot.paramMap.get('farmerId') ||
+      this.route.parent?.snapshot.paramMap.get('farmerId') ||
+      undefined
+    );
+  }
+
   private dispatchLoansLoad(event: TableLazyLoadEvent = this.lastEvent): void {
     this.lastEvent = event;
     const params: PortfolioLoansQueryParams = {
+      farmerId: this.getEffectiveFarmerId(),
       first: event.first ?? 0,
       rows: event.rows ?? 10,
       globalFilter: this.searchTerm || undefined,

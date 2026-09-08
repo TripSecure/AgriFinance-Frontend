@@ -1,6 +1,8 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatMenuModule } from '@angular/material/menu';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -19,7 +21,7 @@ interface StatusFilterOption {
 
 interface AuditLogRow {
   log: AuditLog;
-  timestamp: string;
+  timestamp: string | Date | null;
   actor: string;
   action: string;
   resource: string;
@@ -40,7 +42,7 @@ const auditStatusOptions: readonly StatusFilterOption[] = [
 
 @Component({
   selector: 'app-audit-logs',
-  imports: [MatMenuModule, TableModule],
+  imports: [DatePipe, MenuModule, TableModule],
   templateUrl: './audit-logs.component.html',
   styleUrl: './audit-logs.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,6 +55,19 @@ export class AuditLogsComponent {
   protected readonly logsData = this.store.selectSignal(AuditLogsState.logsConfigs);
   protected readonly isLoading = this.store.selectSignal(AuditLogsState.isLoading);
   protected readonly statusOptions = auditStatusOptions;
+
+  protected readonly statusMenuItems: MenuItem[] = [
+    {
+      label: 'All statuses',
+      icon: 'list',
+      command: () => this.onStatusFilter(''),
+    },
+    ...auditStatusOptions.map((option) => ({
+      label: option.label,
+      icon: option.icon,
+      command: () => this.onStatusFilter(option.value),
+    })),
+  ];
 
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
@@ -127,8 +142,7 @@ export class AuditLogsComponent {
 
     const ipAddress = log.ipAddress || log.ip || '-';
 
-    const timestamp =
-      this.formatDateTime(log.timestamp || log.createdAt || log.updatedAt) || '-';
+    const timestamp = log.timestamp || log.createdAt || log.updatedAt || null;
 
     return {
       log,

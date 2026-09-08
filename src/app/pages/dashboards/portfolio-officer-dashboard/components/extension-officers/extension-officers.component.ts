@@ -1,6 +1,8 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatMenuModule } from '@angular/material/menu';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -26,7 +28,7 @@ interface ExtensionOfficerRow {
   assignedFarmers: number;
   completedVisits: number;
   statusLabel: string;
-  lastActivity: string;
+  lastActivity: string | Date | null;
   isActive: boolean;
   isInactive: boolean;
   isPending: boolean;
@@ -42,7 +44,7 @@ const officerStatusOptions: readonly OfficerStatusFilterOption[] = [
 
 @Component({
   selector: 'app-extension-officers',
-  imports: [MatMenuModule, TableModule],
+  imports: [DatePipe, MenuModule, TableModule],
   templateUrl: './extension-officers.component.html',
   styleUrl: './extension-officers.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,6 +57,19 @@ export class ExtensionOfficersComponent {
   protected readonly officersData = this.store.selectSignal(PortfolioExtensionOfficersState.officersConfigs);
   protected readonly isLoading = this.store.selectSignal(PortfolioExtensionOfficersState.isLoading);
   protected readonly statusOptions = officerStatusOptions;
+
+  protected readonly statusMenuItems: MenuItem[] = [
+    {
+      label: 'All statuses',
+      icon: 'list',
+      command: () => this.onStatusFilter(''),
+    },
+    ...officerStatusOptions.map((option) => ({
+      label: option.label,
+      icon: option.icon,
+      command: () => this.onStatusFilter(option.value),
+    })),
+  ];
 
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
@@ -139,9 +154,7 @@ export class ExtensionOfficersComponent {
       0;
 
     const lastActivity =
-      officer.lastActivityLabel ||
-      this.formatDate(officer.lastActiveAt || officer.lastActivityAt || officer.updatedAt) ||
-      '-';
+      officer.lastActiveAt || officer.lastActivityAt || officer.updatedAt || null;
 
     return {
       officer,

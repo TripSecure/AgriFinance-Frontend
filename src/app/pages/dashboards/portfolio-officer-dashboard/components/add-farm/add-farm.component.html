@@ -1,0 +1,143 @@
+<div class="add-farmer-page">
+  <header class="page-header">
+    <a [routerLink]="backLink()" class="back-link">
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      <span>{{ backLinkLabel() }}</span>
+    </a>
+  </header>
+  <section class="form-section" aria-labelledby="farmer-details-heading">
+    <header class="form-section-header">
+      <h2 id="farmer-details-heading">Farm Details</h2>
+    </header>
+
+    <div class="form-section-body form-grid">
+      @if (!isFarmerContext()) {
+        <app-form-input
+          name="farmerId"
+          label="Associated Farmer"
+          [isSelect]="true"
+          [options]="farmerOptions"
+          [isRequired]="true"
+          [formGroup]="farmerDetailsForm"
+        />
+      }
+      <app-form-input
+        name="cropType"
+        label="Primary Crop"
+        [isOption]="true"
+        [selections]="cropOptions"
+        [isRequired]="true"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="sizeHectares"
+        label="Farm Size (Hectares)"
+        type="number"
+        placeholder="2.5"
+        [isRequired]="true"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="secondaryCrop"
+        label="Secondary Crop"
+        [isOption]="true"
+        [selections]="cropOptions"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="annualYield"
+        label="Expected Annual Yield (Kg)"
+        type="number"
+        placeholder="1200"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="irrigationMethod"
+        label="Irrigation Method"
+        [isOption]="true"
+        [selections]="irrigationOptions"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="farmerCode"
+        label="Farmer ID / Code"
+        type="text"
+        placeholder="FRM-0001"
+        [isRequired]="true"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="region"
+        label="Region"
+        [isOption]="true"
+        [selections]="regionOptions"
+        [isRequired]="true"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="district"
+        label="District"
+        type="text"
+        placeholder="Ejura Sekyedumase"
+        [isRequired]="true"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="community"
+        label="Community"
+        type="text"
+        placeholder="Aframso"
+        [isRequired]="true"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="gpsAddress"
+        label="Farm Address"
+        type="text"
+        placeholder="Kitson Street"
+        [isRequired]="true"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="gpsLatitude"
+        label="GPS Latitude"
+        type="number"
+        placeholder="5.6037"
+        [isRequired]="true"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="gpsLongitude"
+        label="GPS Longitude"
+        type="number"
+        placeholder="-0.1870"
+        [isRequired]="true"
+        [formGroup]="farmerDetailsForm"
+      />
+      <app-form-input
+        name="cooperativeName"
+        label="Cooperative / Group Name"
+        type="text"
+        placeholder="Green Growers Cooperative"
+        [isRequired]="true"
+        [formGroup]="farmerDetailsForm"
+      />
+    </div>
+  </section>
+
+  <div class="step-actions">
+    <a
+      [routerLink]="backLink()"
+      class="secondary-action text-decoration-none d-inline-flex align-items-center"
+    >
+      Cancel
+    </a>
+    <button type="button" class="primary-action" [disabled]="isCreating()" (click)="onSubmit()">
+      {{ submitButtonText() }}
+    </button>
+  </div>
+
+  @if (localSubmitError()) {
+    <p class="form-feedback form-feedback-error">{{ localSubmitError() }}</p>
+  }
+</div>

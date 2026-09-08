@@ -321,6 +321,33 @@ p-table {
   color: #667085;
 }
 
+.action-button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #344054;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #2e90fa;
+    outline-offset: 2px;
+  }
+}
+
 @media (max-width: 720px) {
   .content .filters {
     justify-content: stretch;

@@ -1,0 +1,15 @@
+::ng-deep {
+  .p-tablist-tab-list {
+    justify-content: end;
+    width: fit-content;
+  }
+  .p-ripple {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .p-tablist-content {
+    display: flex;
+    justify-content: end;
+  }
+}
