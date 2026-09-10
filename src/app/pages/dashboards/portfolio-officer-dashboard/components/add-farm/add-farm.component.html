@@ -4,7 +4,12 @@
       <mat-icon aria-hidden="true">arrow_back</mat-icon>
       <span>{{ backLinkLabel() }}</span>
     </a>
+    <!-- <div>
+      <p>Portfolio Officer</p>
+      <h1>{{ pageTitle() }}</h1>
+    </div> -->
   </header>
+
   <section class="form-section" aria-labelledby="farmer-details-heading">
     <header class="form-section-header">
       <h2 id="farmer-details-heading">Farm Details</h2>
@@ -21,43 +26,6 @@
           [formGroup]="farmerDetailsForm"
         />
       }
-      <app-form-input
-        name="cropType"
-        label="Primary Crop"
-        [isOption]="true"
-        [selections]="cropOptions"
-        [isRequired]="true"
-        [formGroup]="farmerDetailsForm"
-      />
-      <app-form-input
-        name="sizeHectares"
-        label="Farm Size (Hectares)"
-        type="number"
-        placeholder="2.5"
-        [isRequired]="true"
-        [formGroup]="farmerDetailsForm"
-      />
-      <app-form-input
-        name="secondaryCrop"
-        label="Secondary Crop"
-        [isOption]="true"
-        [selections]="cropOptions"
-        [formGroup]="farmerDetailsForm"
-      />
-      <app-form-input
-        name="annualYield"
-        label="Expected Annual Yield (Kg)"
-        type="number"
-        placeholder="1200"
-        [formGroup]="farmerDetailsForm"
-      />
-      <app-form-input
-        name="irrigationMethod"
-        label="Irrigation Method"
-        [isOption]="true"
-        [selections]="irrigationOptions"
-        [formGroup]="farmerDetailsForm"
-      />
       <app-form-input
         name="farmerCode"
         label="Farmer ID / Code"
@@ -91,7 +59,7 @@
         [formGroup]="farmerDetailsForm"
       />
       <app-form-input
-        name="gpsAddress"
+        name="farmAddress"
         label="Farm Address"
         type="text"
         placeholder="Kitson Street"
@@ -115,12 +83,65 @@
         [formGroup]="farmerDetailsForm"
       />
       <app-form-input
-        name="cooperativeName"
+        name="cooperativeGroupName"
         label="Cooperative / Group Name"
         type="text"
         placeholder="Green Growers Cooperative"
         [isRequired]="true"
         [formGroup]="farmerDetailsForm"
+      />
+    </div>
+  </section>
+
+  <section class="form-section mt-4" aria-labelledby="production-heading">
+    <header class="form-section-header">
+      <h2 id="production-heading">Productivity</h2>
+    </header>
+
+    <div class="form-section-body form-grid">
+      <app-form-input
+        name="farmSizeAcres"
+        label="Farm Size (Acres)"
+        type="number"
+        placeholder="4.5"
+        [isRequired]="true"
+        [formGroup]="productionDetailsForm"
+      />
+      <app-form-input
+        name="primaryCrop"
+        label="Primary Crop"
+        [isOption]="true"
+        [selections]="cropOptions"
+        [isRequired]="true"
+        [formGroup]="productionDetailsForm"
+      />
+      <app-form-input
+        name="secondaryCrop"
+        label="Secondary Crop"
+        [isOption]="true"
+        [selections]="cropOptions"
+        [formGroup]="productionDetailsForm"
+      />
+      <app-form-input
+        name="expectedAnnualYield"
+        label="Expected Annual Yield (Kg)"
+        type="number"
+        placeholder="1200"
+        [formGroup]="productionDetailsForm"
+      />
+      <app-form-input
+        name="farmingExperienceYears"
+        label="Farming Experience (Years)"
+        type="number"
+        placeholder="6"
+        [formGroup]="productionDetailsForm"
+      />
+      <app-form-input
+        name="irrigationMethod"
+        label="Irrigation Method"
+        [isOption]="true"
+        [selections]="irrigationOptions"
+        [formGroup]="productionDetailsForm"
       />
     </div>
   </section>

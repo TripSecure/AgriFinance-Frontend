@@ -4,6 +4,7 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  computed,
   inject,
   input,
   Input,
@@ -22,6 +23,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { DatePicker } from 'primeng/datepicker';
+import { Select, SelectChangeEvent } from 'primeng/select';
 import { forkJoin, take } from 'rxjs';
 import { KycDocumentUploadService } from '../services/kyc-document-upload.service';
 import { extractErrorMessage } from '../request.utils';
@@ -45,6 +47,7 @@ export interface SelectOption {
     MatCheckboxModule,
     MultiSelectModule,
     DatePicker,
+    Select,
   ],
   templateUrl: './form-input.component.html',
   styleUrl: './form-input.component.scss',
@@ -76,9 +79,40 @@ export class FormInputComponent {
 
   readonly isMultiSelect = input(false);
   readonly isRequired = input(false);
+  readonly filter = input(false);
+  readonly filterBy = input('name');
+  readonly showClear = input(false);
+  readonly readOnly = input(false);
   readonly checks = input<string[]>([]);
   readonly selections = input<string[]>([]);
-  @Input() options!: Signal<SelectOption[]>;
+  readonly rawOptions = input<Signal<SelectOption[]> | SelectOption[] | unknown>([], {
+    alias: 'options',
+  });
+
+  readonly options = computed<SelectOption[]>(() => {
+    const opts = this.rawOptions();
+    if (typeof opts === 'function') {
+      const res = (opts as () => unknown)();
+      return Array.isArray(res) ? (res as SelectOption[]) : [];
+    }
+    if (Array.isArray(opts)) {
+      return opts as SelectOption[];
+    }
+    return [];
+  });
+
+  readonly selectionOptions = computed<SelectOption[]>(() => {
+    return this.selections().map((item) => ({
+      id: item,
+      name: this.formatOptionLabel(item),
+    }));
+  });
+
+  protected readonly control = computed(() => this.formGroup().get(this.name()));
+  protected readonly showError = computed(() => {
+    const ctrl = this.control();
+    return Boolean(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
+  });
 
   // Mutated internally by the upload flow below, so these stay as plain (non-signal) inputs.
   @Input() uploadStatus: FileUploadStatus = 'idle';
@@ -101,8 +135,24 @@ export class FormInputComponent {
     this.open = !this.open;
   }
 
-  onChange(event: Event) {
-    this.selectedOption.set((event.target as HTMLSelectElement).value);
+  onSelectChange(event: SelectChangeEvent): void {
+    this.selectedOption.set(String(event.value ?? ''));
+  }
+
+  onChange(event: Event | SelectChangeEvent): void {
+    if (event && typeof event === 'object' && 'value' in event) {
+      this.selectedOption.set(String((event as SelectChangeEvent).value ?? ''));
+    } else if (event && (event as Event).target) {
+      this.selectedOption.set(((event as Event).target as HTMLSelectElement).value);
+    }
+  }
+
+  private formatOptionLabel(value: string): string {
+    if (!value) return '';
+    return value
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
   }
 
   browseFiles(): void {

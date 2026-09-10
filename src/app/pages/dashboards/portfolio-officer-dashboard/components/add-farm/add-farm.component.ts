@@ -10,7 +10,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatStepperModule } from '@angular/material/stepper';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { FormInputComponent, SelectOption } from '../../../../../shared/form-input/form-input.component';
@@ -21,18 +20,22 @@ import { CreatePortfolioFarm, CreatePortfolioFarmPayload, PortfolioFarmsState } 
 type FarmerDetailsControls = {
   farmerId: FormControl<string>;
   farmerCode: FormControl<string>;
-  cropType: FormControl<string>;
-  secondaryCrop: FormControl<string>;
-  sizeHectares: FormControl<number>;
-  annualYield: FormControl<number>;
-  irrigationMethod: FormControl<string>;
   region: FormControl<string>;
   district: FormControl<string>;
   community: FormControl<string>;
-  gpsAddress: FormControl<string>;
+  farmAddress: FormControl<string>;
   gpsLatitude: FormControl<number>;
   gpsLongitude: FormControl<number>;
-  cooperativeName: FormControl<string>;
+  cooperativeGroupName: FormControl<string>;
+};
+
+type ProductionDetailsControls = {
+  farmSizeAcres: FormControl<number>;
+  primaryCrop: FormControl<string>;
+  secondaryCrop: FormControl<string>;
+  expectedAnnualYield: FormControl<number>;
+  farmingExperienceYears: FormControl<number>;
+  irrigationMethod: FormControl<string>;
 };
 
 @Component({
@@ -41,7 +44,6 @@ type FarmerDetailsControls = {
     FormInputComponent,
     MatButtonModule,
     MatIconModule,
-    MatStepperModule,
     ReactiveFormsModule,
     RouterLink,
   ],
@@ -62,7 +64,6 @@ export class AddFarmComponent implements OnInit {
 
   protected readonly farmerIdFromRoute = signal<string | null>(null);
   protected readonly localSubmitError = signal<string | null>(null);
-  protected readonly isLinear = signal(false);
 
   protected readonly isFarmerContext = computed(() => Boolean(this.farmerIdFromRoute()));
   protected readonly pageTitle = computed(() => 'Add Farm');
@@ -94,21 +95,13 @@ export class AddFarmComponent implements OnInit {
   protected readonly farmerDetailsForm = new FormGroup<FarmerDetailsControls>({
     farmerId: new FormControl('', { nonNullable: true }),
     farmerCode: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    cropType: new FormControl('maize', { nonNullable: true, validators: Validators.required }),
-    secondaryCrop: new FormControl('cassava', { nonNullable: true }),
-    sizeHectares: new FormControl(1, {
-      nonNullable: true,
-      validators: [Validators.required, Validators.min(0.01)],
-    }),
-    annualYield: new FormControl(0, { nonNullable: true }),
-    irrigationMethod: new FormControl('rainfed', { nonNullable: true }),
     region: new FormControl('Greater Accra', {
       nonNullable: true,
       validators: Validators.required,
     }),
     district: new FormControl('', { nonNullable: true, validators: Validators.required }),
     community: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    gpsAddress: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    farmAddress: new FormControl('', { nonNullable: true, validators: Validators.required }),
     gpsLatitude: new FormControl(0, {
       nonNullable: true,
       validators: [Validators.required, Validators.min(-90), Validators.max(90)],
@@ -117,7 +110,19 @@ export class AddFarmComponent implements OnInit {
       nonNullable: true,
       validators: [Validators.required, Validators.min(-180), Validators.max(180)],
     }),
-    cooperativeName: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    cooperativeGroupName: new FormControl('', { nonNullable: true, validators: Validators.required }),
+  });
+
+  protected readonly productionDetailsForm = new FormGroup<ProductionDetailsControls>({
+    farmSizeAcres: new FormControl(1, {
+      nonNullable: true,
+      validators: [Validators.required, Validators.min(0.01)],
+    }),
+    primaryCrop: new FormControl('maize', { nonNullable: true, validators: Validators.required }),
+    secondaryCrop: new FormControl('cassava', { nonNullable: true }),
+    expectedAnnualYield: new FormControl(0, { nonNullable: true }),
+    farmingExperienceYears: new FormControl(0, { nonNullable: true }),
+    irrigationMethod: new FormControl('rainfed', { nonNullable: true }),
   });
 
   constructor() {
@@ -168,88 +173,97 @@ export class AddFarmComponent implements OnInit {
       return;
     }
 
-    if (this.farmerDetailsForm.invalid) {
+    if (this.farmerDetailsForm.invalid || this.productionDetailsForm.invalid) {
       this.localSubmitError.set('Please complete all required fields.');
       return;
     }
 
     this.localSubmitError.set(null);
-    const formValue = this.farmerDetailsForm.getRawValue();
-    const sizeHectaresNum = Number(formValue.sizeHectares) || 0;
+    const farmerDetails = this.farmerDetailsForm.getRawValue();
+    const production = this.productionDetailsForm.getRawValue();
+    const farmSizeAcresNum = Number(production.farmSizeAcres) || 0;
+    const sizeHectaresNum = farmSizeAcresNum / 2.47105;
+
     const payload: CreatePortfolioFarmPayload = {
       farmerId: targetFarmerId,
-      farmerCode: formValue.farmerCode,
-      farmer_code: formValue.farmerCode,
+      farmerDetails: {
+        farmerCode: farmerDetails.farmerCode,
+        region: farmerDetails.region,
+        district: farmerDetails.district,
+        community: farmerDetails.community,
+        farmAddress: farmerDetails.farmAddress,
+        gpsLatitude: Number(farmerDetails.gpsLatitude) || 0,
+        gpsLongitude: Number(farmerDetails.gpsLongitude) || 0,
+        cooperativeGroupName: farmerDetails.cooperativeGroupName,
+      },
+      production: {
+        farmSizeAcres: farmSizeAcresNum,
+        primaryCrop: production.primaryCrop,
+        secondaryCrop: production.secondaryCrop,
+        expectedAnnualYield: Number(production.expectedAnnualYield) || 0,
+        farmingExperienceYears: Number(production.farmingExperienceYears) || 0,
+        irrigationMethod: production.irrigationMethod,
+      },
+      // Backend validation & compatibility fallbacks
+      cropType: production.primaryCrop,
+      crop_type: production.primaryCrop,
+      primaryCrop: production.primaryCrop,
+      primary_crop: production.primaryCrop,
+      secondaryCrop: production.secondaryCrop || undefined,
+      secondary_crop: production.secondaryCrop || undefined,
       sizeHectares: sizeHectaresNum,
       size_hectares: sizeHectaresNum,
+      sizeAcres: farmSizeAcresNum,
+      farmSizeAcres: farmSizeAcresNum,
       farmSizeHectares: sizeHectaresNum,
       farm_size_hectares: sizeHectaresNum,
-      sizeAcres: sizeHectaresNum * 2.47105,
-      farmSizeAcres: sizeHectaresNum * 2.47105,
-      cropType: formValue.cropType,
-      crop_type: formValue.cropType,
-      primaryCrop: formValue.cropType,
-      primary_crop: formValue.cropType,
-      secondaryCrop: formValue.secondaryCrop || undefined,
-      secondary_crop: formValue.secondaryCrop || undefined,
-      annualYield: formValue.annualYield ? Number(formValue.annualYield) : undefined,
-      yieldKg: formValue.annualYield ? Number(formValue.annualYield) : undefined,
-      irrigationMethod: formValue.irrigationMethod || undefined,
-      farmName: formValue.gpsAddress || formValue.community || 'Farm',
-      farm_name: formValue.gpsAddress || formValue.community || 'Farm',
-      region: formValue.region,
-      farmAddressRegion: formValue.region,
-      farm_address_region: formValue.region,
-      district: formValue.district,
-      farmAddressDistrict: formValue.district,
-      farm_address_district: formValue.district,
-      community: formValue.community,
-      farmAddressCommunity: formValue.community,
-      farm_address_community: formValue.community,
-      location: formValue.community || formValue.region,
-      locationLabel: `${formValue.community}, ${formValue.region}`,
-      location_label: `${formValue.community}, ${formValue.region}`,
-      gpsAddress: formValue.gpsAddress,
-      gps_address: formValue.gpsAddress,
-      farmAddress: formValue.gpsAddress,
-      farm_address: formValue.gpsAddress,
-      address: formValue.gpsAddress,
-      gpsLatitude: Number(formValue.gpsLatitude),
-      gps_latitude: Number(formValue.gpsLatitude),
-      latitude: Number(formValue.gpsLatitude),
-      lat: Number(formValue.gpsLatitude),
-      gpsLongitude: Number(formValue.gpsLongitude),
-      gps_longitude: Number(formValue.gpsLongitude),
-      longitude: Number(formValue.gpsLongitude),
-      lng: Number(formValue.gpsLongitude),
-      lon: Number(formValue.gpsLongitude),
+      farmerCode: farmerDetails.farmerCode,
+      farmer_code: farmerDetails.farmerCode,
+      region: farmerDetails.region,
+      farmAddressRegion: farmerDetails.region,
+      farm_address_region: farmerDetails.region,
+      district: farmerDetails.district,
+      farmAddressDistrict: farmerDetails.district,
+      farm_address_district: farmerDetails.district,
+      community: farmerDetails.community,
+      farmAddressCommunity: farmerDetails.community,
+      farm_address_community: farmerDetails.community,
+      location: farmerDetails.community || farmerDetails.region,
+      locationLabel: `${farmerDetails.community}, ${farmerDetails.region}`,
+      location_label: `${farmerDetails.community}, ${farmerDetails.region}`,
+      gpsAddress: farmerDetails.farmAddress,
+      gps_address: farmerDetails.farmAddress,
+      farmAddress: farmerDetails.farmAddress,
+      farm_address: farmerDetails.farmAddress,
+      address: farmerDetails.farmAddress,
+      gpsLatitude: Number(farmerDetails.gpsLatitude) || 0,
+      gps_latitude: Number(farmerDetails.gpsLatitude) || 0,
+      latitude: Number(farmerDetails.gpsLatitude) || 0,
+      lat: Number(farmerDetails.gpsLatitude) || 0,
+      gpsLongitude: Number(farmerDetails.gpsLongitude) || 0,
+      gps_longitude: Number(farmerDetails.gpsLongitude) || 0,
+      longitude: Number(farmerDetails.gpsLongitude) || 0,
+      lng: Number(farmerDetails.gpsLongitude) || 0,
+      lon: Number(farmerDetails.gpsLongitude) || 0,
       gpsLocation: {
-        latitude: Number(formValue.gpsLatitude),
-        longitude: Number(formValue.gpsLongitude),
+        latitude: Number(farmerDetails.gpsLatitude) || 0,
+        longitude: Number(farmerDetails.gpsLongitude) || 0,
       },
       gps_location: {
-        latitude: Number(formValue.gpsLatitude),
-        longitude: Number(formValue.gpsLongitude),
+        latitude: Number(farmerDetails.gpsLatitude) || 0,
+        longitude: Number(farmerDetails.gpsLongitude) || 0,
       },
-      cooperativeName: formValue.cooperativeName,
-      cooperative_name: formValue.cooperativeName,
-      cooperative: formValue.cooperativeName,
-      groupName: formValue.cooperativeName,
-      group_name: formValue.cooperativeName,
-      farmDetails: {
-        farmerCode: formValue.farmerCode,
-        farmAddressRegion: formValue.region,
-        district: formValue.district,
-        community: formValue.community,
-        gpsAddress: formValue.gpsAddress,
-        farmSizeHectares: sizeHectaresNum,
-        primaryCrop: formValue.cropType,
-        gpsLocation: {
-          latitude: Number(formValue.gpsLatitude),
-          longitude: Number(formValue.gpsLongitude),
-        },
-        cooperativeName: formValue.cooperativeName,
-      },
+      cooperativeName: farmerDetails.cooperativeGroupName,
+      cooperative_name: farmerDetails.cooperativeGroupName,
+      cooperative: farmerDetails.cooperativeGroupName,
+      groupName: farmerDetails.cooperativeGroupName,
+      group_name: farmerDetails.cooperativeGroupName,
+      cooperativeGroupName: farmerDetails.cooperativeGroupName,
+      annualYield: Number(production.expectedAnnualYield) || 0,
+      expectedAnnualYield: Number(production.expectedAnnualYield) || 0,
+      yieldKg: Number(production.expectedAnnualYield) || 0,
+      farmingExperienceYears: Number(production.farmingExperienceYears) || 0,
+      irrigationMethod: production.irrigationMethod || undefined,
     };
 
     this.store.dispatch(new CreatePortfolioFarm(targetFarmerId, payload)).subscribe({
@@ -279,5 +293,6 @@ export class AddFarmComponent implements OnInit {
 
   private markAllFormsTouched(): void {
     this.farmerDetailsForm.markAllAsTouched();
+    this.productionDetailsForm.markAllAsTouched();
   }
 }

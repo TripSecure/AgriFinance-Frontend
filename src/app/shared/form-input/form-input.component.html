@@ -1,33 +1,54 @@
 @if (isSelect()) {
   <div class="form_field input-field" [formGroup]="formGroup()">
-    <label for="priority">{{ label() }}</label>
-
-    <select
-      class="form-select text-primary"
-      aria-label="Default select example"
-      [formControlName]="name()"
-      (change)="onChange($event)"
-    >
-      @for (option of options(); track $index) {
-        <option [value]="option.id">{{ option.name }}</option>
+    <label [for]="name()">
+      {{ label() }}
+      @if (isRequired()) {
+        <span class="required">*</span>
       }
-    </select>
+    </label>
+
+    <p-select
+      styleClass="form-input__control w-100"
+      [inputId]="name()"
+      [formControlName]="name()"
+      [options]="options()"
+      [placeholder]="placeholder() || 'Select ' + label()"
+      [readonly]="readOnly()"
+      [showClear]="showClear()"
+      [filter]="filter()"
+      [filterBy]="filterBy()"
+      [invalid]="showError()"
+      optionLabel="name"
+      optionValue="id"
+      appendTo="body"
+      (onChange)="onSelectChange($event)"
+    />
   </div>
 } @else if (isOption()) {
   <div class="form_field input-field" [formGroup]="formGroup()">
-    <label for="priority">{{ label() }}</label>
-
-    <select
-      class="form-select text-primary"
-      aria-label="Default select example"
-      [formControlName]="name()"
-    >
-      @if (selections().length) {
-        @for (option of selections(); track $index) {
-          <option [value]="option">{{ option | titlecase }}</option>
-        }
+    <label [for]="name()">
+      {{ label() }}
+      @if (isRequired()) {
+        <span class="required">*</span>
       }
-    </select>
+    </label>
+
+    <p-select
+      styleClass="form-input__control w-100"
+      [inputId]="name()"
+      [formControlName]="name()"
+      [options]="selectionOptions()"
+      [placeholder]="placeholder() || 'Select ' + label()"
+      [readonly]="readOnly()"
+      [showClear]="showClear()"
+      [filter]="filter()"
+      [filterBy]="filterBy()"
+      [invalid]="showError()"
+      optionLabel="name"
+      optionValue="id"
+      appendTo="body"
+      (onChange)="onSelectChange($event)"
+    />
   </div>
 } @else if (isCheckbox()) {
   <section class="checkbox-block" [formGroup]="formGroup()">

@@ -1,16 +1,35 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { MenuItem } from 'primeng/api';
+import { Dialog } from 'primeng/dialog';
 import { MenuModule } from 'primeng/menu';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ConfirmModalComponent } from '../../../../../shared/confirm-modal/confirm-modal.component';
+import {
+  FormInputComponent,
+  SelectOption,
+} from '../../../../../shared/form-input/form-input.component';
+import { extractErrorMessage } from '../../../../../shared/request.utils';
 import { ToastrService } from '../../../../../shared/toastr/toastr.service';
 import {
+  GetPortfolioExtensionOfficers,
+  PortfolioExtensionOfficersState,
+} from '../extension-officers/extension-officers.state';
+import {
+  AssignExtensionOfficerToFarm,
   DeletePortfolioFarm,
   GetPortfolioFarms,
   PortfolioFarm,
@@ -48,7 +67,14 @@ const farmStatusOptions: readonly FarmStatusFilterOption[] = [
 
 @Component({
   selector: 'app-farms',
-  imports: [DatePipe, MenuModule, TableModule],
+  imports: [
+    DatePipe,
+    Dialog,
+    FormInputComponent,
+    MenuModule,
+    ReactiveFormsModule,
+    TableModule,
+  ],
   templateUrl: './farms.component.html',
   styleUrl: './farms.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,6 +93,36 @@ export class FarmsComponent {
   protected readonly farmsData = this.store.selectSignal(PortfolioFarmsState.farmsConfigs);
   protected readonly isLoading = this.store.selectSignal(PortfolioFarmsState.isLoading);
   protected readonly statusOptions = farmStatusOptions;
+
+  private readonly extensionOfficers = this.store.selectSignal(
+    PortfolioExtensionOfficersState.officers,
+  );
+
+  protected readonly officerOptions = computed<SelectOption[]>(() => {
+    return this.extensionOfficers().map((officer) => {
+      const name =
+        officer.fullName ||
+        officer.name ||
+        officer.personalInformation?.fullName ||
+        'Extension Officer';
+      const staffId = officer.staffId || officer.employmentDetails?.staffId;
+      const region = officer.region || officer.employmentDetails?.regionDistrict;
+      const details = [staffId, region].filter(Boolean).join(' - ');
+      return {
+        id: officer.id || officer.officerId || '',
+        name: details ? `${name} (${details})` : name,
+      };
+    });
+  });
+
+  protected readonly isAssignModalVisible = signal(false);
+  protected readonly isSubmittingAssignment = signal(false);
+  protected readonly selectedFarmForAssignment = signal<PortfolioFarm | null>(null);
+
+  protected readonly assignForm = new FormGroup({
+    officerId: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    assignmentNotes: new FormControl('', { nonNullable: true }),
+  });
 
   protected selectedFarmForAction: PortfolioFarm | null = null;
 
@@ -172,11 +228,6 @@ export class FarmsComponent {
   }
 
   protected onViewFarm(farm: PortfolioFarm): void {
-    // if (farm.farmerId || farm.farmer?.id) {
-    //   const farmerId = farm.farmerId || farm.farmer?.id;
-    //   void this.router.navigate(['/dashboard/portfolio-officer/farmers', farmerId, 'farms']);
-    //   return;
-    // }
     if (farm.id) {
       void this.router.navigate(['/dashboard/portfolio-officer/farms', farm.id]);
       return;
@@ -196,10 +247,70 @@ export class FarmsComponent {
   }
 
   protected onAssignOfficer(farm: PortfolioFarm): void {
-    this.toastr.triggerToastr(
-      'info',
-      `Assign extension officer for: ${farm.farmName || farm.locationLabel || farm.id}`,
-    );
+    if (!farm.id) {
+      this.toastr.triggerToastr('error', 'Invalid farm selected.');
+      return;
+    }
+
+    this.selectedFarmForAssignment.set(farm);
+    const existingOfficerId =
+      farm.assignment?.officerId ||
+      (typeof farm['officerId'] === 'string' ? farm['officerId'] : '');
+    const existingNotes =
+      farm.assignment?.notes ||
+      (typeof farm['assignmentNotes'] === 'string' ? farm['assignmentNotes'] : '');
+
+    this.assignForm.reset({
+      officerId: existingOfficerId,
+      assignmentNotes: existingNotes,
+    });
+
+    this.isAssignModalVisible.set(true);
+    this.store.dispatch(new GetPortfolioExtensionOfficers({ rows: 100 })).subscribe();
+  }
+
+  protected onSubmitAssignment(): void {
+    if (this.assignForm.invalid) {
+      this.assignForm.markAllAsTouched();
+      return;
+    }
+
+    const farm = this.selectedFarmForAssignment();
+    if (!farm?.id) {
+      this.toastr.triggerToastr('error', 'No farm selected.');
+      return;
+    }
+
+    this.isSubmittingAssignment.set(true);
+    const raw = this.assignForm.getRawValue();
+    const payload = {
+      officerId: raw.officerId,
+      assignmentNotes: raw.assignmentNotes?.trim() || '',
+    };
+
+    this.store.dispatch(new AssignExtensionOfficerToFarm(farm.id, payload)).subscribe({
+      next: () => {
+        this.isSubmittingAssignment.set(false);
+        const stateErrors = this.store.selectSnapshot(PortfolioFarmsState.errors);
+        if (stateErrors.length) {
+          this.toastr.triggerToastr('error', stateErrors[0]);
+          return;
+        }
+
+        const stateMessage = this.store.selectSnapshot(PortfolioFarmsState.message);
+        this.toastr.triggerToastr(
+          'success',
+          stateMessage || 'Extension officer assigned successfully.',
+        );
+        this.isAssignModalVisible.set(false);
+        this.dispatchFarmsLoad();
+      },
+      error: (error: unknown) => {
+        this.isSubmittingAssignment.set(false);
+        const errorMsg = extractErrorMessage(error, 'Unable to assign extension officer.');
+        this.toastr.triggerToastr('error', errorMsg);
+      },
+    });
   }
 
   protected onScheduleVisit(farm: PortfolioFarm): void {

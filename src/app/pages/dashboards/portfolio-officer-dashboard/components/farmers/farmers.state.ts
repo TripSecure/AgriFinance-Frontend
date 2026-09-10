@@ -61,40 +61,20 @@ interface FarmerDetailsResponse {
 }
 
 export interface CreateFarmerPayload {
-  submitForReview: boolean;
-  fullName: string;
-  nationalId: string;
-  phone: string;
-  email: string;
-  dateOfBirth: string;
-  gender: string;
-  farmDetails: {
-    farmerCode: string;
-    farmSizeHectares: number;
-    primaryCrop: string;
-    farmAddressRegion: string;
-    district: string;
-    community: string;
-    gpsLocation: {
-      latitude: number;
-      longitude: number;
-    };
-    cooperativeName: string;
+  personalDetails: {
+    fullName: string;
+    dateOfBirth: string;
+    gender: string;
+    nationalId: string;
+    phone: string;
+    email: string;
   };
-  productionHistory: {
-    yearsOfFarmingExperience: number;
-    lastSeasonCrop: string;
-    yieldKg: number;
-    revenueGhs: number;
-    secondaryCrop: string;
-    irrigationMethod: string;
-  };
-  financialInformation: {
+  financials: {
     bankName: string;
     accountNumber: string;
     mobileMoneyProvider: string;
     mobileMoneyNumber: string;
-    estimatedAnnualIncome: number;
+    estimatedAnnualIncomeGhs: number;
     existingLoans: string;
   };
   documentUpload: {
@@ -103,11 +83,13 @@ export interface CreateFarmerPayload {
     passportPhoto: string;
     farmOwnershipDocument: string;
   };
-  consentDeclarations: {
+  consent: {
     dataPrivacyConsent: boolean;
     accuracyConsent: boolean;
     thirdPartyCreditVerificationConsent: boolean;
   };
+  submitForReview: boolean;
+  [key: string]: unknown;
 }
 
 interface FarmersData {
@@ -367,14 +349,105 @@ export class FarmersState {
       return null;
     }
 
+    let record: Record<string, unknown> = { ...data };
+
     for (const key of ['farmer', 'profile', 'record', 'data']) {
       const nested = data[key];
       if (this.isRecord(nested)) {
-        return this.withFallbackId({ ...data, ...nested }, fallbackId);
+        record = { ...record, ...nested };
+        break;
       }
     }
 
-    return this.withFallbackId(data, fallbackId);
+    const personal =
+      (this.isRecord(record['personalDetails']) ? record['personalDetails'] : null) ||
+      (this.isRecord(record['personal_details']) ? record['personal_details'] : null) ||
+      {};
+
+    const farm =
+      (this.isRecord(record['farmDetails']) ? record['farmDetails'] : null) ||
+      (this.isRecord(record['farm_details']) ? record['farm_details'] : null) ||
+      (this.isRecord(record['farmerDetails']) ? record['farmerDetails'] : null) ||
+      (this.isRecord(record['farmer_details']) ? record['farmer_details'] : null) ||
+      {};
+
+    const fullName =
+      record['fullName'] ||
+      record['full_name'] ||
+      personal['fullName'] ||
+      personal['full_name'] ||
+      personal['name'] ||
+      [record['firstName'], record['lastName']].filter(Boolean).join(' ') ||
+      [personal['firstName'], personal['lastName']].filter(Boolean).join(' ') ||
+      record['name'] ||
+      null;
+
+    const phone =
+      record['phone'] ||
+      record['phoneNumber'] ||
+      record['phone_number'] ||
+      personal['phone'] ||
+      personal['phoneNumber'] ||
+      personal['phone_number'] ||
+      null;
+
+    const email = record['email'] || personal['email'] || null;
+
+    const nationalId =
+      record['nationalId'] ||
+      record['national_id'] ||
+      record['nationalIdNumber'] ||
+      record['national_id_number'] ||
+      personal['nationalId'] ||
+      personal['national_id'] ||
+      null;
+
+    const community =
+      record['community'] ||
+      record['location'] ||
+      farm['community'] ||
+      farm['farmAddressCommunity'] ||
+      farm['location'] ||
+      null;
+
+    const region =
+      record['region'] ||
+      farm['region'] ||
+      farm['farmAddressRegion'] ||
+      null;
+
+    const farmerCode =
+      record['farmerCode'] ||
+      record['farmer_code'] ||
+      record['code'] ||
+      farm['farmerCode'] ||
+      null;
+
+    const status =
+      record['approvalStatus'] ||
+      record['status'] ||
+      record['verificationStatus'] ||
+      'Active';
+
+    const normalized: Record<string, unknown> = {
+      ...record,
+      ...personal,
+      fullName: fullName as string | null,
+      full_name: fullName as string | null,
+      phone: phone as string | null,
+      phoneNumber: phone as string | null,
+      email: email as string | null,
+      nationalId: nationalId as string | null,
+      nationalIdNumber: nationalId as string | null,
+      community: community as string | null,
+      region: region as string | null,
+      farmerCode: farmerCode as string | null,
+      farmer_code: farmerCode as string | null,
+      status: status as string,
+      approvalStatus: status as string,
+    };
+
+    return this.withFallbackId(normalized, fallbackId);
   }
 
   private isFarmer(value: unknown): value is Farmer {
@@ -382,15 +455,11 @@ export class FarmersState {
   }
 
   private withFallbackId(record: Record<string, unknown>, fallbackId: string): Farmer | null {
-    if (this.isFarmer(record)) {
-      return record;
+    const id = record['id'] || record['_id'] || fallbackId;
+    if (typeof id === 'string' && id) {
+      return { ...record, id } as Farmer;
     }
-
-    if (!fallbackId) {
-      return null;
-    }
-
-    return { ...record, id: fallbackId } as Farmer;
+    return null;
   }
 
   private isRecord(value: unknown): value is Record<string, unknown> {

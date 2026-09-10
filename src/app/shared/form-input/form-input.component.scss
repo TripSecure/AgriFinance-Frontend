@@ -272,7 +272,9 @@ label {
   display: block;
   margin-bottom: 0.5rem;
 }
-.p-multiselect {
+.p-multiselect,
+.p-select,
+.form-input__control {
   width: 100%;
 }
 

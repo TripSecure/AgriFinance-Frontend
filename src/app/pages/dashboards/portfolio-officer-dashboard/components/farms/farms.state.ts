@@ -88,6 +88,25 @@ export interface PortfolioFarmsQueryParams {
 }
 
 export interface CreatePortfolioFarmPayload {
+  farmerId?: string;
+  farmerDetails?: {
+    farmerCode: string;
+    region: string;
+    district: string;
+    community: string;
+    farmAddress: string;
+    gpsLatitude: number;
+    gpsLongitude: number;
+    cooperativeGroupName: string;
+  };
+  production?: {
+    farmSizeAcres: number;
+    primaryCrop: string;
+    secondaryCrop: string;
+    expectedAnnualYield: number;
+    farmingExperienceYears: number;
+    irrigationMethod: string;
+  };
   sizeHectares?: number;
   sizeAcres?: number;
   cropType?: string;
@@ -107,6 +126,7 @@ export interface CreatePortfolioFarmPayload {
     longitude?: number;
   };
   cooperativeName?: string;
+  cooperativeGroupName?: string;
   [key: string]: unknown;
 }
 
@@ -130,6 +150,17 @@ export class GetPortfolioFarms {
 export class CreatePortfolioFarm {
   static readonly type = '[Portfolio Farms] Create Farm';
   constructor(public farmerId: string, public payload: CreatePortfolioFarmPayload) {}
+}
+
+export interface AssignExtensionOfficerPayload {
+  officerId: string;
+  assignmentNotes?: string;
+  [key: string]: unknown;
+}
+
+export class AssignExtensionOfficerToFarm {
+  static readonly type = '[Portfolio Farms] Assign Extension Officer';
+  constructor(public farmId: string, public payload: AssignExtensionOfficerPayload) {}
 }
 
 export class DeletePortfolioFarm {
@@ -244,6 +275,41 @@ export class PortfolioFarmsState {
           );
           ctx.patchState({
             isCreating: false,
+            message: null,
+            errors: [message],
+          });
+          return of(error);
+        }),
+      );
+  }
+
+  @Action(AssignExtensionOfficerToFarm)
+  assignExtensionOfficer(
+    ctx: StateContext<PortfolioFarmsStateModel>,
+    { farmId, payload }: AssignExtensionOfficerToFarm,
+  ) {
+    ctx.patchState({ isLoading: true, errors: [] });
+
+    return this.http
+      .post<{ message?: string; success?: boolean; isSuccessful?: boolean; data?: unknown }>(
+        `${environment.api}/portfolio/farms/${farmId}/assign-extension`,
+        payload,
+      )
+      .pipe(
+        tap((response) => {
+          ctx.patchState({
+            isLoading: false,
+            message: response.message ?? 'Extension officer assigned successfully.',
+            errors: [],
+          });
+        }),
+        catchError((error: unknown) => {
+          const message = extractErrorMessage(
+            error,
+            'Unable to assign extension officer. Please try again.',
+          );
+          ctx.patchState({
+            isLoading: false,
             message: null,
             errors: [message],
           });

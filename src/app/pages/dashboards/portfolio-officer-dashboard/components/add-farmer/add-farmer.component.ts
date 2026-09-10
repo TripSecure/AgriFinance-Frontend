@@ -65,7 +65,7 @@ type FinancialInformationControls = {
   accountNumber: FormControl<string>;
   mobileMoneyProvider: FormControl<string>;
   mobileMoneyNumber: FormControl<string>;
-  estimatedAnnualIncome: FormControl<number>;
+  estimatedAnnualIncomeGhs: FormControl<number>;
   existingLoans: FormControl<string>;
 };
 
@@ -114,9 +114,6 @@ export class AddFarmerComponent implements OnInit {
 
   protected readonly uploadEndpoint = `${environment.api}/portfolio/farmer-documents/upload`;
   protected readonly genderOptions = ['female', 'male', 'other'];
-  protected readonly regionOptions = ['Greater Accra', 'Ashanti', 'Northern', 'Eastern', 'Volta'];
-  protected readonly cropOptions = ['maize', 'rice', 'cassava', 'cocoa', 'soybean', 'vegetables'];
-  protected readonly irrigationOptions = ['rainfed', 'manual', 'drip', 'sprinkler', 'mechanized'];
   protected readonly mobileMoneyProviders = ['mtn', 'telecel', 'airteltigo'];
   protected readonly loanOptions = ['none', 'bank_loan', 'mobile_money_loan', 'cooperative_loan'];
 
@@ -154,50 +151,6 @@ export class AddFarmerComponent implements OnInit {
     }),
   });
 
-  protected readonly farmerDetailsForm = new FormGroup<FarmerDetailsControls>({
-    farmerCode: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    region: new FormControl('Greater Accra', {
-      nonNullable: true,
-      validators: Validators.required,
-    }),
-    district: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    community: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    gpsAddress: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    gpsLatitude: new FormControl(0, {
-      nonNullable: true,
-      validators: [Validators.required, Validators.min(-90), Validators.max(90)],
-    }),
-    gpsLongitude: new FormControl(0, {
-      nonNullable: true,
-      validators: [Validators.required, Validators.min(-180), Validators.max(180)],
-    }),
-    cooperativeName: new FormControl('', { nonNullable: true, validators: Validators.required }),
-  });
-
-  protected readonly productionDetailsForm = new FormGroup<ProductionDetailsControls>({
-    farmSizeAcres: new FormControl(0, {
-      nonNullable: true,
-      validators: [Validators.required, Validators.min(0.1)],
-    }),
-    primaryCrop: new FormControl('maize', { nonNullable: true, validators: Validators.required }),
-    secondaryCrop: new FormControl('cassava', {
-      nonNullable: true,
-      validators: Validators.required,
-    }),
-    annualYield: new FormControl(0, {
-      nonNullable: true,
-      validators: [Validators.required, Validators.min(1)],
-    }),
-    farmingExperienceYears: new FormControl(0, {
-      nonNullable: true,
-      validators: [Validators.required, Validators.min(0)],
-    }),
-    irrigationMethod: new FormControl('rainfed', {
-      nonNullable: true,
-      validators: Validators.required,
-    }),
-  });
-
   protected readonly financialInformationForm = new FormGroup<FinancialInformationControls>({
     bankName: new FormControl('', { nonNullable: true, validators: Validators.required }),
     accountNumber: new FormControl('', { nonNullable: true, validators: Validators.required }),
@@ -206,9 +159,9 @@ export class AddFarmerComponent implements OnInit {
       validators: Validators.required,
     }),
     mobileMoneyNumber: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    estimatedAnnualIncome: new FormControl(0, {
+    estimatedAnnualIncomeGhs: new FormControl(0, {
       nonNullable: true,
-      validators: [Validators.required, Validators.min(1)],
+      validators: [Validators.required, Validators.min(0)],
     }),
     existingLoans: new FormControl('none', { nonNullable: true, validators: Validators.required }),
   });
@@ -285,8 +238,6 @@ export class AddFarmerComponent implements OnInit {
   private markAllFormsTouched(): void {
     this.personalDetailsForm.markAllAsTouched();
     this.documentUploadForm.markAllAsTouched();
-    this.farmerDetailsForm.markAllAsTouched();
-    this.productionDetailsForm.markAllAsTouched();
     this.financialInformationForm.markAllAsTouched();
     this.declarationsForm.markAllAsTouched();
   }
@@ -295,8 +246,6 @@ export class AddFarmerComponent implements OnInit {
     return (
       this.personalDetailsForm.invalid ||
       this.documentUploadForm.invalid ||
-      this.farmerDetailsForm.invalid ||
-      this.productionDetailsForm.invalid ||
       this.financialInformationForm.invalid ||
       this.declarationsForm.invalid
     );
@@ -304,19 +253,8 @@ export class AddFarmerComponent implements OnInit {
 
   private patchForm(farmer: Farmer): void {
     const personalDetails = this.getMergedRecord(farmer, ['personalDetails', 'personal_details']);
-    const farmDetails = this.getMergedRecord(farmer, [
-      'farmerDetails',
-      'farmer_details',
-      'farmDetails',
-      'farm_details',
-    ]);
-    const productionHistory = this.getMergedRecord(farmer, [
-      'productionDetails',
-      'production_details',
-      'productionHistory',
-      'production_history',
-    ]);
     const financialInformation = this.getMergedRecord(farmer, [
+      'financials',
       'financialInformation',
       'financial_information',
     ]);
@@ -325,20 +263,11 @@ export class AddFarmerComponent implements OnInit {
       ...this.getMergedRecord(farmer, ['documentUpload', 'document_upload', 'documents']),
     };
     const consentDeclarations = this.getMergedRecord(farmer, [
+      'consent',
       'declarations',
       'consentDeclarations',
       'consent_declarations',
     ]);
-    const gpsLocation = this.getGpsRecord(
-      this.getFirstValue(farmDetails, [
-        'gpsLocation',
-        'gps_location',
-        'gpsCoordinates',
-        'gps_coordinates',
-        'locationCoordinates',
-        'location_coordinates',
-      ]),
-    );
 
     this.personalDetailsForm.patchValue({
       fullName:
@@ -401,89 +330,6 @@ export class AddFarmerComponent implements OnInit {
       ]),
     });
 
-    this.farmerDetailsForm.patchValue({
-      farmerCode:
-        this.getString(farmDetails, ['farmerCode', 'farmer_code', 'code']) ||
-        this.getString(farmer, ['farmerCode', 'farmer_code', 'code']),
-      region: this.getOptionValue(
-        this.getString(farmDetails, ['farmAddressRegion', 'farm_address_region', 'region']) ||
-          this.getString(farmer, ['region', 'farmAddressRegion', 'farm_address_region']),
-        this.regionOptions,
-        'Greater Accra',
-      ),
-      district:
-        this.getString(farmDetails, ['district', 'farmAddressDistrict', 'farm_address_district']) ||
-        this.getString(farmer, ['district']),
-      community:
-        this.getString(farmDetails, [
-          'community',
-          'farmAddressCommunity',
-          'farm_address_community',
-        ]) || this.getString(farmer, ['community']),
-      gpsAddress: this.getString(farmDetails, [
-        'gpsAddress',
-        'gps_address',
-        'farmAddress',
-        'farm_address',
-        'address',
-      ]),
-      gpsLatitude: this.getNumber(gpsLocation, ['latitude', 'lat']),
-      gpsLongitude: this.getNumber(gpsLocation, ['longitude', 'lng', 'lon']),
-      cooperativeName: this.getString(farmDetails, [
-        'cooperativeName',
-        'cooperative_name',
-        'cooperative',
-        'groupName',
-        'group_name',
-      ]),
-    });
-
-    this.productionDetailsForm.patchValue({
-      farmSizeAcres: this.getNumber(farmDetails, [
-        'farmSizeHectares',
-        'farm_size_hectares',
-        'farmSizeAcres',
-        'farm_size_acres',
-      ]),
-      primaryCrop: this.getOptionValue(
-        this.getString(farmDetails, ['primaryCrop', 'primary_crop']) ||
-          this.getString(productionHistory, [
-            'primaryCrop',
-            'primary_crop',
-            'lastSeasonCrop',
-            'last_season_crop',
-          ]),
-        this.cropOptions,
-        'maize',
-      ),
-      secondaryCrop: this.getOptionValue(
-        this.getString(productionHistory, ['secondaryCrop', 'secondary_crop']) ||
-          this.getString(farmDetails, ['secondaryCrop', 'secondary_crop']),
-        this.cropOptions,
-        'cassava',
-      ),
-      annualYield: this.getNumber(productionHistory, [
-        'yieldKg',
-        'yield_kg',
-        'annualYield',
-        'annual_yield',
-        'expectedAnnualYield',
-        'expected_annual_yield',
-      ]),
-      farmingExperienceYears: this.getNumber(productionHistory, [
-        'yearsOfFarmingExperience',
-        'years_of_farming_experience',
-        'farmingExperienceYears',
-        'farming_experience_years',
-      ]),
-      irrigationMethod: this.getOptionValue(
-        this.getString(productionHistory, ['irrigationMethod', 'irrigation_method']) ||
-          this.getString(farmDetails, ['irrigationMethod', 'irrigation_method']),
-        this.irrigationOptions,
-        'rainfed',
-      ),
-    });
-
     this.financialInformationForm.patchValue({
       bankName: this.getString(financialInformation, ['bankName', 'bank_name']),
       accountNumber: this.getString(financialInformation, ['accountNumber', 'account_number']),
@@ -496,7 +342,9 @@ export class AddFarmerComponent implements OnInit {
         'mobileMoneyNumber',
         'mobile_money_number',
       ]),
-      estimatedAnnualIncome: this.getNumber(financialInformation, [
+      estimatedAnnualIncomeGhs: this.getNumber(financialInformation, [
+        'estimatedAnnualIncomeGhs',
+        'estimated_annual_income_ghs',
         'estimatedAnnualIncome',
         'estimated_annual_income',
       ]),
@@ -526,43 +374,57 @@ export class AddFarmerComponent implements OnInit {
       ]),
     });
   }
+
   private buildPayload(): CreateFarmerPayload {
-    const personalDetails = this.personalDetailsForm.getRawValue();
-    const farmerDetails = this.farmerDetailsForm.getRawValue();
-    const productionDetails = this.productionDetailsForm.getRawValue();
+    const personal = this.personalDetailsForm.getRawValue();
+    const financials = this.financialInformationForm.getRawValue();
+    const documents = this.documentUploadForm.getRawValue();
     const declarations = this.declarationsForm.getRawValue();
 
     return {
+      personalDetails: {
+        fullName: personal.fullName,
+        dateOfBirth: this.formatDateForPayload(personal.dateOfBirth),
+        gender: personal.gender,
+        nationalId: personal.nationalIdNumber,
+        phone: personal.phone,
+        email: personal.email,
+      },
+      financials: {
+        bankName: financials.bankName,
+        accountNumber: financials.accountNumber,
+        mobileMoneyProvider: financials.mobileMoneyProvider,
+        mobileMoneyNumber: financials.mobileMoneyNumber,
+        estimatedAnnualIncomeGhs: Number(financials.estimatedAnnualIncomeGhs) || 0,
+        existingLoans: financials.existingLoans,
+      },
+      documentUpload: {
+        nationalIdFront: documents.nationalIdFront,
+        nationalIdBack: documents.nationalIdBack,
+        passportPhoto: documents.passportPhoto,
+        farmOwnershipDocument: documents.farmOwnershipDocument,
+      },
+      consent: {
+        dataPrivacyConsent: declarations.dataPrivacyConsent,
+        accuracyConsent: declarations.accuracyDeclaration,
+        thirdPartyCreditVerificationConsent: declarations.creditVerificationConsent,
+      },
       submitForReview: true,
-      fullName: personalDetails.fullName,
-      nationalId: personalDetails.nationalIdNumber,
-      phone: personalDetails.phone,
-      email: personalDetails.email,
-      dateOfBirth: this.formatDateForPayload(personalDetails.dateOfBirth),
-      gender: personalDetails.gender,
-      farmDetails: {
-        farmerCode: farmerDetails.farmerCode,
-        farmSizeHectares: productionDetails.farmSizeAcres,
-        primaryCrop: productionDetails.primaryCrop,
-        farmAddressRegion: farmerDetails.region,
-        district: farmerDetails.district,
-        community: farmerDetails.community,
-        gpsLocation: {
-          latitude: farmerDetails.gpsLatitude,
-          longitude: farmerDetails.gpsLongitude,
-        },
-        cooperativeName: farmerDetails.cooperativeName,
+      // Fallback properties for compatibility
+      fullName: personal.fullName,
+      nationalId: personal.nationalIdNumber,
+      phone: personal.phone,
+      email: personal.email,
+      dateOfBirth: this.formatDateForPayload(personal.dateOfBirth),
+      gender: personal.gender,
+      financialInformation: {
+        bankName: financials.bankName,
+        accountNumber: financials.accountNumber,
+        mobileMoneyProvider: financials.mobileMoneyProvider,
+        mobileMoneyNumber: financials.mobileMoneyNumber,
+        estimatedAnnualIncome: Number(financials.estimatedAnnualIncomeGhs) || 0,
+        existingLoans: financials.existingLoans,
       },
-      productionHistory: {
-        yearsOfFarmingExperience: productionDetails.farmingExperienceYears,
-        lastSeasonCrop: productionDetails.primaryCrop,
-        yieldKg: productionDetails.annualYield,
-        revenueGhs: this.financialInformationForm.getRawValue().estimatedAnnualIncome,
-        secondaryCrop: productionDetails.secondaryCrop,
-        irrigationMethod: productionDetails.irrigationMethod,
-      },
-      financialInformation: this.financialInformationForm.getRawValue(),
-      documentUpload: this.documentUploadForm.getRawValue(),
       consentDeclarations: {
         dataPrivacyConsent: declarations.dataPrivacyConsent,
         accuracyConsent: declarations.accuracyDeclaration,

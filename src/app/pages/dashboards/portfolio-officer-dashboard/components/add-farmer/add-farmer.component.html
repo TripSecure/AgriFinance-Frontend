@@ -17,7 +17,6 @@
   <mat-stepper [linear]="isLinear()" #stepper class="farmer-stepper">
     <mat-step
       [stepControl]="personalDetailsForm"
-      [editable]="isEditMode()"
       [optional]="isEditMode()"
       [completed]="isEditMode() || personalDetailsForm.valid"
     >
@@ -86,7 +85,6 @@
 
     <mat-step
       [stepControl]="documentUploadForm"
-      [editable]="isEditMode()"
       [optional]="isEditMode()"
       [completed]="isEditMode() || documentUploadForm.valid"
     >
@@ -174,164 +172,7 @@
       </div>
     </mat-step>
     <mat-step
-      [stepControl]="farmerDetailsForm"
-      [editable]="isEditMode()"
-      [optional]="isEditMode()"
-      [completed]="isEditMode() || farmerDetailsForm.valid"
-    >
-      <ng-template matStepLabel>Farmer Details</ng-template>
-      <section class="form-section" aria-labelledby="farmer-details-heading">
-        <header class="form-section-header">
-          <h2 id="farmer-details-heading">Farmer Details</h2>
-        </header>
-
-        <div class="form-section-body form-grid">
-          <app-form-input
-            name="farmerCode"
-            label="Farmer ID / Code"
-            type="text"
-            placeholder="FRM-0001"
-            [isRequired]="true"
-            [formGroup]="farmerDetailsForm"
-          />
-          <app-form-input
-            name="region"
-            label="Region"
-            [isOption]="true"
-            [selections]="regionOptions"
-            [isRequired]="true"
-            [formGroup]="farmerDetailsForm"
-          />
-          <app-form-input
-            name="district"
-            label="District"
-            type="text"
-            placeholder="Ejura Sekyedumase"
-            [isRequired]="true"
-            [formGroup]="farmerDetailsForm"
-          />
-          <app-form-input
-            name="community"
-            label="Community"
-            type="text"
-            placeholder="Aframso"
-            [isRequired]="true"
-            [formGroup]="farmerDetailsForm"
-          />
-          <app-form-input
-            name="gpsAddress"
-            label="Farm Address"
-            type="text"
-            placeholder="Kitson Street"
-            [isRequired]="true"
-            [formGroup]="farmerDetailsForm"
-          />
-          <app-form-input
-            name="gpsLatitude"
-            label="GPS Latitude"
-            type="number"
-            placeholder="5.6037"
-            [isRequired]="true"
-            [formGroup]="farmerDetailsForm"
-          />
-          <app-form-input
-            name="gpsLongitude"
-            label="GPS Longitude"
-            type="number"
-            placeholder="-0.1870"
-            [isRequired]="true"
-            [formGroup]="farmerDetailsForm"
-          />
-          <app-form-input
-            name="cooperativeName"
-            label="Cooperative / Group Name"
-            type="text"
-            placeholder="Green Growers Cooperative"
-            [isRequired]="true"
-            [formGroup]="farmerDetailsForm"
-          />
-        </div>
-      </section>
-
-      <div class="step-actions">
-        <button type="button" class="secondary-action" matStepperPrevious>Back</button>
-        <button type="button" class="primary-action" matStepperNext>Next</button>
-      </div>
-    </mat-step>
-
-    <mat-step
-      [stepControl]="productionDetailsForm"
-      [editable]="isEditMode()"
-      [optional]="isEditMode()"
-      [completed]="isEditMode() || productionDetailsForm.valid"
-    >
-      <ng-template matStepLabel>Production</ng-template>
-      <section class="form-section" aria-labelledby="production-heading">
-        <header class="form-section-header">
-          <h2 id="production-heading">Production</h2>
-        </header>
-
-        <div class="form-section-body form-grid">
-          <app-form-input
-            name="farmSizeAcres"
-            label="Farm Size (Acres)"
-            type="number"
-            placeholder="4.5"
-            [isRequired]="true"
-            [formGroup]="productionDetailsForm"
-          />
-          <app-form-input
-            name="primaryCrop"
-            label="Primary Crop"
-            [isOption]="true"
-            [selections]="cropOptions"
-            [isRequired]="true"
-            [formGroup]="productionDetailsForm"
-          />
-          <app-form-input
-            name="secondaryCrop"
-            label="Secondary Crop"
-            [isOption]="true"
-            [selections]="cropOptions"
-            [isRequired]="true"
-            [formGroup]="productionDetailsForm"
-          />
-          <app-form-input
-            name="annualYield"
-            label="Expected Annual Yield"
-            type="number"
-            placeholder="1200"
-            [isRequired]="true"
-            [formGroup]="productionDetailsForm"
-          />
-          <app-form-input
-            name="farmingExperienceYears"
-            label="Farming Experience (Years)"
-            type="number"
-            placeholder="6"
-            [isRequired]="true"
-            [formGroup]="productionDetailsForm"
-          />
-          <app-form-input
-            name="irrigationMethod"
-            label="Irrigation Method"
-            [isOption]="true"
-            [selections]="irrigationOptions"
-            [isRequired]="true"
-            [formGroup]="productionDetailsForm"
-          />
-        </div>
-      </section>
-
-      <div class="step-actions">
-        <button type="button" class="secondary-action" matStepperPrevious>Back</button>
-        <button type="button" class="primary-action" matStepperNext>Next</button>
-      </div>
-    </mat-step>
-
-    <mat-step
       [stepControl]="financialInformationForm"
-      [editable]="isEditMode()"
       [optional]="isEditMode()"
       [completed]="isEditMode() || financialInformationForm.valid"
     >
@@ -375,7 +216,7 @@
             [formGroup]="financialInformationForm"
           />
           <app-form-input
-            name="estimatedAnnualIncome"
+            name="estimatedAnnualIncomeGhs"
             label="Estimated Annual Income (GHS)"
             type="number"
             placeholder="25000"
@@ -401,7 +242,6 @@
 
     <mat-step
       [stepControl]="declarationsForm"
-      [editable]="isEditMode()"
       [optional]="isEditMode()"
       [completed]="isEditMode() || declarationsForm.valid"
     >

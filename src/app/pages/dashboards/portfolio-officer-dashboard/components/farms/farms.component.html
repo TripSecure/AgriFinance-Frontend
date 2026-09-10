@@ -141,4 +141,76 @@
       </ng-template>
     </p-menu>
   </div>
+
+  <p-dialog
+    [visible]="isAssignModalVisible()"
+    (visibleChange)="isAssignModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Assign Extension Officer"
+    [style]="{ width: '90vw', maxWidth: '540px' }"
+    appendTo="body"
+    [closable]="!isSubmittingAssignment()"
+  >
+    <form [formGroup]="assignForm" (ngSubmit)="onSubmitAssignment()" class="d-flex flex-column gap-3 pt-2">
+      @if (selectedFarmForAssignment(); as farm) {
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fw-semibold text-dark fs-6">
+            {{ farm.farmName || farm.locationLabel || farm.community || 'Selected Farm' }}
+          </div>
+          <div class="small text-secondary mt-1">
+            <span>Farmer: <strong>{{ farm.farmer?.fullName || farm.farmer?.name || 'N/A' }}</strong></span>
+            @if (farm.cropType || farm.primaryCrop) {
+              <span class="ms-2">&bull; Crop: <strong>{{ farm.cropType || farm.primaryCrop }}</strong></span>
+            }
+          </div>
+        </div>
+      }
+
+      <app-form-input
+        name="officerId"
+        label="Extension Officer"
+        [isSelect]="true"
+        [options]="officerOptions"
+        [isRequired]="true"
+        [filter]="true"
+        filterBy="name"
+        placeholder="Select an extension officer"
+        [formGroup]="assignForm"
+      />
+
+      <app-form-input
+        name="assignmentNotes"
+        label="Assignment Notes"
+        type="textform"
+        placeholder="Enter assignment notes or special instructions..."
+        [formGroup]="assignForm"
+      />
+
+      <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-2">
+        <button
+          type="button"
+          class="btn btn-outline-secondary px-3 py-2"
+          (click)="isAssignModalVisible.set(false)"
+          [disabled]="isSubmittingAssignment()"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-success px-4 py-2 d-flex align-items-center gap-2 text-white fw-medium"
+          [disabled]="assignForm.invalid || isSubmittingAssignment()"
+        >
+          @if (isSubmittingAssignment()) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>Assigning...</span>
+          } @else {
+            <span class="material-symbols-outlined fs-6">how_to_reg</span>
+            <span>Assign Officer</span>
+          }
+        </button>
+      </div>
+    </form>
+  </p-dialog>
 </div>
