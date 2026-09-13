@@ -141,28 +141,45 @@
   </div>
 } @else if (type() === 'email') {
   <div class="input-field" [formGroup]="formGroup()">
-    <label
+    <label [for]="name()"
       >{{ label() }}
       @if (isRequired()) {
         <span class="required">*</span>
       }
     </label>
-    <input [name]="name()" [type]="type()" [placeholder]="placeholder()" [formControlName]="name()" />
+    <input
+      [id]="name()"
+      [name]="name()"
+      [type]="type()"
+      [placeholder]="placeholder()"
+      [readOnly]="readOnly()"
+      [formControlName]="name()"
+    />
   </div>
 } @else if (type() === 'number') {
   <div class="input-field" [formGroup]="formGroup()">
-    <label
+    <label [for]="name()"
       >{{ label() }}
       @if (isRequired()) {
         <span class="required">*</span>
       }
     </label>
-    <input [name]="name()" type="number" [placeholder]="placeholder()" [formControlName]="name()" />
+    <input
+      [id]="name()"
+      [name]="name()"
+      type="number"
+      [placeholder]="placeholder()"
+      [attr.min]="min()"
+      [attr.step]="step()"
+      [readOnly]="readOnly()"
+      [formControlName]="name()"
+    />
   </div>
 } @else if (type() === 'textform') {
   <div [formGroup]="formGroup()">
-    <label>{{ label() }}</label>
+    <label [for]="name()">{{ label() }}</label>
     <textarea
+      [id]="name()"
       [placeholder]="placeholder()"
       class="form-control"
       [name]="name()"
@@ -172,7 +189,7 @@
   </div>
 } @else if (type() === 'date') {
   <div [formGroup]="formGroup()">
-    <label
+    <label [for]="name()"
       >{{ label() }}
       @if (isRequired()) {
         <span class="required">*</span>
@@ -183,7 +200,7 @@
       [formControlName]="name()"
       [iconDisplay]="'input'"
       [showIcon]="true"
-      inputId="icondisplay"
+      [inputId]="name()"
       appendTo="body"
     />
   </div>
@@ -194,12 +211,19 @@
   </label>
 } @else {
   <div class="input-field" [formGroup]="formGroup()">
-    <label
+    <label [for]="name()"
       >{{ label() }}
       @if (isRequired()) {
         <span class="required">*</span>
       }
     </label>
-    <input [name]="name()" [type]="type()" [placeholder]="placeholder()" [formControlName]="name()" />
+    <input
+      [id]="name()"
+      [name]="name()"
+      [type]="type()"
+      [placeholder]="placeholder()"
+      [readOnly]="readOnly()"
+      [formControlName]="name()"
+    />
   </div>
 }

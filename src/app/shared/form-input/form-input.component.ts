@@ -83,6 +83,8 @@ export class FormInputComponent {
   readonly filterBy = input('name');
   readonly showClear = input(false);
   readonly readOnly = input(false);
+  readonly min = input<number | string | null>(null);
+  readonly step = input<number | string | null>(null);
   readonly checks = input<string[]>([]);
   readonly selections = input<string[]>([]);
   readonly rawOptions = input<Signal<SelectOption[]> | SelectOption[] | unknown>([], {

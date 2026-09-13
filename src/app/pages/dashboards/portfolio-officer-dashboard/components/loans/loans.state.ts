@@ -82,12 +82,40 @@ export interface PortfolioLoansQueryParams {
   status?: string;
 }
 
+export interface CropPlanPayload {
+  plannedAcreageHa: number;
+  expectedYieldMt: number;
+  plantingDate: string;
+  harvestDate: string;
+}
+
+export interface LoanParametersPayload {
+  loanAmount: number;
+  interestRateAnnual: number;
+  repaymentPeriodMonths: number;
+}
+
+export interface CreatePortfolioLoanPayload {
+  farmId: string;
+  cropPlan: CropPlanPayload;
+  loanParameters: LoanParametersPayload;
+  selectedServices: string[];
+  insuranceIncluded: boolean;
+  submissionTarget: 'bank' | 'insurance' | string;
+  bankUserId?: string;
+  notes?: string;
+  [key: string]: unknown;
+}
+
 export interface PortfolioLoansStateModel {
   totalPages: number;
   pageIndex: number;
   pageSize: number;
   totalCount: number;
   isLoading: boolean;
+  isCreating: boolean;
+  isLoadingRiskPreview: boolean;
+  message: string | null;
   errors: string[];
   loans: PortfolioLoanApplication[];
 }
@@ -95,6 +123,16 @@ export interface PortfolioLoansStateModel {
 export class GetPortfolioLoans {
   static readonly type = '[Portfolio Loans] Get Loans';
   constructor(public params?: PortfolioLoansQueryParams) {}
+}
+
+export class CreatePortfolioLoan {
+  static readonly type = '[Portfolio Loans] Create Loan';
+  constructor(public farmerId: string, public payload: CreatePortfolioLoanPayload) {}
+}
+
+export class CreatePortfolioLoanRiskPreview {
+  static readonly type = '[Portfolio Loans] Create Risk Preview';
+  constructor(public farmerId: string, public payload: CreatePortfolioLoanPayload) {}
 }
 
 @State<PortfolioLoansStateModel>({
@@ -106,6 +144,9 @@ export class GetPortfolioLoans {
     pageSize: 10,
     totalCount: 0,
     isLoading: false,
+    isCreating: false,
+    isLoadingRiskPreview: false,
+    message: null,
     errors: [],
   },
 })
@@ -116,6 +157,21 @@ export class PortfolioLoansState {
   @Selector()
   static isLoading(state: PortfolioLoansStateModel): boolean {
     return state.isLoading;
+  }
+
+  @Selector()
+  static isCreating(state: PortfolioLoansStateModel): boolean {
+    return state.isCreating;
+  }
+
+  @Selector()
+  static isLoadingRiskPreview(state: PortfolioLoansStateModel): boolean {
+    return state.isLoadingRiskPreview;
+  }
+
+  @Selector()
+  static message(state: PortfolioLoansStateModel): string | null {
+    return state.message;
   }
 
   @Selector()
@@ -162,6 +218,76 @@ export class PortfolioLoansState {
           ctx.patchState({
             isLoading: false,
             errors: [extractErrorMessage(error, 'Unable to load loan applications.')],
+          });
+          return of(error);
+        }),
+      );
+  }
+
+  @Action(CreatePortfolioLoan)
+  createLoan(
+    ctx: StateContext<PortfolioLoansStateModel>,
+    { farmerId, payload }: CreatePortfolioLoan,
+  ) {
+    ctx.patchState({ isCreating: true, message: null, errors: [] });
+
+    return this.http
+      .post<{ message?: string; success?: boolean; isSuccessful?: boolean; data?: unknown }>(
+        `${environment.api}/portfolio/farmers/${farmerId}/loans`,
+        payload,
+      )
+      .pipe(
+        tap((response) => {
+          ctx.patchState({
+            isCreating: false,
+            message: response.message ?? 'Loan application submitted successfully.',
+            errors: [],
+          });
+        }),
+        catchError((error: unknown) => {
+          const message = extractErrorMessage(
+            error,
+            'Unable to submit loan application. Please review the form and try again.',
+          );
+          ctx.patchState({
+            isCreating: false,
+            message: null,
+            errors: [message],
+          });
+          return of(error);
+        }),
+      );
+  }
+
+  @Action(CreatePortfolioLoanRiskPreview)
+  createRiskPreview(
+    ctx: StateContext<PortfolioLoansStateModel>,
+    { farmerId, payload }: CreatePortfolioLoanRiskPreview,
+  ) {
+    ctx.patchState({ isLoadingRiskPreview: true, message: null, errors: [] });
+
+    return this.http
+      .post<{ message?: string; success?: boolean; isSuccessful?: boolean; data?: unknown }>(
+        `${environment.api}/portfolio/farmers/${farmerId}/loans/risk-preview`,
+        payload,
+      )
+      .pipe(
+        tap((response) => {
+          ctx.patchState({
+            isLoadingRiskPreview: false,
+            message: response.message ?? 'Risk preview initialized successfully.',
+            errors: [],
+          });
+        }),
+        catchError((error: unknown) => {
+          const message = extractErrorMessage(
+            error,
+            'Unable to initialize risk preview. Please try again.',
+          );
+          ctx.patchState({
+            isLoadingRiskPreview: false,
+            message: null,
+            errors: [message],
           });
           return of(error);
         }),

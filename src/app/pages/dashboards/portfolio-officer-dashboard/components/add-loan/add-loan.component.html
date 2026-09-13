@@ -1,1 +1,269 @@
-<p>add-loan works!</p>
+<main class="loan-page">
+  <h1>Create New Loan Application</h1>
+
+  <div class="loan-layout">
+    <form [formGroup]="loanForm" novalidate>
+      <section class="form-section" aria-labelledby="select-farm-heading">
+        <header class="form-section-header">
+          <h2 id="select-farm-heading">Select Farm</h2>
+        </header>
+        <div class="form-section-body form-grid form-grid--two">
+          <app-form-input
+            name="farmerId"
+            label="Farmer"
+            [isSelect]="true"
+            [options]="farmerOptions"
+            [placeholder]="isLoadingFarmers() ? 'Loading farmers...' : 'Select farmer'"
+            [isRequired]="true"
+            [filter]="true"
+            [formGroup]="loanForm"
+          />
+          <app-form-input
+            name="farmId"
+            label="Associated Farm"
+            [isSelect]="true"
+            [options]="farmOptions"
+            [placeholder]="
+              !selectedFarmerId()
+                ? 'Select a farmer first'
+                : isLoadingFarms()
+                  ? 'Loading farms...'
+                  : 'Select farm'
+            "
+            [isRequired]="true"
+            [readOnly]="!selectedFarmerId() || isLoadingFarms()"
+            [formGroup]="loanForm"
+          />
+        </div>
+      </section>
+
+      <section class="form-section" aria-labelledby="crop-plan-heading">
+        <header class="form-section-header">
+          <h2 id="crop-plan-heading">Crop Plan</h2>
+        </header>
+        <div class="form-section-body form-grid form-grid--two">
+          <app-form-input
+            name="plannedAcreage"
+            label="Planned Acreage (HA)"
+            type="number"
+            placeholder="0.00"
+            [min]="0.01"
+            [step]="0.01"
+            [isRequired]="true"
+            [formGroup]="loanForm"
+          />
+          <app-form-input
+            name="expectedYield"
+            label="Expected Yield (MT)"
+            type="number"
+            placeholder="0.00"
+            [min]="0"
+            [step]="0.01"
+            [isRequired]="true"
+            [formGroup]="loanForm"
+          />
+          <app-form-input
+            name="plantingDate"
+            label="Planting Date"
+            type="date"
+            [isRequired]="true"
+            [formGroup]="loanForm"
+          />
+          <app-form-input
+            name="harvestDate"
+            label="Harvest Date"
+            type="date"
+            [isRequired]="true"
+            [formGroup]="loanForm"
+          />
+        </div>
+      </section>
+
+      <section class="form-section" aria-labelledby="input-bundle-heading">
+        <header class="form-section-header">
+          <h2 id="input-bundle-heading">Input Bundle Selection</h2>
+        </header>
+        <div class="form-section-body bundle-grid">
+          <app-form-input
+            name="agrochemicals"
+            label="Agrochemicals"
+            type="checkbox"
+            [formGroup]="loanForm"
+          />
+          <app-form-input
+            name="seeds"
+            label="Seeds and planting materials"
+            type="checkbox"
+            [formGroup]="loanForm"
+          />
+          <app-form-input
+            name="irrigation"
+            label="Irrigation and water support"
+            type="checkbox"
+            [formGroup]="loanForm"
+          />
+          <app-form-input
+            name="farmEquipment"
+            label="Farm tools and equipment"
+            type="checkbox"
+            [formGroup]="loanForm"
+          />
+          <app-form-input
+            name="insurance"
+            label="Crop insurance"
+            type="checkbox"
+            [formGroup]="loanForm"
+          />
+          <app-form-input
+            name="logistics"
+            label="Logistics and aggregation"
+            type="checkbox"
+            [formGroup]="loanForm"
+          />
+        </div>
+      </section>
+
+      <section class="form-section risk-card" aria-labelledby="risk-profile-heading">
+        <header class="form-section-header">
+          <h2 id="risk-profile-heading">Risk Profiling from TARIA AI</h2>
+        </header>
+        <div class="form-section-body risk-card__body">
+          <button
+            type="button"
+            class="risk-button"
+            [disabled]="isLoadingRiskPreview() || isCreating()"
+            (click)="loadRiskProfile()"
+          >
+            <mat-icon aria-hidden="true">psychology</mat-icon>
+            <span>{{
+              isLoadingRiskPreview() ? 'Connecting to TARIA AI...' : 'Load Risk Profile'
+            }}</span>
+          </button>
+          <div class="risk-results" aria-live="polite">
+            <div>
+              <span class="risk-label">Risk Score</span>
+              <strong>{{ riskProfileLoaded() ? riskScore() : '—' }}</strong>
+            </div>
+            <div>
+              <span class="risk-label">Risk Level</span>
+              <strong class="risk-level">{{ riskProfileLoaded() ? riskLevel() : '—' }}</strong>
+            </div>
+          </div>
+          <p>Risk score automatically informs Loan Parameters</p>
+        </div>
+      </section>
+
+      <section class="form-section" aria-labelledby="loan-parameters-heading">
+        <header class="form-section-header">
+          <h2 id="loan-parameters-heading">Loan Parameters</h2>
+        </header>
+        <div class="form-section-body form-grid form-grid--three">
+          <app-form-input
+            name="loanAmount"
+            label="Loan Amount (GH₵)"
+            type="number"
+            [min]="1"
+            [step]="0.01"
+            [isRequired]="true"
+            [formGroup]="loanForm"
+          />
+          <app-form-input
+            name="interestRate"
+            label="Interest Rate (Annual)"
+            type="text"
+            [readOnly]="true"
+            [formGroup]="loanForm"
+          />
+          <app-form-input
+            name="repaymentPeriod"
+            label="Repayment Period"
+            [isSelect]="true"
+            [options]="repaymentPeriodOptions"
+            [isRequired]="true"
+            [formGroup]="loanForm"
+          />
+        </div>
+      </section>
+
+      @if (localSubmitError()) {
+        <p class="form-feedback form-feedback-error" role="alert">{{ localSubmitError() }}</p>
+      }
+
+      @if (stateErrors().length) {
+        <ul class="form-feedback form-feedback-error" role="alert">
+          @for (error of stateErrors(); track error) {
+            <li>{{ error }}</li>
+          }
+        </ul>
+      }
+    </form>
+
+    <aside class="loan-summary" aria-labelledby="loan-summary-heading">
+      <header class="loan-summary__header">
+        <h2 id="loan-summary-heading">Loan Summary</h2>
+        <p>Estimated figures based on current selection</p>
+      </header>
+
+      <div class="loan-summary__body">
+        <dl class="summary-lines">
+          <div>
+            <dt>Principal Amount</dt>
+            <dd>{{ principalAmount() | currency: 'GHS' : 'GH₵' : '1.2-2' }}</dd>
+          </div>
+          <div>
+            <dt>Insurance Premium (1.2%)</dt>
+            <dd>{{ insurancePremium() | currency: 'GHS' : 'GH₵' : '1.2-2' }}</dd>
+          </div>
+          <div>
+            <dt>Application Fee</dt>
+            <dd>{{ applicationFee | currency: 'GHS' : 'GH₵' : '1.2-2' }}</dd>
+          </div>
+        </dl>
+
+        <dl class="repayment-summary">
+          <div>
+            <dt>Total Repayable</dt>
+            <dd>{{ totalRepayable() | currency: 'GHS' : 'GH₵' : '1.2-2' }}</dd>
+          </div>
+          <div>
+            <dt>Monthly Installment</dt>
+            <dd>{{ monthlyInstallment() | currency: 'GHS' : 'GH₵' : '1.2-2' }}</dd>
+          </div>
+        </dl>
+
+        <div class="summary-actions">
+          <button
+            type="button"
+            class="summary-action summary-action--bank"
+            [disabled]="isCreating() || isLoadingRiskPreview()"
+            (click)="onSubmit('bank')"
+          >
+            <span>{{ isCreating() ? 'Submitting...' : 'Submit to Bank' }}</span>
+            <mat-icon aria-hidden="true">account_balance</mat-icon>
+          </button>
+          <button
+            type="button"
+            class="summary-action summary-action--insurance"
+            [disabled]="isCreating() || isLoadingRiskPreview()"
+            (click)="onSubmit('insurance')"
+          >
+            <span>{{ isCreating() ? 'Submitting...' : 'Submit to Insurance Partner' }}</span>
+            <mat-icon aria-hidden="true">verified_user</mat-icon>
+          </button>
+        </div>
+
+        <p class="submission-note">
+          By submitting this application, you agree to the AgriFinance terms of service and credit
+          check authorization. All rates are subject to final approval.
+        </p>
+      </div>
+
+      <footer class="eco-credit">
+        <div>
+          <strong>Eco-Impact Credit Bonus Active</strong>
+          <span>Selection qualifies for green interest rebate</span>
+        </div>
+      </footer>
+    </aside>
+  </div>
+</main>
