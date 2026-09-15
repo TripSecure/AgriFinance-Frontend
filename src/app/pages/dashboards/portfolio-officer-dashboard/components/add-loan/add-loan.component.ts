@@ -363,7 +363,7 @@ export class AddLoanComponent implements OnInit {
         sessionStorage.removeItem('agrifinance_taria_assessment');
         this.toastr.triggerToastr(
           'success',
-          this.stateMessage() || 'Loan application submitted successfully.',
+          this.stateMessage() || 'Loan application saved successfully.',
         );
         void this.router.navigate(['/dashboard/portfolio-officer/loans']);
       },

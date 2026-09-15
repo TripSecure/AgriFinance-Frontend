@@ -256,7 +256,7 @@ export class PortfolioLoansState {
         tap((response) => {
           ctx.patchState({
             isCreating: false,
-            message: response.message ?? 'Loan application submitted successfully.',
+            message: response.message ?? 'Loan application saved successfully.',
             errors: [],
           });
         }),
