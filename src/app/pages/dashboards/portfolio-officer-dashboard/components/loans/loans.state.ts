@@ -95,6 +95,21 @@ export interface LoanParametersPayload {
   repaymentPeriodMonths: number;
 }
 
+export interface TariaAssessmentPayload {
+  assessmentId: string;
+  farmerId?: string;
+  farmId?: string;
+  submittedAt?: string;
+  persisted?: boolean;
+  score: number;
+  rawScore?: number;
+  riskLevel?: string;
+  loanRecommendationTier?: string;
+  loanAmount?: number;
+  insurancePremium?: number;
+  sectionScores?: unknown[];
+}
+
 export interface CreatePortfolioLoanPayload {
   farmId: string;
   cropPlan: CropPlanPayload;
@@ -104,6 +119,7 @@ export interface CreatePortfolioLoanPayload {
   submissionTarget: 'bank' | 'insurance' | string;
   bankUserId?: string;
   notes?: string;
+  tariaAssessment?: TariaAssessmentPayload;
   [key: string]: unknown;
 }
 

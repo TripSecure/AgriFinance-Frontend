@@ -149,6 +149,17 @@
               <strong class="risk-level">{{ riskProfileLoaded() ? riskLevel() : '—' }}</strong>
             </div>
           </div>
+          @if (isLoadingExistingRisk()) {
+            <p class="risk-card__status">Checking for the saved risk assessment for this farm...</p>
+          } @else if (riskProfileLoaded()) {
+            <p class="risk-card__status risk-card__status--success">
+              Saved risk loaded for this farm. Open TARIA if you want to edit the answers and recalculate it.
+            </p>
+          } @else if (existingRiskMessage()) {
+            <p class="risk-card__status risk-card__status--error" role="alert">
+              {{ existingRiskMessage() }}
+            </p>
+          }
           <p>Risk score automatically informs Loan Parameters</p>
         </div>
       </section>
@@ -164,6 +175,7 @@
             type="number"
             [min]="1"
             [step]="0.01"
+            [readOnly]="true"
             [isRequired]="true"
             [formGroup]="loanForm"
           />

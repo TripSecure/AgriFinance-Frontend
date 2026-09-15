@@ -54,6 +54,10 @@ export class LoginComponent {
 
   constructor() {
     this.store.dispatch(new ResetLoginOtpRequest());
+
+    if (this.route.snapshot.queryParamMap.get('reason') === 'session-expired') {
+      this.toastr.triggerToastr('info', 'Your session expired. Please sign in again.');
+    }
   }
 
   protected togglePasswordVisibility(): void {

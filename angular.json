@@ -63,6 +63,18 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "staging": {
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractLicenses": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environment/environment.ts",
+                  "with": "src/environment/environment.staging.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -75,6 +87,9 @@
             },
             "development": {
               "buildTarget": "TripSecure:build:development"
+            },
+            "staging": {
+              "buildTarget": "TripSecure:build:staging"
             }
           },
           "defaultConfiguration": "development"

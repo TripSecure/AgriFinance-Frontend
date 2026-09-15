@@ -81,7 +81,7 @@ export interface CreateFarmerPayload {
     nationalIdFront: string;
     nationalIdBack: string;
     passportPhoto: string;
-    farmOwnershipDocument: string;
+    farmOwnershipDocument: string | null;
   };
   consent: {
     dataPrivacyConsent: boolean;

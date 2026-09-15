@@ -1,30 +1,34 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  NgZone,
   OnInit,
   computed,
   inject,
   signal,
 } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { startWith } from 'rxjs';
+import { firstValueFrom, fromEvent, startWith } from 'rxjs';
 import {
   FormInputComponent,
   SelectOption,
 } from '../../../../../shared/form-input/form-input.component';
 import { ToastrService } from '../../../../../shared/toastr/toastr.service';
+import { environment } from '../../../../../../environment/environment';
 import { FarmersState, GetPortfolioFarmers } from '../farmers/farmers.state';
 import { GetPortfolioFarms, PortfolioFarmsState } from '../farms/farms.state';
 import {
   CreatePortfolioLoan,
   CreatePortfolioLoanPayload,
-  CreatePortfolioLoanRiskPreview,
   PortfolioLoansState,
+  TariaAssessmentPayload,
 } from '../loans/loans.state';
 
 type LoanFormControls = {
@@ -57,6 +61,9 @@ export class AddLoanComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly store = inject(Store);
   private readonly toastr = inject(ToastrService);
+  private readonly ngZone = inject(NgZone);
+  private readonly http = inject(HttpClient);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly isCreating = this.store.selectSignal(PortfolioLoansState.isCreating);
   protected readonly isLoadingRiskPreview = this.store.selectSignal(
@@ -70,8 +77,15 @@ export class AddLoanComponent implements OnInit {
   protected readonly isLoadingFarms = this.store.selectSignal(PortfolioFarmsState.isLoading);
 
   protected readonly riskProfileLoaded = signal(false);
-  protected readonly riskScore = signal('78/100');
-  protected readonly riskLevel = signal('Medium-Low');
+  protected readonly isLoadingExistingRisk = signal(false);
+  protected readonly existingRiskMessage = signal<string | null>(null);
+  protected readonly riskScore = signal('—');
+  protected readonly riskLevel = signal('—');
+  private readonly tariaAssessment = signal<TariaAssessmentPayload | null>(null);
+  private tariaWindow: Window | null = null;
+  private tariaPollTimer: ReturnType<typeof window.setInterval> | null = null;
+  private tariaPollInFlight = false;
+  private tariaRecoveryDeadline = 0;
   protected readonly selectedFarmerId = signal('');
   protected readonly localSubmitError = signal<string | null>(null);
 
@@ -150,15 +164,37 @@ export class AddLoanComponent implements OnInit {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.stopTariaResultRecovery());
+
+    fromEvent<MessageEvent>(window, 'message')
+      .pipe(takeUntilDestroyed())
+      .subscribe((event) => this.ngZone.run(() => this.handleTariaMessage(event)));
+
     this.loanForm.controls.farmerId.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe((farmerId) => {
         this.selectedFarmerId.set(farmerId ?? '');
         this.loanForm.controls.farmId.reset(null);
 
+        this.clearTariaAssessment();
+        this.existingRiskMessage.set(null);
+
         if (farmerId) {
           this.store.dispatch(new GetPortfolioFarms({ farmerId, rows: 100 })).subscribe();
         }
+      });
+
+    this.loanForm.controls.farmId.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((farmId) => {
+        const farmerId = this.selectedFarmerId();
+        if (!farmerId || !farmId) {
+          this.clearTariaAssessment();
+          this.existingRiskMessage.set(null);
+          return;
+        }
+
+        void this.loadExistingTariaAssessment(farmerId, farmId);
       });
   }
 
@@ -191,8 +227,24 @@ export class AddLoanComponent implements OnInit {
     }
 
     if (tariaAssessmentId) {
-      this.riskProfileLoaded.set(true);
-      this.toastr.triggerToastr('success', 'TARIA AI risk assessment completed successfully.');
+      this.restoreTariaAssessment(tariaAssessmentId);
+    }
+
+    const savedAssessment = sessionStorage.getItem('agrifinance_taria_assessment');
+    if (savedAssessment) {
+      try {
+        const assessment = JSON.parse(savedAssessment) as TariaAssessmentPayload;
+        if (
+          assessment?.assessmentId &&
+          assessment.farmerId === this.loanForm.controls.farmerId.value &&
+          assessment.farmId === this.loanForm.controls.farmId.value &&
+          Number.isFinite(Number(assessment.score))
+        ) {
+          this.setTariaAssessment(assessment);
+        }
+      } catch {
+        sessionStorage.removeItem('agrifinance_taria_assessment');
+      }
     }
   }
 
@@ -249,24 +301,28 @@ export class AddLoanComponent implements OnInit {
       // ignore storage write errors
     }
 
-    this.store
-      .dispatch(new CreatePortfolioLoanRiskPreview(farmerId, payload))
-      .subscribe({
-        next: () => {
-          if (this.stateErrors().length) {
-            this.toastr.triggerToastr('error', this.stateErrors()[0]);
-            return;
-          }
+    const tariaUrl = new URL('https://taria.tripsecureagrifinanceltd.com/farmer-risk/assessment');
+    tariaUrl.searchParams.set('sourceApplication', 'agrifinance');
+    tariaUrl.searchParams.set('externalFarmerId', farmerId);
+    tariaUrl.searchParams.set('farmId', payload.farmId);
+    tariaUrl.searchParams.set('returnOrigin', window.location.origin);
 
-          const tariaUrl = `https://taria.tripsecureagrifinanceltd.com/farmer-risk/assessment?farmerId=${encodeURIComponent(
-            farmerId,
-          )}&farmId=${encodeURIComponent(payload.farmId)}`;
-          window.location.href = tariaUrl;
-        },
-        error: () => {
-          this.toastr.triggerToastr('error', 'Unable to initiate risk assessment with TARIA AI.');
-        },
-      });
+    const tariaWindow = window.open(
+      'about:blank',
+      'agrifinance-taria-risk',
+      'popup,width=1280,height=900',
+    );
+    if (!tariaWindow) {
+      const msg = 'TARIA could not be opened. Please allow popups for Agrifinance and try again.';
+      this.localSubmitError.set(msg);
+      this.toastr.triggerToastr('error', msg);
+      return;
+    }
+
+    this.tariaWindow = tariaWindow;
+    tariaWindow.location.href = tariaUrl.toString();
+    this.startTariaResultRecovery(farmerId, payload.farmId);
+    this.toastr.triggerToastr('info', 'Complete the farmer risk assessment in the TARIA window.');
   }
 
   protected onSubmit(submissionTarget: 'bank' | 'insurance'): void {
@@ -275,6 +331,13 @@ export class AddLoanComponent implements OnInit {
 
     if (this.loanForm.invalid) {
       const msg = 'Please complete all required fields before submitting.';
+      this.localSubmitError.set(msg);
+      this.toastr.triggerToastr('error', msg);
+      return;
+    }
+
+    if (!this.tariaAssessment()) {
+      const msg = 'Complete the TARIA farmer risk assessment before submitting this loan.';
       this.localSubmitError.set(msg);
       this.toastr.triggerToastr('error', msg);
       return;
@@ -297,6 +360,7 @@ export class AddLoanComponent implements OnInit {
         }
 
         sessionStorage.removeItem('agrifinance_add_loan_draft');
+        sessionStorage.removeItem('agrifinance_taria_assessment');
         this.toastr.triggerToastr(
           'success',
           this.stateMessage() || 'Loan application submitted successfully.',
@@ -349,7 +413,8 @@ export class AddLoanComponent implements OnInit {
       },
       selectedServices,
       insuranceIncluded: Boolean(val.insurance),
-      submissionTarget,
+      submissionTarget: submissionTarget === 'insurance' ? 'insurance_partner' : submissionTarget,
+      ...(this.tariaAssessment() ? { tariaAssessment: this.tariaAssessment()! } : {}),
     };
 
     return { farmerId: val.farmerId, payload };
@@ -368,5 +433,230 @@ export class AddLoanComponent implements OnInit {
 
   private markAllFormsTouched(): void {
     this.loanForm.markAllAsTouched();
+  }
+
+  private handleTariaMessage(event: MessageEvent): void {
+    if (event.origin !== new URL('https://taria.tripsecureagrifinanceltd.com').origin) {
+      return;
+    }
+
+    if (!this.tariaWindow || event.source !== this.tariaWindow) {
+      return;
+    }
+
+    const message = event.data as {
+      type?: string;
+      assessment?: {
+        assessmentId?: string;
+        context?: { externalFarmerId?: string | null; farmId?: string | null };
+        result?: Partial<TariaAssessmentPayload>;
+      };
+    } | null;
+    if (message?.type !== 'taria.farmerRisk.completed' || !message.assessment?.assessmentId) {
+      return;
+    }
+
+    const score = Number(message.assessment.result?.score);
+    if (!Number.isFinite(score) || score < 0 || score > 100) {
+      this.toastr.triggerToastr('error', 'TARIA returned an invalid risk score.');
+      return;
+    }
+
+    const assessment: TariaAssessmentPayload = {
+      assessmentId: message.assessment.assessmentId,
+      farmerId: message.assessment.context?.externalFarmerId || this.selectedFarmerId(),
+      farmId: message.assessment.context?.farmId || this.loanForm.controls.farmId.value || undefined,
+      score,
+      ...(message.assessment.result?.rawScore !== undefined
+        ? { rawScore: Number(message.assessment.result.rawScore) }
+        : {}),
+      ...(message.assessment.result?.riskLevel
+        ? { riskLevel: message.assessment.result.riskLevel }
+        : {}),
+      ...(message.assessment.result?.loanRecommendationTier
+        ? { loanRecommendationTier: message.assessment.result.loanRecommendationTier }
+        : {}),
+      ...(message.assessment.result?.loanAmount !== undefined
+        ? { loanAmount: Number(message.assessment.result.loanAmount) }
+        : {}),
+      ...(message.assessment.result?.insurancePremium !== undefined
+        ? { insurancePremium: Number(message.assessment.result.insurancePremium) }
+        : {}),
+      ...(message.assessment.result?.sectionScores
+        ? { sectionScores: message.assessment.result.sectionScores }
+        : {}),
+    };
+
+    this.setTariaAssessment(assessment);
+    try {
+      sessionStorage.setItem('agrifinance_taria_assessment', JSON.stringify(assessment));
+    } catch {
+      // keep the in-memory result when storage is unavailable
+    }
+    this.stopTariaResultRecovery();
+    this.tariaWindow?.close();
+    this.tariaWindow = null;
+    this.toastr.triggerToastr('success', 'TARIA risk assessment completed successfully.');
+  }
+
+  private setTariaAssessment(assessment: TariaAssessmentPayload): void {
+    const selectedFarmId = this.loanForm.controls.farmId.value;
+    if (
+      (assessment.farmerId && this.selectedFarmerId() && assessment.farmerId !== this.selectedFarmerId()) ||
+      (assessment.farmId && selectedFarmId && assessment.farmId !== selectedFarmId)
+    ) {
+      return;
+    }
+
+    const score = Math.round(Number(assessment.score));
+    this.tariaAssessment.set({ ...assessment, score });
+    this.riskProfileLoaded.set(true);
+    this.riskScore.set(`${score}/100`);
+    this.riskLevel.set(assessment.riskLevel || this.toRiskLevel(score));
+
+    const eligibleLoanAmount = Number(assessment.loanAmount);
+    if (Number.isFinite(eligibleLoanAmount) && eligibleLoanAmount > 0) {
+      this.loanForm.controls.loanAmount.setValue(eligibleLoanAmount);
+    }
+  }
+
+  private clearTariaAssessment(): void {
+    this.tariaAssessment.set(null);
+    this.riskProfileLoaded.set(false);
+    this.riskScore.set('—');
+    this.riskLevel.set('—');
+    sessionStorage.removeItem('agrifinance_taria_assessment');
+  }
+
+  private startTariaResultRecovery(farmerId: string, farmId: string): void {
+    this.stopTariaResultRecovery();
+    this.tariaRecoveryDeadline = Date.now() + 15_000;
+    this.tariaPollTimer = window.setInterval(() => {
+      if (this.tariaPollInFlight) {
+        return;
+      }
+
+      const popupClosed = !this.tariaWindow || this.tariaWindow.closed;
+      this.tariaPollInFlight = true;
+      void this.loadExistingTariaAssessment(farmerId, farmId, {
+        clearWhenMissing: false,
+        showErrors: false,
+      }).finally(() => {
+        this.tariaPollInFlight = false;
+        if (popupClosed && Date.now() >= this.tariaRecoveryDeadline) {
+          this.stopTariaResultRecovery();
+          this.tariaWindow = null;
+        }
+      });
+    }, 1500);
+  }
+
+  private stopTariaResultRecovery(): void {
+    if (this.tariaPollTimer !== null) {
+      window.clearInterval(this.tariaPollTimer);
+      this.tariaPollTimer = null;
+    }
+    this.tariaRecoveryDeadline = 0;
+  }
+
+  private async loadExistingTariaAssessment(
+    farmerId: string,
+    farmId: string,
+    options: { clearWhenMissing?: boolean; showErrors?: boolean } = {},
+  ): Promise<void> {
+    const { clearWhenMissing = true, showErrors = true } = options;
+    const lookupKey = `${farmerId}:${farmId}`;
+    this.isLoadingExistingRisk.set(true);
+    this.existingRiskMessage.set(null);
+
+    try {
+      const payload = await firstValueFrom(
+        this.http.get<{
+          data?: {
+            assessmentId?: string;
+            submittedAt?: string;
+            persisted?: boolean;
+            context?: { externalFarmerId?: string; farmId?: string; loanApplicationId?: string };
+            result?: Partial<TariaAssessmentPayload>;
+          } | null;
+          message?: string;
+        }>(
+        `${environment.api}/portfolio/farmers/${encodeURIComponent(farmerId)}/farms/${encodeURIComponent(farmId)}/risk-assessment`,
+        { withCredentials: true },
+        ),
+      );
+
+      if (`${this.selectedFarmerId()}:${this.loanForm.controls.farmId.value}` !== lookupKey) {
+        return;
+      }
+
+      const saved = payload.data;
+      if (!saved?.assessmentId || !Number.isFinite(Number(saved.result?.score))) {
+        if (clearWhenMissing) {
+          this.clearTariaAssessment();
+        }
+        return;
+      }
+
+      const assessment: TariaAssessmentPayload = {
+        assessmentId: saved.assessmentId,
+        submittedAt: saved.submittedAt,
+        persisted: saved.persisted,
+        farmerId: saved.context?.externalFarmerId || farmerId,
+        farmId: saved.context?.farmId || farmId,
+        score: Number(saved.result?.score),
+        ...(saved.result?.rawScore !== undefined ? { rawScore: Number(saved.result.rawScore) } : {}),
+        ...(saved.result?.riskLevel ? { riskLevel: saved.result.riskLevel } : {}),
+        ...(saved.result?.loanRecommendationTier
+          ? { loanRecommendationTier: saved.result.loanRecommendationTier }
+          : {}),
+        ...(saved.result?.loanAmount !== undefined ? { loanAmount: Number(saved.result.loanAmount) } : {}),
+        ...(saved.result?.insurancePremium !== undefined
+          ? { insurancePremium: Number(saved.result.insurancePremium) }
+          : {}),
+        ...(saved.result?.sectionScores ? { sectionScores: saved.result.sectionScores } : {}),
+      };
+
+      this.setTariaAssessment(assessment);
+      sessionStorage.setItem('agrifinance_taria_assessment', JSON.stringify(assessment));
+    } catch (error) {
+      if (showErrors && `${this.selectedFarmerId()}:${this.loanForm.controls.farmId.value}` === lookupKey) {
+        // Keep a previously loaded result visible when a refresh is transiently unavailable.
+        // Selecting a different farmer or farm clears the result before this lookup starts.
+        if (!this.tariaAssessment()) {
+          this.existingRiskMessage.set(
+            error instanceof Error
+              ? error.message
+              : 'Unable to load the saved TARIA risk for this farm. You can open TARIA to calculate it.',
+          );
+        }
+      }
+    } finally {
+      if (`${this.selectedFarmerId()}:${this.loanForm.controls.farmId.value}` === lookupKey) {
+        this.isLoadingExistingRisk.set(false);
+      }
+    }
+  }
+
+  private restoreTariaAssessment(assessmentId: string): void {
+    const savedAssessment = sessionStorage.getItem('agrifinance_taria_assessment');
+    if (!savedAssessment) {
+      return;
+    }
+
+    try {
+      const assessment = JSON.parse(savedAssessment) as TariaAssessmentPayload;
+      if (assessment.assessmentId === assessmentId) {
+        this.setTariaAssessment(assessment);
+      }
+    } catch {
+      sessionStorage.removeItem('agrifinance_taria_assessment');
+    }
+  }
+
+  private toRiskLevel(score: number): string {
+    if (score <= 50) return 'High Risk';
+    if (score <= 80) return 'Medium Risk';
+    return 'Low Risk';
   }
 }

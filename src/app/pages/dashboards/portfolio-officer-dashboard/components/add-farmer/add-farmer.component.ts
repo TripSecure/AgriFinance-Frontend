@@ -402,7 +402,7 @@ export class AddFarmerComponent implements OnInit {
         nationalIdFront: documents.nationalIdFront,
         nationalIdBack: documents.nationalIdBack,
         passportPhoto: documents.passportPhoto,
-        farmOwnershipDocument: documents.farmOwnershipDocument,
+        farmOwnershipDocument: documents.farmOwnershipDocument || null,
       },
       consent: {
         dataPrivacyConsent: declarations.dataPrivacyConsent,
@@ -415,16 +415,6 @@ export class AddFarmerComponent implements OnInit {
       nationalId: personal.nationalIdNumber,
       phone: personal.phone,
       email: personal.email,
-      dateOfBirth: this.formatDateForPayload(personal.dateOfBirth),
-      gender: personal.gender,
-      financialInformation: {
-        bankName: financials.bankName,
-        accountNumber: financials.accountNumber,
-        mobileMoneyProvider: financials.mobileMoneyProvider,
-        mobileMoneyNumber: financials.mobileMoneyNumber,
-        estimatedAnnualIncome: Number(financials.estimatedAnnualIncomeGhs) || 0,
-        existingLoans: financials.existingLoans,
-      },
       consentDeclarations: {
         dataPrivacyConsent: declarations.dataPrivacyConsent,
         accuracyConsent: declarations.accuracyDeclaration,
