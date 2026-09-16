@@ -88,6 +88,7 @@ export class AddLoanComponent implements OnInit {
   private tariaRecoveryDeadline = 0;
   protected readonly selectedFarmerId = signal('');
   protected readonly localSubmitError = signal<string | null>(null);
+  protected readonly isLoadingExistingLoan = signal(false);
 
   protected readonly farmerOptions = computed<SelectOption[]>(() => {
     return this.farmers().map((farmer) => {
@@ -201,6 +202,11 @@ export class AddLoanComponent implements OnInit {
   ngOnInit(): void {
     this.store.dispatch(new GetPortfolioFarmers({ rows: 100 })).subscribe();
 
+    const loanId = this.route.snapshot.paramMap.get('loanId');
+    if (loanId) {
+      void this.loadExistingLoan(loanId);
+    }
+
     const tariaAssessmentId = this.route.snapshot.queryParamMap.get('tariaAssessmentId');
     const savedDraft = sessionStorage.getItem('agrifinance_add_loan_draft');
 
@@ -246,6 +252,113 @@ export class AddLoanComponent implements OnInit {
         sessionStorage.removeItem('agrifinance_taria_assessment');
       }
     }
+  }
+
+  private async loadExistingLoan(loanId: string): Promise<void> {
+    this.isLoadingExistingLoan.set(true);
+    this.localSubmitError.set(null);
+
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{
+          data?: {
+            application?: {
+              farmerId?: string | null;
+              farmId?: string | null;
+              requestedAmount?: number | null;
+              cropPlan?: Record<string, unknown> | null;
+              repaymentSchedule?: Record<string, unknown> | null;
+              selectedServices?: string[] | null;
+              insuranceAcceptance?: boolean;
+            };
+            riskProfile?: { score?: number | null; category?: string | null } | null;
+          };
+          message?: string;
+        }>(`${environment.api}/portfolio/loans/${encodeURIComponent(loanId)}`, {
+          withCredentials: true,
+        }),
+      );
+
+      const application = response.data?.application;
+      if (!application?.farmerId || !application.farmId) {
+        throw new Error('The loan record is missing its farmer or farm details.');
+      }
+
+      const cropPlan = application.cropPlan ?? {};
+      const repaymentSchedule = application.repaymentSchedule ?? {};
+      const selectedServices = new Set(application.selectedServices ?? []);
+      const tariaAssessment = this.readStoredTariaAssessment(cropPlan['tariaAssessment']);
+
+      this.loanForm.patchValue({
+        farmerId: application.farmerId,
+        plannedAcreage: this.readNumber(cropPlan, ['plannedAcreageHa', 'planned_acreage_ha']),
+        expectedYield: this.readNumber(cropPlan, ['expectedYieldMt', 'expected_yield_mt']),
+        plantingDate: this.readDate(cropPlan, ['plantingDate', 'planting_date']),
+        harvestDate: this.readDate(cropPlan, ['harvestDate', 'harvest_date']),
+        loanAmount: application.requestedAmount ?? null,
+        interestRate: '4.5%',
+        repaymentPeriod: String(
+          this.readNumber(repaymentSchedule, ['repaymentPeriodMonths', 'repayment_period_months']) ?? 12,
+        ),
+        agrochemicals: selectedServices.has('agrochemicals'),
+        seeds: selectedServices.has('seeds'),
+        irrigation: selectedServices.has('irrigation'),
+        farmEquipment: selectedServices.has('farmEquipment'),
+        insurance: Boolean(application.insuranceAcceptance),
+        logistics: selectedServices.has('logistics'),
+      });
+      this.selectedFarmerId.set(application.farmerId);
+
+      await firstValueFrom(
+        this.store.dispatch(new GetPortfolioFarms({ farmerId: application.farmerId, rows: 100 })),
+      );
+      this.loanForm.controls.farmId.setValue(application.farmId);
+
+      if (tariaAssessment) {
+        this.setTariaAssessment(tariaAssessment);
+        // The form displays the amount requested by this saved loan. Taria's
+        // eligible amount remains available in the saved assessment.
+        this.loanForm.controls.loanAmount.setValue(application.requestedAmount ?? null);
+      } else if (Number.isFinite(Number(response.data?.riskProfile?.score))) {
+        const score = Math.round(Number(response.data?.riskProfile?.score));
+        this.riskProfileLoaded.set(true);
+        this.riskScore.set(`${score}/100`);
+        this.riskLevel.set(response.data?.riskProfile?.category || this.toRiskLevel(score));
+      }
+    } catch (error: unknown) {
+      this.localSubmitError.set(
+        error instanceof Error ? error.message : 'Unable to load the saved loan application.',
+      );
+    } finally {
+      this.isLoadingExistingLoan.set(false);
+    }
+  }
+
+  private readNumber(source: Record<string, unknown>, keys: string[]): number | null {
+    for (const key of keys) {
+      const value = Number(source[key]);
+      if (Number.isFinite(value)) return value;
+    }
+    return null;
+  }
+
+  private readDate(source: Record<string, unknown>, keys: string[]): Date | null {
+    for (const key of keys) {
+      const value = source[key];
+      if (typeof value === 'string' && value) {
+        const date = new Date(value);
+        if (!Number.isNaN(date.getTime())) return date;
+      }
+    }
+    return null;
+  }
+
+  private readStoredTariaAssessment(value: unknown): TariaAssessmentPayload | null {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const assessment = value as Partial<TariaAssessmentPayload>;
+    const score = Number(assessment.score);
+    if (typeof assessment.assessmentId !== 'string' || !Number.isFinite(score)) return null;
+    return { ...assessment, score } as TariaAssessmentPayload;
   }
 
   protected loadRiskProfile(): void {
