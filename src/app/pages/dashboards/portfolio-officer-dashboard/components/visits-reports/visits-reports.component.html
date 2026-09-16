@@ -44,6 +44,20 @@
         </ng-template>
       </p-menu>
     </div>
+
+    <div class="filters__actions">
+      <label for="visitsReportsOfficerFilter">Extension officer</label>
+      <button
+        id="visitsReportsOfficerFilter"
+        type="button"
+        (click)="officerMenu.toggle($event)"
+        class="filters__actions__input-form"
+      >
+        <span>{{ selectedOfficerLabel() }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+      </button>
+      <p-menu #officerMenu [model]="officerMenuItems()" [popup]="true" [appendTo]="'body'"></p-menu>
+    </div>
   </div>
 
   <div class="table-wrapper">
@@ -80,6 +94,7 @@
           <th id="reportRisk">Risk Assessment</th>
           <th id="reportStatus">Status</th>
           <th id="reportLastActivity">Last Activity</th>
+          <th id="reportActions">Action</th>
         </tr>
       </ng-template>
 
@@ -112,14 +127,65 @@
             </span>
           </td>
           <td>{{ (row.lastActivity | date: 'medium') || row.visit.lastActivityLabel || '-' }}</td>
+          <td>
+            <button
+              type="button"
+              class="action-button"
+              aria-label="Review monitoring report"
+              (click)="openActionMenu(row.visit, $event, actionMenu)"
+            >
+              <span class="material-symbols-outlined">more_vert</span>
+            </button>
+          </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [colSpan]="9" class="empty-state">No monitoring visits found.</td>
+          <td [colSpan]="10" class="empty-state">No monitoring visits found.</td>
         </tr>
       </ng-template>
     </p-table>
   </div>
 </div>
+
+<p-menu #actionMenu [model]="actionMenuItems" [popup]="true" [appendTo]="'body'"></p-menu>
+
+<p-dialog
+  [visible]="isReviewModalVisible()"
+  (visibleChange)="isReviewModalVisible.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  header="Review monitoring report"
+  [style]="{ width: '90vw', maxWidth: '560px' }"
+  appendTo="body"
+>
+  @if (selectedVisit(); as visit) {
+    <div class="review-summary">
+      <div><span>Farmer</span><strong>{{ visit.farmer?.fullName || visit.farmerName || '-' }}</strong></div>
+      <div><span>Extension officer</span><strong>{{ visit.officer?.fullName || visit.officerName || '-' }}</strong></div>
+      <div><span>Visit date</span><strong>{{ (visit.visitDate | date: 'medium') || '-' }}</strong></div>
+      <div><span>Current status</span><strong>{{ formatLabel(visit.status || 'submitted') }}</strong></div>
+      <div><span>Yield estimate</span><strong>{{ visit.yieldEstimate ?? '-' }}</strong></div>
+      <div><span>Risk notes</span><strong>{{ visit.riskNotes || 'None' }}</strong></div>
+      @if (visit.reviewNotes) {
+        <div class="review-summary__wide"><span>Previous review notes</span><strong>{{ visit.reviewNotes }}</strong></div>
+      }
+    </div>
+    <label for="reviewNotes" class="form-label mt-3">Notes</label>
+    <textarea
+      id="reviewNotes"
+      class="form-control"
+      rows="3"
+      [value]="reviewNotes"
+      (input)="reviewNotes = $any($event.target).value"
+      placeholder="Add a note for the extension officer"
+    ></textarea>
+    <div class="d-flex justify-content-end gap-2 pt-3 mt-3 border-top">
+      <button type="button" class="btn btn-outline-warning" (click)="reviewAction = 'under_review'; submitReview()">Keep under review</button>
+      <button type="button" class="btn btn-outline-danger" (click)="reviewAction = 'rejected'; submitReview()">Return for revision</button>
+      <button type="button" class="btn btn-success text-white" (click)="reviewAction = 'approved'; submitReview()">Approve report</button>
+    </div>
+  }
+</p-dialog>

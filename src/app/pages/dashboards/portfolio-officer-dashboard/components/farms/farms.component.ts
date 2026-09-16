@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -24,8 +25,10 @@ import {
 } from '../../../../../shared/form-input/form-input.component';
 import { extractErrorMessage } from '../../../../../shared/request.utils';
 import { ToastrService } from '../../../../../shared/toastr/toastr.service';
+import { environment } from '../../../../../../environment/environment';
 import {
   GetPortfolioExtensionOfficers,
+  GetAvailablePortfolioExtensionOfficers,
   PortfolioExtensionOfficersState,
 } from '../extension-officers/extension-officers.state';
 import {
@@ -85,6 +88,7 @@ export class FarmsComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toastr = inject(ToastrService);
+  private readonly http = inject(HttpClient);
 
   public readonly farmerId = input<string | undefined>();
 
@@ -97,9 +101,15 @@ export class FarmsComponent {
   private readonly extensionOfficers = this.store.selectSignal(
     PortfolioExtensionOfficersState.officers,
   );
+  private readonly availableExtensionOfficers = this.store.selectSignal(
+    PortfolioExtensionOfficersState.availableOfficers,
+  );
 
   protected readonly officerOptions = computed<SelectOption[]>(() => {
-    return this.extensionOfficers().map((officer) => {
+    const officers = this.availableExtensionOfficers().length
+      ? this.availableExtensionOfficers()
+      : this.extensionOfficers();
+    return officers.map((officer) => {
       const name =
         officer.fullName ||
         officer.name ||
@@ -125,6 +135,13 @@ export class FarmsComponent {
   });
 
   protected selectedFarmForAction: PortfolioFarm | null = null;
+  protected readonly isScheduleModalVisible = signal(false);
+  protected readonly isSubmittingSchedule = signal(false);
+  protected readonly selectedFarmForSchedule = signal<PortfolioFarm | null>(null);
+  protected readonly scheduleForm = new FormGroup({
+    date: new FormControl<Date | null>(null, Validators.required),
+    description: new FormControl('', { nonNullable: true }),
+  });
 
   protected readonly statusMenuItems: MenuItem[] = [
     {
@@ -266,7 +283,7 @@ export class FarmsComponent {
     });
 
     this.isAssignModalVisible.set(true);
-    this.store.dispatch(new GetPortfolioExtensionOfficers({ rows: 100 })).subscribe();
+    this.store.dispatch(new GetAvailablePortfolioExtensionOfficers({ rows: 100 })).subscribe();
   }
 
   protected onSubmitAssignment(): void {
@@ -314,10 +331,43 @@ export class FarmsComponent {
   }
 
   protected onScheduleVisit(farm: PortfolioFarm): void {
-    this.toastr.triggerToastr(
-      'info',
-      `Schedule visit for: ${farm.farmName || farm.locationLabel || farm.id}`,
-    );
+    this.selectedFarmForSchedule.set(farm);
+    this.scheduleForm.reset({ date: null, description: '' });
+    this.isScheduleModalVisible.set(true);
+  }
+
+  protected onSubmitSchedule(): void {
+    if (this.scheduleForm.invalid) {
+      this.scheduleForm.markAllAsTouched();
+      return;
+    }
+
+    const farm = this.selectedFarmForSchedule();
+    const date = this.scheduleForm.controls.date.value;
+    if (!farm?.id || !date) return;
+
+    this.isSubmittingSchedule.set(true);
+    this.http
+      .post(
+        `${environment.api}/portfolio/farms/${encodeURIComponent(farm.id)}/visits`,
+        {
+          date: date.toISOString(),
+          description: this.scheduleForm.controls.description.value.trim() || null,
+        },
+        { withCredentials: true },
+      )
+      .subscribe({
+        next: () => {
+          this.isSubmittingSchedule.set(false);
+          this.isScheduleModalVisible.set(false);
+          this.toastr.triggerToastr('success', 'Monitoring visit scheduled successfully.');
+          this.dispatchFarmsLoad();
+        },
+        error: (error: unknown) => {
+          this.isSubmittingSchedule.set(false);
+          this.toastr.triggerToastr('error', extractErrorMessage(error, 'Unable to schedule monitoring visit.'));
+        },
+      });
   }
 
   protected onDeleteFarm(farm: PortfolioFarm): void {

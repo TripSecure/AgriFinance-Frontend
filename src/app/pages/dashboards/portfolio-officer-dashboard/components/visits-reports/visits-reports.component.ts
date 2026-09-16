@@ -1,11 +1,20 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
+import { DialogModule } from 'primeng/dialog';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { environment } from '../../../../../../environment/environment';
+import { ToastrService } from '../../../../../shared/toastr/toastr.service';
+import {
+  GetAvailablePortfolioExtensionOfficers,
+  GetPortfolioExtensionOfficers,
+  PortfolioExtensionOfficersState,
+} from '../extension-officers/extension-officers.state';
 import {
   GetPortfolioMonitoringVisits,
   MonitoringVisitsQueryParams,
@@ -45,18 +54,47 @@ const visitStatusOptions: readonly ReportStatusFilterOption[] = [
 
 @Component({
   selector: 'app-visits-reports',
-  imports: [DatePipe, MenuModule, TableModule],
+  imports: [DatePipe, DialogModule, MenuModule, TableModule],
   templateUrl: './visits-reports.component.html',
   styleUrl: './visits-reports.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VisitsReportsComponent {
   private readonly store = inject(Store);
+  private readonly http = inject(HttpClient);
+  private readonly toastr = inject(ToastrService);
 
   private readonly visits = this.store.selectSignal(PortfolioMonitoringVisitsState.visits);
   protected readonly visitRows = computed(() => this.visits().map((v) => this.toRow(v)));
   protected readonly visitsData = this.store.selectSignal(PortfolioMonitoringVisitsState.visitsConfigs);
   protected readonly isLoading = this.store.selectSignal(PortfolioMonitoringVisitsState.isLoading);
+  private readonly officers = this.store.selectSignal(PortfolioExtensionOfficersState.officers);
+  private readonly availableOfficers = this.store.selectSignal(PortfolioExtensionOfficersState.availableOfficers);
+  protected readonly officerOptions = computed(() => {
+    const byId = new Map<string, { id: string; name: string }>();
+    [...this.officers(), ...this.availableOfficers()].forEach((officer) => {
+      const id = officer.officerId || officer.id;
+      if (id) {
+        byId.set(id, {
+          id,
+          name: officer.officerName || officer.fullName || officer.name || 'Extension Officer',
+        });
+      }
+    });
+    return Array.from(byId.values());
+  });
+  protected readonly officerMenuItems = computed<MenuItem[]>(() => [
+    { label: 'All officers', icon: 'group', command: () => this.onOfficerFilter('') },
+    ...this.officerOptions().map((officer) => ({
+      label: officer.name,
+      icon: 'person',
+      command: () => this.onOfficerFilter(officer.id),
+    })),
+  ]);
+  protected readonly isReviewModalVisible = signal(false);
+  protected readonly selectedVisit = signal<PortfolioMonitoringVisit | null>(null);
+  protected reviewAction: 'approved' | 'rejected' | 'under_review' = 'approved';
+  protected reviewNotes = '';
   protected readonly statusOptions = visitStatusOptions;
 
   protected readonly statusMenuItems: MenuItem[] = [
@@ -72,13 +110,20 @@ export class VisitsReportsComponent {
     })),
   ];
 
+  protected readonly actionMenuItems: MenuItem[] = [
+    { label: 'Review report', icon: 'fact_check', command: () => this.openReview('approved') },
+  ];
+
   private lastEvent: TableLazyLoadEvent = {};
   private searchTerm = '';
   protected selectedStatus = '';
+  protected selectedOfficerId = '';
 
   private readonly searchInput$ = new Subject<string>();
 
   constructor() {
+    this.store.dispatch(new GetPortfolioExtensionOfficers({ rows: 100 })).subscribe();
+    this.store.dispatch(new GetAvailablePortfolioExtensionOfficers({ rows: 100 })).subscribe();
     this.searchInput$
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((value) => {
@@ -99,6 +144,46 @@ export class VisitsReportsComponent {
   protected onStatusFilter(status: string): void {
     this.selectedStatus = status;
     this.dispatchVisitsLoad({ ...this.lastEvent, first: 0 });
+  }
+
+  protected onOfficerFilter(officerId: string): void {
+    this.selectedOfficerId = officerId;
+    this.dispatchVisitsLoad({ ...this.lastEvent, first: 0 });
+  }
+
+  protected selectedOfficerLabel(): string {
+    return this.officerOptions().find((officer) => officer.id === this.selectedOfficerId)?.name ?? 'All officers';
+  }
+
+  protected openReview(action: 'approved' | 'rejected' | 'under_review'): void {
+    if (!this.selectedVisit()) return;
+    this.reviewAction = action;
+    this.reviewNotes = '';
+    this.isReviewModalVisible.set(true);
+  }
+
+  protected openActionMenu(visit: PortfolioMonitoringVisit, event: Event, menu: { toggle: (event: Event) => void }): void {
+    this.selectedVisit.set(visit);
+    menu.toggle(event);
+  }
+
+  protected submitReview(): void {
+    const visit = this.selectedVisit();
+    if (!visit?.id) return;
+
+    this.http
+      .post(`${environment.api}/portfolio/monitoring-visits/${encodeURIComponent(visit.id)}/review`, {
+        action: this.reviewAction,
+        notes: this.reviewNotes.trim() || null,
+      }, { withCredentials: true })
+      .subscribe({
+        next: () => {
+          this.isReviewModalVisible.set(false);
+          this.toastr.triggerToastr('success', `Report ${this.reviewAction === 'approved' ? 'approved' : 'updated'} successfully.`);
+          this.dispatchVisitsLoad();
+        },
+        error: () => this.toastr.triggerToastr('error', 'Unable to review this monitoring report.'),
+      });
   }
 
   protected formatLabel(value: string): string {
@@ -131,11 +216,13 @@ export class VisitsReportsComponent {
     const farmLocation =
       visit.farm?.locationLabel ||
       visit.farmLocation ||
+      visit.farmer?.farmDetails?.farmAddress ||
       '-';
 
     const crop =
       visit.farm?.cropType ||
       visit.cropType ||
+      visit.farmer?.farmDetails?.primaryCrop ||
       '-';
 
     const officerName =
@@ -153,7 +240,7 @@ export class VisitsReportsComponent {
       ? 'Alert Generated'
       : visit.riskNotes || 'Normal';
 
-    const visitDate = visit.visitDate || null;
+    const visitDate = visit.visitDate || visit.visitScheduling?.date || null;
     const lastActivity =
       visit.reviewedAt || visit.submittedAt || visit.updatedAt || visit.createdAt || null;
 
@@ -198,6 +285,8 @@ export class VisitsReportsComponent {
       rows: event.rows ?? 10,
       globalFilter: this.searchTerm || undefined,
       status: this.selectedStatus || undefined,
+      officerId: this.selectedOfficerId || undefined,
+      timeframeDays: 365,
     };
 
     this.store.dispatch(new GetPortfolioMonitoringVisits(params)).subscribe();

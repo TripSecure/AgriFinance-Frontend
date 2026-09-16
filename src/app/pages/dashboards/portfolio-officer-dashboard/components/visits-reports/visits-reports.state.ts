@@ -18,6 +18,11 @@ export interface PortfolioMonitoringVisitFarmer {
   fullName?: string | null;
   name?: string | null;
   phone?: string | null;
+  farmDetails?: {
+    farmAddress?: string | null;
+    primaryCrop?: string | null;
+    farmSizeAcres?: number | null;
+  } | null;
 }
 
 export interface PortfolioMonitoringVisitOfficer {
@@ -50,6 +55,9 @@ export interface PortfolioMonitoringVisit extends Record<string, unknown> {
   lastActivityLabel?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  visitScheduling?: { date?: string | null; description?: string | null } | null;
+  checklist?: Record<string, unknown> | null;
+  photos?: string[];
 }
 
 interface MonitoringVisitsResponse {
@@ -83,6 +91,8 @@ export interface MonitoringVisitsQueryParams {
   globalFilter?: string;
   status?: string;
   timeframeDays?: number;
+  officerId?: string;
+  farmId?: string;
 }
 
 export interface PortfolioMonitoringVisitsStateModel {
@@ -154,8 +164,9 @@ export class PortfolioMonitoringVisitsState {
       .pipe(
         tap((response) => {
           const data = normalizeListResponse(response.data);
+          const visits = data.results.map((visit) => this.normalizeVisit(visit));
           ctx.patchState({
-            visits: data.results,
+            visits,
             totalPages: data.totalPages,
             pageIndex: data.pageIndex,
             pageSize: data.pageSize,
@@ -171,6 +182,19 @@ export class PortfolioMonitoringVisitsState {
           return of(error);
         }),
       );
+  }
+
+  private normalizeVisit(visit: PortfolioMonitoringVisit): PortfolioMonitoringVisit {
+    const farmerDetails = visit.farmer?.farmDetails;
+    return {
+      ...visit,
+      visitDate: visit.visitDate ?? visit.visitScheduling?.date ?? null,
+      instructions: visit.instructions ?? visit.visitScheduling?.description ?? null,
+      farmerName: visit.farmerName ?? visit.farmer?.fullName ?? visit.farmer?.name ?? null,
+      officerName: visit.officerName ?? visit.officer?.fullName ?? visit.officer?.name ?? null,
+      farmLocation: visit.farmLocation ?? farmerDetails?.farmAddress ?? null,
+      cropType: visit.cropType ?? farmerDetails?.primaryCrop ?? null,
+    };
   }
 
   private buildParams(params?: MonitoringVisitsQueryParams): HttpParams {
@@ -196,6 +220,14 @@ export class PortfolioMonitoringVisitsState {
 
     if (params.timeframeDays) {
       httpParams = httpParams.set('timeframeDays', String(params.timeframeDays));
+    }
+
+    if (params.officerId) {
+      httpParams = httpParams.set('officerId', params.officerId);
+    }
+
+    if (params.farmId) {
+      httpParams = httpParams.set('farmId', params.farmId);
     }
 
     return httpParams;

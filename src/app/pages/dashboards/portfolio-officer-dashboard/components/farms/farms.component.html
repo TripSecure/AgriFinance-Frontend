@@ -213,4 +213,36 @@
       </div>
     </form>
   </p-dialog>
+
+  <p-dialog
+    [visible]="isScheduleModalVisible()"
+    (visibleChange)="isScheduleModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Schedule Monitoring Visit"
+    [style]="{ width: '90vw', maxWidth: '540px' }"
+    appendTo="body"
+    [closable]="!isSubmittingSchedule()"
+  >
+    <form [formGroup]="scheduleForm" (ngSubmit)="onSubmitSchedule()" class="d-flex flex-column gap-3 pt-2">
+      @if (selectedFarmForSchedule(); as farm) {
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fw-semibold text-dark fs-6">{{ farm.farmName || farm.locationLabel || 'Selected farm' }}</div>
+          <div class="small text-secondary mt-1">
+            {{ farm.farmer?.fullName || 'Farmer' }}
+            @if (farm.assignment?.officerName) { &bull; {{ farm.assignment?.officerName }} }
+          </div>
+        </div>
+      }
+      <app-form-input name="date" label="Visit date" type="date" [isRequired]="true" [formGroup]="scheduleForm" />
+      <app-form-input name="description" label="Brief note / description" type="textform" placeholder="Add instructions for the field visit..." [formGroup]="scheduleForm" />
+      <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-2">
+        <button type="button" class="btn btn-outline-secondary px-3 py-2" (click)="isScheduleModalVisible.set(false)" [disabled]="isSubmittingSchedule()">Cancel</button>
+        <button type="submit" class="btn btn-success px-4 py-2 text-white fw-medium" [disabled]="scheduleForm.invalid || isSubmittingSchedule()">
+          {{ isSubmittingSchedule() ? 'Scheduling...' : 'Schedule visit' }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
 </div>

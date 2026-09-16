@@ -129,6 +129,7 @@ export interface PortfolioExtensionOfficersStateModel {
   isLoading: boolean;
   errors: string[];
   officers: ExtensionOfficerActivityItem[];
+  availableOfficers: ExtensionOfficerActivityItem[];
   farmTypes: Array<{ value: string; label: string }>;
   summary: {
     totalFieldOfficers: { total: number; newThisMonth: number };
@@ -142,10 +143,16 @@ export class GetPortfolioExtensionOfficers {
   constructor(public params?: ExtensionOfficersQueryParams) {}
 }
 
+export class GetAvailablePortfolioExtensionOfficers {
+  static readonly type = '[Portfolio Extension Officers] Get Available Officers';
+  constructor(public params?: ExtensionOfficersQueryParams) {}
+}
+
 @State<PortfolioExtensionOfficersStateModel>({
   name: 'portfolioExtensionOfficers',
   defaults: {
     officers: [],
+    availableOfficers: [],
     totalPages: 0,
     pageIndex: 0,
     pageSize: 10,
@@ -177,6 +184,11 @@ export class PortfolioExtensionOfficersState {
   @Selector()
   static officers(state: PortfolioExtensionOfficersStateModel): ExtensionOfficerActivityItem[] {
     return state.officers;
+  }
+
+  @Selector()
+  static availableOfficers(state: PortfolioExtensionOfficersStateModel): ExtensionOfficerActivityItem[] {
+    return state.availableOfficers;
   }
 
   @Selector()
@@ -246,6 +258,29 @@ export class PortfolioExtensionOfficersState {
             isLoading: false,
             errors: [extractErrorMessage(error, 'Unable to load extension officers activity.')],
           });
+          return of(error);
+        }),
+      );
+  }
+
+  @Action(GetAvailablePortfolioExtensionOfficers)
+  getAvailableOfficers(
+    ctx: StateContext<PortfolioExtensionOfficersStateModel>,
+    { params }: GetAvailablePortfolioExtensionOfficers,
+  ) {
+    return this.http
+      .get<ExtensionOfficersResponse>(`${environment.api}/portfolio/extension-officers/available`, {
+        params: this.buildParams(params),
+      })
+      .pipe(
+        tap((response) => {
+          const raw = response.data;
+          const data = Array.isArray(raw) ? raw : (raw as ExtensionOfficersData);
+          const items = Array.isArray(data) ? data : data.items ?? data.results ?? data.data ?? [];
+          ctx.patchState({ availableOfficers: items });
+        }),
+        catchError((error: unknown) => {
+          ctx.patchState({ errors: [extractErrorMessage(error, 'Unable to load available extension officers.')] });
           return of(error);
         }),
       );
