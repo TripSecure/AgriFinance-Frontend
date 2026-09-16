@@ -56,8 +56,12 @@ const resolveSignedInUser = (store: Store): Observable<unknown> => {
   const token = store.selectSnapshot(AuthState.getToken);
   const profile = store.selectSnapshot(AuthState.getProfile);
 
-  if (!isAuthenticated || !token) {
-    return of(null);
+  if (!isAuthenticated && !token) {
+    return store.dispatch(new LoadLoggedInUser());
+  }
+
+  if (!token) {
+    return store.dispatch(new LoadLoggedInUser());
   }
 
   if (profile) {

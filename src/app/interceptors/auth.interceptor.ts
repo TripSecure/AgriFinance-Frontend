@@ -18,17 +18,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const token = store.selectSnapshot((state: AuthSnapshot) => state.auth?.token);
 
-  if (!token) {
-    return next(req);
-  }
+  const authRequest = req.clone({
+    withCredentials: true,
+    ...(token ? { setHeaders: { Authorization: `Bearer ${token}` } } : {}),
+  });
 
-  return next(
-    req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-    }),
-  ).pipe(
+  return next(authRequest).pipe(
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse && error.status === 401) {
         handleExpiredSession(store, router);

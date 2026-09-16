@@ -320,7 +320,25 @@ export class AddLoanComponent implements OnInit {
     }
 
     this.tariaWindow = tariaWindow;
-    tariaWindow.location.href = tariaUrl.toString();
+    void firstValueFrom(
+      this.http.get<{ data?: { handoffToken?: string } }>(
+        `${environment.api}/portfolio/farmers/${encodeURIComponent(farmerId)}/farms/${encodeURIComponent(payload.farmId)}/risk-assessment/handoff`,
+        { withCredentials: true },
+      ),
+    )
+      .then((handoffResponse) => {
+        const handoffToken = handoffResponse.data?.handoffToken;
+        if (!handoffToken) throw new Error('TARIA handoff was not created.');
+        tariaUrl.searchParams.set('handoff', handoffToken);
+        tariaWindow.location.href = tariaUrl.toString();
+      })
+      .catch((error: unknown) => {
+        tariaWindow.close();
+        this.tariaWindow = null;
+        const msg = error instanceof Error ? error.message : 'Unable to open TARIA securely.';
+        this.localSubmitError.set(msg);
+        this.toastr.triggerToastr('error', msg);
+      });
     this.startTariaResultRecovery(farmerId, payload.farmId);
     this.toastr.triggerToastr('info', 'Complete the farmer risk assessment in the TARIA window.');
   }

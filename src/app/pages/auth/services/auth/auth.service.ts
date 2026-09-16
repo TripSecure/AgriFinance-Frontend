@@ -27,6 +27,7 @@ export class AuthService {
   loadLoggedInUser(accessToken?: string) {
     return this.http.get<CurrentSessionResponse>(`${environment.api}/auth/me`, {
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      withCredentials: true,
     });
   }
 

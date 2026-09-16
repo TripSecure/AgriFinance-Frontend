@@ -40,13 +40,15 @@ export class AuthState implements NgxsOnInit {
   private readonly authService = inject(AuthService);
 
   ngxsOnInit(ctx: StateContext<AuthStateModel>) {
-    const state = localStorage.getItem(AUTH_STORAGE_KEY) ?? sessionStorage.getItem(AUTH_STORAGE_KEY);
+    const localState = localStorage.getItem(AUTH_STORAGE_KEY);
+    const state = localState ?? sessionStorage.getItem(AUTH_STORAGE_KEY);
     if (state) {
       try {
         const parsed = JSON.parse(state) as Partial<AuthStateModel>;
         ctx.setState({
           ...authInitialState,
           ...parsed,
+          token: localState ? null : parsed.token ?? null,
           loading: false,
           errors: [],
           message: null,
@@ -357,13 +359,13 @@ export class AuthState implements NgxsOnInit {
   @Action(PersistState)
   saveState(ctx: StateContext<AuthStateModel>) {
     const state = { ...ctx.getState(), loading: false };
-    const serialized = JSON.stringify(state);
+    const serialized = JSON.stringify({ ...state, token: null });
 
     if (state.rememberDevice) {
       localStorage.setItem(AUTH_STORAGE_KEY, serialized);
-      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state));
     } else {
-      sessionStorage.setItem(AUTH_STORAGE_KEY, serialized);
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state));
       localStorage.removeItem(AUTH_STORAGE_KEY);
     }
   }
