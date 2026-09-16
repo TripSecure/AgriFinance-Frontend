@@ -1,1 +1,67 @@
-<p>dashboard works!</p>
+<main class="officer-home">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">FIELD OPERATIONS</p>
+      <h1>Good morning</h1>
+      <p class="page-header__copy">Stay on top of assigned farms, field visits, and reports that need your attention.</p>
+    </div>
+    <a class="primary-action" routerLink="/dashboard/extension-officer/visits">
+      <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+      Open visit schedule
+    </a>
+  </header>
+
+  <section class="metric-grid" aria-label="Fieldwork summary">
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--green"><span class="material-symbols-outlined" aria-hidden="true">groups</span></div>
+      <div><p>Assigned farmers</p><strong>{{ isLoadingFarmers() ? '—' : farmersData().totalCount }}</strong><span>Farmers in your portfolio</span></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--blue"><span class="material-symbols-outlined" aria-hidden="true">yard</span></div>
+      <div><p>Assigned farms</p><strong>{{ isLoadingFarms() ? '—' : farmsData().totalCount }}</strong><span>Farms to monitor</span></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--amber"><span class="material-symbols-outlined" aria-hidden="true">event_note</span></div>
+      <div><p>Visits this period</p><strong>{{ isLoadingVisits() ? '—' : visitsData().totalCount }}</strong><span>Last 30 days</span></div>
+    </article>
+    <article class="metric-card" [class.metric-card--attention]="riskAlerts() > 0 || reportsToComplete() > 0">
+      <div class="metric-card__icon metric-card__icon--red"><span class="material-symbols-outlined" aria-hidden="true">flag</span></div>
+      <div><p>Needs attention</p><strong>{{ riskAlerts() + reportsToComplete() }}</strong><span>{{ riskAlerts() }} risk alerts · {{ reportsToComplete() }} reports to finish</span></div>
+    </article>
+  </section>
+
+  <div class="home-grid">
+    <section class="panel visit-panel" aria-labelledby="recent-visits-heading">
+      <header class="panel__header">
+        <div><p class="eyebrow">FIELD LOG</p><h2 id="recent-visits-heading">Recent visits</h2></div>
+        <a routerLink="/dashboard/extension-officer/visits">View all</a>
+      </header>
+
+      @if (isLoadingVisits()) {
+        <div class="empty-state">Loading your visit activity...</div>
+      } @else if (recentVisits().length === 0) {
+        <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">event_available</span><strong>No visits in this period</strong><span>Your scheduled visits will appear here.</span></div>
+      } @else {
+        <div class="visit-list">
+          @for (visit of recentVisits(); track visit.id) {
+            <article class="visit-row">
+              <div class="visit-row__date"><span>{{ visitDate(visit) | date: 'MMM' }}</span><strong>{{ visitDate(visit) | date: 'd' }}</strong></div>
+              <div class="visit-row__details"><strong>{{ visit.farmer?.fullName || 'Assigned farmer' }}</strong><span>{{ visit.farm?.locationLabel || 'Assigned farm' }} · {{ visit.farm?.cropType || 'Crop not specified' }}</span></div>
+              <div class="visit-row__meta"><span class="status-pill" [class.status-pill--success]="visit.status === 'approved'" [class.status-pill--warning]="visit.status !== 'approved'">{{ statusLabel(visit.status) }}</span>@if (visit.alertGenerated) {<span class="alert-badge"><span class="material-symbols-outlined" aria-hidden="true">priority_high</span>Risk alert</span>}</div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <aside class="panel action-panel" aria-labelledby="actions-heading">
+      <header class="panel__header"><div><p class="eyebrow">YOUR WORKSPACE</p><h2 id="actions-heading">Next actions</h2></div></header>
+      <nav class="action-list" aria-label="Extension officer actions">
+        <a routerLink="/dashboard/extension-officer/visits"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">edit_calendar</span></span><span><strong>Complete visit reports</strong><small>{{ reportsToComplete() }} report{{ reportsToComplete() === 1 ? '' : 's' }} waiting for your update</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
+        <a routerLink="/dashboard/extension-officer/farms"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">map</span></span><span><strong>Review assigned farms</strong><small>Check locations, crops, and latest visits</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
+        <a routerLink="/dashboard/extension-officer/farmers"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">person_search</span></span><span><strong>Open farmer list</strong><small>Find contact and field context quickly</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
+      </nav>
+      @if (riskAlerts() > 0) {<div class="alert-callout"><span class="material-symbols-outlined" aria-hidden="true">warning</span><div><strong>{{ riskAlerts() }} risk alert{{ riskAlerts() === 1 ? '' : 's' }} raised</strong><span>Include the issue in the visit report and submit it for review.</span></div></div>}
+    </aside>
+  </div>
+</main>
