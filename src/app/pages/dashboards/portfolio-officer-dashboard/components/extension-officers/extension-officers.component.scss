@@ -103,6 +103,41 @@
   }
 }
 
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.summary-card {
+  display: flex;
+  align-items: flex-start;
+  gap: .85rem;
+  border: 1px solid #dbe7e2;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(16, 42, 67, .05);
+}
+
+.summary-card > .material-symbols-outlined {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 10px;
+  background: #e1f5ec;
+  color: #007c5a;
+}
+
+.summary-card small,
+.summary-card strong,
+.summary-card em { display: block; }
+.summary-card small { color: #667085; font-size: .76rem; font-weight: 700; }
+.summary-card strong { margin-top: .25rem; color: #062f58; font-size: 1.65rem; line-height: 1.1; }
+.summary-card em { margin-top: .25rem; color: #14743e; font-size: .7rem; font-style: normal; font-weight: 700; }
+
 p-table {
   width: 100%;
   margin-top: 1rem;
@@ -126,6 +161,61 @@ p-table {
     color: #667085;
   }
 }
+
+.officer-region {
+  display: block;
+  margin-top: 0.2rem;
+  color: #667085;
+  font-size: 0.78rem;
+}
+
+.risk-flag {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 0.28rem 0.55rem;
+  background: #eef0f2;
+  color: #475467;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.risk-flag--danger { background: #fde7e4; color: #b42318; }
+.risk-flag--warning { background: #fff0c9; color: #8b6100; }
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 0;
+  background: transparent;
+  color: #007c5a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.action-button:hover,
+.action-button:focus-visible { color: #005f45; text-decoration: underline; }
+.action-button .material-symbols-outlined { font-size: 1.1rem; }
+
+.officer-detail__heading,
+.officer-detail__stats,
+.officer-detail__visits li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.officer-detail__heading h4 { margin: 0; color: #102a43; font-size: 1.2rem; }
+.officer-detail__heading p { margin: .25rem 0 0; padding: 0; color: #667085; }
+.officer-detail__stats { margin: 1.25rem 0; flex-wrap: wrap; }
+.officer-detail__stats span { display: grid; gap: .2rem; min-width: 120px; color: #667085; font-size: .75rem; }
+.officer-detail__stats strong { color: #062f58; font-size: 1.2rem; }
+.officer-detail h5 { margin: 0 0 .5rem; color: #102a43; }
+.officer-detail__visits { margin: 0; padding: 0; list-style: none; }
+.officer-detail__visits li { border-top: 1px solid #edf2f0; padding: .65rem 0; color: #667085; font-size: .78rem; }
+.officer-detail__visits li span:first-child { color: #102a43; font-weight: 700; }
 
 ::ng-deep {
   .p-datatable-wrapper {
@@ -264,6 +354,10 @@ p-table {
     0 2px 4px -2px rgb(0 0 0 / 0.1);
   overflow: hidden;
   border: 1px solid #d0d5dd;
+}
+
+@media (max-width: 900px) {
+  .summary-grid { grid-template-columns: 1fr; }
 }
 
 .data-head {

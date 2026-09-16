@@ -4,7 +4,7 @@ import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../../../environment/environment';
-import { extractErrorMessage, normalizeListResponse } from '../../../../../shared/request.utils';
+import { extractErrorMessage } from '../../../../../shared/request.utils';
 
 export interface ExtensionOfficerPersonal {
   fullName?: string | null;
@@ -49,6 +49,15 @@ export interface ExtensionOfficerActivityItem extends Record<string, unknown> {
   lastActivityLabel?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  officerName?: string | null;
+  initials?: string | null;
+  farmsMonitored?: number;
+  reportsSubmitted?: number;
+  assignedFarmCount?: number;
+  riskFlagsRaised?: { total?: number; high?: number; medium?: number; low?: number; label?: string; tone?: string } | null;
+  lastVisitAt?: string | null;
+  lastVisitLabel?: string | null;
+  action?: { canViewDetail?: boolean; detailEndpoint?: string; actionsEndpoint?: string } | null;
 }
 
 interface ExtensionOfficersResponse {
@@ -74,6 +83,29 @@ interface ExtensionOfficersData {
   results?: ExtensionOfficerActivityItem[];
   items?: ExtensionOfficerActivityItem[];
   data?: ExtensionOfficerActivityItem[];
+  summary?: {
+    totalFieldOfficers?: { total?: number; newThisMonth?: number };
+    totalFarmVisits?: { total?: number; changePercentVsLastCycle?: number };
+    averageMonitoringAccuracy?: { percent?: number; label?: string };
+  };
+  filters?: {
+    options?: {
+      officers?: Array<{ id: string; label: string; region?: string | null }>;
+      activities?: Array<{ value: string; label: string }>;
+      farmTypes?: Array<{ value: string; label: string }>;
+    };
+  };
+  table?: {
+    items?: ExtensionOfficerActivityItem[];
+    pagination?: {
+      totalPages?: number;
+      page?: number;
+      pageSize?: number;
+      limit?: number;
+      offset?: number;
+      total?: number;
+    };
+  };
 }
 
 export interface ExtensionOfficersQueryParams {
@@ -82,6 +114,11 @@ export interface ExtensionOfficersQueryParams {
   globalFilter?: string;
   status?: string;
   region?: string;
+  timeframeDays?: number;
+  activity?: string;
+  officerId?: string;
+  farmerSearch?: string;
+  farmType?: string;
 }
 
 export interface PortfolioExtensionOfficersStateModel {
@@ -92,6 +129,12 @@ export interface PortfolioExtensionOfficersStateModel {
   isLoading: boolean;
   errors: string[];
   officers: ExtensionOfficerActivityItem[];
+  farmTypes: Array<{ value: string; label: string }>;
+  summary: {
+    totalFieldOfficers: { total: number; newThisMonth: number };
+    totalFarmVisits: { total: number; changePercentVsLastCycle: number };
+    averageMonitoringAccuracy: { percent: number; label: string };
+  };
 }
 
 export class GetPortfolioExtensionOfficers {
@@ -109,6 +152,12 @@ export class GetPortfolioExtensionOfficers {
     totalCount: 0,
     isLoading: false,
     errors: [],
+    farmTypes: [],
+    summary: {
+      totalFieldOfficers: { total: 0, newThisMonth: 0 },
+      totalFarmVisits: { total: 0, changePercentVsLastCycle: 0 },
+      averageMonitoringAccuracy: { percent: 0, label: 'Needs Attention' },
+    },
   },
 })
 @Injectable()
@@ -136,6 +185,16 @@ export class PortfolioExtensionOfficersState {
     return { totalPages, pageIndex, pageSize, totalCount };
   }
 
+  @Selector()
+  static farmTypes(state: PortfolioExtensionOfficersStateModel): Array<{ value: string; label: string }> {
+    return state.farmTypes;
+  }
+
+  @Selector()
+  static summary(state: PortfolioExtensionOfficersStateModel): PortfolioExtensionOfficersStateModel['summary'] {
+    return state.summary;
+  }
+
   @Action(GetPortfolioExtensionOfficers)
   getOfficers(
     ctx: StateContext<PortfolioExtensionOfficersStateModel>,
@@ -152,13 +211,33 @@ export class PortfolioExtensionOfficersState {
       )
       .pipe(
         tap((response) => {
-          const data = normalizeListResponse(response.data);
+          const data = response.data as ExtensionOfficersData | ExtensionOfficerActivityItem[];
+          const activityData = Array.isArray(data) ? null : data;
+          const items = activityData?.table?.items ?? (Array.isArray(data) ? data : []);
+          const pagination = activityData?.table?.pagination;
           ctx.patchState({
-            officers: data.results,
-            totalPages: data.totalPages,
-            pageIndex: data.pageIndex,
-            pageSize: data.pageSize,
-            totalCount: data.totalCount,
+            officers: items,
+            totalPages: pagination?.totalPages ?? 1,
+            pageIndex: pagination?.page ?? 1,
+            pageSize: pagination?.pageSize ?? pagination?.limit ?? items.length,
+            totalCount: pagination?.total ?? items.length,
+            farmTypes: activityData?.filters?.options?.farmTypes ?? [],
+            summary: activityData?.summary
+              ? {
+                  totalFieldOfficers: {
+                    total: activityData.summary.totalFieldOfficers?.total ?? 0,
+                    newThisMonth: activityData.summary.totalFieldOfficers?.newThisMonth ?? 0,
+                  },
+                  totalFarmVisits: {
+                    total: activityData.summary.totalFarmVisits?.total ?? 0,
+                    changePercentVsLastCycle: activityData.summary.totalFarmVisits?.changePercentVsLastCycle ?? 0,
+                  },
+                  averageMonitoringAccuracy: {
+                    percent: activityData.summary.averageMonitoringAccuracy?.percent ?? 0,
+                    label: activityData.summary.averageMonitoringAccuracy?.label ?? 'Needs Attention',
+                  },
+                }
+              : undefined,
             isLoading: false,
           });
         }),
@@ -195,6 +274,26 @@ export class PortfolioExtensionOfficersState {
 
     if (params.region) {
       httpParams = httpParams.set('region', params.region);
+    }
+
+    if (params.timeframeDays) {
+      httpParams = httpParams.set('timeframeDays', String(params.timeframeDays));
+    }
+
+    if (params.activity) {
+      httpParams = httpParams.set('activity', params.activity);
+    }
+
+    if (params.officerId) {
+      httpParams = httpParams.set('officerId', params.officerId);
+    }
+
+    if (params.farmerSearch) {
+      httpParams = httpParams.set('farmerSearch', params.farmerSearch);
+    }
+
+    if (params.farmType) {
+      httpParams = httpParams.set('farmType', params.farmType);
     }
 
     return httpParams;
