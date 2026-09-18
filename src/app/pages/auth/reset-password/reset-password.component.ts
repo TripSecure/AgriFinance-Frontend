@@ -56,7 +56,8 @@ export class ResetPasswordComponent implements OnInit {
 
   protected readonly pageTitle = computed(() => 'Reset password');
   protected readonly pageHelpText = computed(
-    () => 'Enter the 6-digit verification code and your new password.',
+    () =>
+      'Enter the 6-digit verification code and your new password (min. 12 characters, with an uppercase letter, a lowercase letter, and a number).',
   );
   protected readonly submitButtonText = computed(() => 'Reset Password');
 
@@ -64,7 +65,14 @@ export class ResetPasswordComponent implements OnInit {
     {
       identity: ['', [Validators.required]],
       otpCode: ['', [Validators.required, Validators.pattern('^[0-9]{6}$')]],
-      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      newPassword: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(12),
+          Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/),
+        ],
+      ],
       confirmPassword: ['', [Validators.required]],
     },
     { validators: passwordMatchValidator() },
@@ -108,7 +116,10 @@ export class ResetPasswordComponent implements OnInit {
       return 'Verification code must be 6 digits.';
     }
     if (control.hasError('minlength') && controlName === 'newPassword') {
-      return 'Password must be at least 6 characters.';
+      return 'Password must be at least 12 characters.';
+    }
+    if (control.hasError('pattern') && controlName === 'newPassword') {
+      return 'Password must include an uppercase letter, a lowercase letter, and a number.';
     }
     return null;
   }

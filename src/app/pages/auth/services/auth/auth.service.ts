@@ -38,10 +38,8 @@ export class AuthService {
   resetPassword(payload: { identity: string; otpCode?: string; otp?: string; newPassword: string; confirmPassword?: string }) {
     const body = {
       identity: payload.identity,
-      otp: payload.otpCode || payload.otp || '',
       otpCode: payload.otpCode || payload.otp || '',
-      newPassword: payload.newPassword,
-      confirmPassword: payload.confirmPassword || payload.newPassword,
+      password: payload.newPassword,
     };
     return this.http.post<ApiResponseBase>(`${environment.api}/auth/password/reset`, body);
   }
