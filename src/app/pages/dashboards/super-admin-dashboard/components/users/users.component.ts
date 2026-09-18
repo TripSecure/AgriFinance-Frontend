@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
@@ -52,7 +52,9 @@ export class UsersComponent {
   protected readonly userRows = computed(() => this.users().map((user) => this.toRow(user)));
   protected readonly usersData = this.store.selectSignal(UsersState.usersConfigs);
   protected readonly isLoading = this.store.selectSignal(UsersState.isLoading);
+  protected readonly summary = this.store.selectSignal(UsersState.summary);
   protected readonly approvalOptions = userApprovalOptions;
+  protected readonly activeTab = signal<'directory' | 'approvals'>('directory');
 
   protected selectedUserForAction: User | null = null;
 
@@ -105,6 +107,11 @@ export class UsersComponent {
 
   protected onStatusFilter(status: string): void {
     this.selectedStatus = status;
+    this.dispatchUsersLoad({ ...this.lastEvent, first: 0 });
+  }
+
+  protected onTabChange(tab: 'directory' | 'approvals'): void {
+    this.activeTab.set(tab);
     this.dispatchUsersLoad({ ...this.lastEvent, first: 0 });
   }
 
@@ -186,6 +193,7 @@ export class UsersComponent {
       sortOrder: event.sortOrder ?? undefined,
       globalFilter: this.searchTerm || undefined,
       status: this.selectedStatus || undefined,
+      view: this.activeTab(),
     };
 
     this.store.dispatch(new GetUsers(params)).subscribe();

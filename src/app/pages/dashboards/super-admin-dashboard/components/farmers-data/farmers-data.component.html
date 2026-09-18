@@ -1,0 +1,283 @@
+<div class="content">
+  <div class="title mb-4">
+    <h3>Farmers Data</h3>
+    <p>Platform-wide farmer records, KYC status, and farm details across all portfolio officers.</p>
+  </div>
+
+  <section class="metric-grid">
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--blue"><span class="material-symbols-outlined" aria-hidden="true">groups</span></div>
+      <div><p>Total farmers</p><strong>{{ isLoading() ? '—' : (summary()?.totalFarmers ?? 0) }}</strong></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--green"><span class="material-symbols-outlined" aria-hidden="true">person_add</span></div>
+      <div><p>New this month</p><strong>{{ isLoading() ? '—' : (summary()?.newThisMonth ?? 0) }}</strong></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--green"><span class="material-symbols-outlined" aria-hidden="true">verified</span></div>
+      <div><p>Verified farmers</p><strong>{{ isLoading() ? '—' : (summary()?.verifiedFarmers ?? 0) }}</strong></div>
+    </article>
+    <article class="metric-card" [class.metric-card--attention]="(summary()?.flaggedAccounts ?? 0) > 0">
+      <div class="metric-card__icon metric-card__icon--red"><span class="material-symbols-outlined" aria-hidden="true">flag</span></div>
+      <div><p>Flagged accounts</p><strong>{{ isLoading() ? '—' : (summary()?.flaggedAccounts ?? 0) }}</strong></div>
+    </article>
+  </section>
+
+  <div class="filters">
+    <div class="filters__search">
+      <label for="farmersSearch" class="d-block">Search</label>
+      <div class="filters__search__input-form">
+        <div class="d-flex align-items-center justify-content-center">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          <input id="farmersSearch" (input)="onSearch($any($event.target)?.value ?? '')" type="text" placeholder="Search farmer ID or name" />
+        </div>
+      </div>
+    </div>
+
+    <div class="filters__actions">
+      <label for="farmersStatusFilter">Filter by KYC status</label>
+      <button id="farmersStatusFilter" type="button" (click)="statusMenu.toggle($event)" class="filters__actions__input-form">
+        <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+      </button>
+      <p-menu #statusMenu [model]="statusMenuItems" [popup]="true" [appendTo]="'body'">
+        <ng-template pTemplate="item" let-item>
+          <button type="button" class="p-menu-item-link w-100 d-flex align-items-center gap-2 border-0 bg-transparent text-start py-2 px-3 text-secondary" (click)="item.command ? item.command($event) : null">
+            <span class="material-symbols-outlined">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+          </button>
+        </ng-template>
+      </p-menu>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="ps-3 py-2 d-flex align-items-center gap-3">
+      <div class="data-head">Database Explorer</div>
+      @if (!isLoading()) {
+        <div class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3">
+          {{ farmersData().totalCount }}
+        </div>
+      }
+    </div>
+
+    <p-table
+      [value]="farmerRows()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="farmersData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadFarmers($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th id="farmerName">Name</th>
+          <th id="farmerContact">Contact</th>
+          <th id="farmerRegion">Region</th>
+          <th id="farmerSize">Farm Size</th>
+          <th id="farmerCrop">Primary Crop</th>
+          <th id="farmerJoined">Date Joined</th>
+          <th id="farmerStatus">KYC Status</th>
+          <th id="farmerActions">Action</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr
+          class="clickable-row"
+          tabindex="0"
+          role="button"
+          [attr.aria-label]="'View details for ' + row.farmer.fullName"
+          (click)="openDetails(row.farmer)"
+          (keydown.enter)="openDetails(row.farmer)"
+        >
+          <td>{{ row.farmer.fullName }}</td>
+          <td>{{ row.farmer.phone || row.farmer.email || '-' }}</td>
+          <td>{{ row.region }}</td>
+          <td>{{ row.farmSize }}</td>
+          <td>{{ row.crop }}</td>
+          <td>{{ (row.farmer.createdAt | date: 'mediumDate') || '-' }}</td>
+          <td>
+            <span class="status-pill" [class.status-pill--active]="row.isVerified" [class.status-pill--inactive]="row.isFlagged" [class.status-pill--pending]="row.isPending">
+              {{ row.statusLabel }}
+            </span>
+          </td>
+          <td>
+            @if (row.canReview) {
+              <button
+                type="button"
+                class="action-button"
+                aria-label="Open KYC review actions"
+                (click)="$event.stopPropagation(); selectedFarmerForAction.set(row.farmer); actionMenu.toggle($event)"
+              >
+                <span class="material-symbols-outlined">more_vert</span>
+              </button>
+            } @else {
+              <span class="text-secondary small">No action</span>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="8" class="empty-state">No farmers found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" [appendTo]="'body'">
+      <ng-template pTemplate="item" let-item>
+        <button type="button" class="p-menu-item-link w-100 d-flex align-items-center gap-2 border-0 bg-transparent text-start py-2 px-3 text-secondary" (click)="item.command ? item.command($event) : null">
+          <span class="material-symbols-outlined">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </button>
+      </ng-template>
+    </p-menu>
+  </div>
+
+  <p-dialog
+    [visible]="isRejectModalVisible()"
+    (visibleChange)="isRejectModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Reject farmer KYC"
+    [style]="{ width: '90vw', maxWidth: '480px' }"
+    appendTo="body"
+    [closable]="!isReviewing()"
+  >
+    <form [formGroup]="rejectForm" (ngSubmit)="onSubmitReject()" class="d-flex flex-column gap-3 pt-2">
+      @if (selectedFarmerForReject(); as farmer) {
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fw-semibold text-dark fs-6">{{ farmer.fullName }}</div>
+          <div class="small text-secondary mt-1">{{ farmer.phone || farmer.email }}</div>
+        </div>
+      }
+
+      <p class="small text-secondary mb-0">The portfolio officer who registered this farmer will be notified.</p>
+
+      <app-form-input
+        name="reason"
+        label="Reason (optional)"
+        type="textform"
+        placeholder="e.g. National ID photo is unreadable."
+        [formGroup]="rejectForm"
+      />
+
+      <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-2">
+        <button type="button" class="btn btn-outline-secondary px-3 py-2" (click)="isRejectModalVisible.set(false)" [disabled]="isReviewing()">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-danger px-4 py-2 text-white fw-medium" [disabled]="isReviewing()">
+          {{ isReviewing() ? 'Saving...' : 'Reject KYC' }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <p-dialog
+    [visible]="isDetailModalVisible()"
+    (visibleChange)="isDetailModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Farmer record"
+    [style]="{ width: '90vw', maxWidth: '680px' }"
+    appendTo="body"
+  >
+    @if (isDetailLoading()) {
+      <div class="detail-loading">Loading farmer record...</div>
+    } @else if (farmerDetail(); as detail) {
+      <div class="d-flex flex-column gap-3">
+        <div class="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <div class="fw-semibold text-dark fs-6">{{ detail.farmer.fullName }}</div>
+            <div class="small text-secondary mt-1">{{ detail.farmer.phone || detail.farmer.email || '-' }}</div>
+          </div>
+          <span
+            class="status-pill"
+            [class.status-pill--active]="['approved', 'active'].includes(detail.farmer.status)"
+            [class.status-pill--inactive]="['rejected', 'suspended'].includes(detail.farmer.status)"
+            [class.status-pill--pending]="!['approved', 'active', 'rejected', 'suspended'].includes(detail.farmer.status)"
+          >
+            {{ formatLabel(detail.farmer.status) }}
+          </span>
+        </div>
+
+        <div>
+          <h4 class="section-heading">Personal details</h4>
+          <div class="detail-grid">
+            <div class="detail-cell"><span>National ID</span><strong>{{ detail.farmer.nationalId || '-' }}</strong></div>
+            <div class="detail-cell"><span>Gender</span><strong>{{ formatLabel(detail.farmer.gender) }}</strong></div>
+            <div class="detail-cell"><span>Date of birth</span><strong>{{ (detail.farmer.dateOfBirth ? (detail.farmer.dateOfBirth | date: 'mediumDate') : '-') }}</strong></div>
+            <div class="detail-cell"><span>Primary crop</span><strong>{{ formatLabel(detail.farmer.primaryCrop) }}</strong></div>
+            <div class="detail-cell"><span>Farm size</span><strong>{{ detail.farmer.farmSizeHectares != null ? (detail.farmer.farmSizeHectares + ' ha') : '-' }}</strong></div>
+            <div class="detail-cell"><span>Joined</span><strong>{{ (detail.farmer.createdAt | date: 'mediumDate') || '-' }}</strong></div>
+            <div class="detail-cell"><span>Data sharing consent</span><strong>{{ detail.farmer.consentDataSharing ? 'Yes' : 'No' }}</strong></div>
+            <div class="detail-cell"><span>Loan bundle consent</span><strong>{{ detail.farmer.consentBundle ? 'Yes' : 'No' }}</strong></div>
+          </div>
+        </div>
+
+        @if (detail.portfolioOfficer; as officer) {
+          <div>
+            <h4 class="section-heading">Portfolio officer</h4>
+            <div class="p-3 bg-light rounded-3 border">
+              <div class="fw-semibold text-dark">{{ officer.fullName }}</div>
+              <div class="small text-secondary mt-1">{{ officer.phone || officer.email || '-' }}</div>
+            </div>
+          </div>
+        }
+
+        @if (detail.farms.length > 0) {
+          <div>
+            <h4 class="section-heading">Farms</h4>
+            <div class="detail-grid">
+              @for (farm of detail.farms; track farm.id) {
+                <div class="detail-cell">
+                  <span>{{ farm.locationLabel || 'Farm' }}</span>
+                  <strong>{{ formatLabel(farm.cropType) }} &bull; {{ farm.sizeHectares != null ? (farm.sizeHectares + ' ha') : '-' }}</strong>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (detail.documents.length > 0) {
+          <div>
+            <h4 class="section-heading">Documents</h4>
+            <div class="d-flex flex-column gap-2">
+              @for (document of detail.documents; track document.label) {
+                <a
+                  class="document-link"
+                  [href]="document.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  [class.document-link--disabled]="!document.url"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">description</span>
+                  <span>{{ formatLabel(document.label) }}</span>
+                  <span class="material-symbols-outlined document-link__arrow" aria-hidden="true">open_in_new</span>
+                </a>
+              }
+            </div>
+          </div>
+        }
+
+        @if (detail.adminReview; as review) {
+          <div>
+            <h4 class="section-heading">Admin review</h4>
+            <div class="p-3 bg-light rounded-3 border">
+              <div class="small text-secondary">Reviewed {{ (review.reviewedAt ? (review.reviewedAt | date: 'medium') : '-') }}</div>
+              @if (review.reviewNotes) {
+                <div class="mt-1">{{ review.reviewNotes }}</div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </p-dialog>
+</div>

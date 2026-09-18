@@ -1,8 +1,18 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { Store } from '@ngxs/store';
-import { GetUserDetails, User, UsersState } from '../users.state';
+import { ConfirmModalComponent } from '../../../../../../shared/confirm-modal/confirm-modal.component';
+import { ToastrService } from '../../../../../../shared/toastr/toastr.service';
+import {
+  GetUserDetails,
+  UpdateUserApproval,
+  User,
+  UserApprovalOption,
+  UsersState,
+  userApprovalOptions,
+} from '../users.state';
 
 interface DetailField {
   label: string;
@@ -30,15 +40,42 @@ export class UserDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
+  private readonly dialog = inject(MatDialog);
+  private readonly toastr = inject(ToastrService);
 
   protected readonly user = this.store.selectSignal(UsersState.selectedUser);
   protected readonly isLoading = this.store.selectSignal(UsersState.isDetailLoading);
+  protected readonly approvingUserId = this.store.selectSignal(UsersState.approvingUserId);
   protected readonly userName = computed(() => this.getUserName(this.user()));
   protected readonly userInitials = computed(() => this.getInitials(this.userName()));
   protected readonly status = computed(() => this.getUserStatus(this.user()));
   protected readonly summaryFields = computed(() => this.buildSummaryFields(this.user()));
   protected readonly detailSections = computed(() => this.buildDetailSections(this.user()));
   protected readonly documentLinks = computed(() => this.buildDocumentLinks(this.user()));
+  protected readonly approvalOptions = userApprovalOptions;
+  protected readonly isActionInProgress = computed(() => this.approvingUserId() === this.user()?.id);
+
+  protected onApprovalRequest(option: UserApprovalOption): void {
+    const user = this.user();
+    if (!user?.id) {
+      this.toastr.triggerToastr('error', 'Unable to update this user.');
+      return;
+    }
+
+    this.dialog
+      .open(ConfirmModalComponent, { disableClose: true })
+      .afterClosed()
+      .subscribe((confirmed?: boolean) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.store.dispatch(new UpdateUserApproval(user.id, option.value)).subscribe({
+          next: () => this.toastr.triggerToastr('success', option.successMessage),
+          error: () => this.toastr.triggerToastr('error', 'Failed to update user approval.'),
+        });
+      });
+  }
 
   ngOnInit(): void {
     const userId = this.route.snapshot.paramMap.get('userId');

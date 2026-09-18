@@ -13,15 +13,20 @@ import { AuthState } from './pages/auth/services/auth/auth.states';
 import { RegistrationState } from './pages/auth/register/services/registration.state';
 import { UsersState } from './pages/dashboards/super-admin-dashboard/components/users/users.state';
 import { AuditLogsState } from './pages/dashboards/super-admin-dashboard/components/audit-logs/audit-logs.state';
+import { AdminDashboardState } from './pages/dashboards/super-admin-dashboard/components/dashboard/dashboard.state';
+import { AdminFarmersState } from './pages/dashboards/super-admin-dashboard/components/farmers-data/farmers-data.state';
+import { AdminRiskScoresState } from './pages/dashboards/super-admin-dashboard/components/risk-scores/risk-scores.state';
+import { AdminLoansState } from './pages/dashboards/super-admin-dashboard/components/agri-loans/agri-loans.state';
 import { FarmersState } from './pages/dashboards/portfolio-officer-dashboard/components/farmers/farmers.state';
 import { PortfolioLoansState } from './pages/dashboards/portfolio-officer-dashboard/components/loans/loans.state';
-import { ExtensionFarmersState } from './pages/dashboards/extension-officer-dashboard/components/farmers/farmers.state';
 import { ExtensionFarmsState } from './pages/dashboards/extension-officer-dashboard/components/farms/farms.state';
 import { FarmVisitsState } from './pages/dashboards/extension-officer-dashboard/components/farm-visits/farm-visits.state';
+import { ExtensionAlertsState } from './pages/dashboards/extension-officer-dashboard/components/alerts/alerts.state';
 import { PortfolioExtensionOfficersState } from './pages/dashboards/portfolio-officer-dashboard/components/extension-officers/extension-officers.state';
 import { PortfolioInputProvidersState } from './pages/dashboards/portfolio-officer-dashboard/components/input-service-providers/input-service-providers.state';
 import { PortfolioMonitoringVisitsState } from './pages/dashboards/portfolio-officer-dashboard/components/visits-reports/visits-reports.state';
 import { PortfolioFarmsState } from './pages/dashboards/portfolio-officer-dashboard/components/farms/farms.state';
+import { ProviderOrdersState } from './pages/dashboards/input-provider-dashboard/components/orders/orders.state';
 import { environment } from '../environment/environment';
 
 const ngxsFeatures: EnvironmentProviders[] = [
@@ -52,15 +57,20 @@ export const appConfig: ApplicationConfig = {
         RegistrationState,
         UsersState,
         AuditLogsState,
+        AdminDashboardState,
+        AdminFarmersState,
+        AdminRiskScoresState,
+        AdminLoansState,
         FarmersState,
         PortfolioLoansState,
-        ExtensionFarmersState,
         ExtensionFarmsState,
         FarmVisitsState,
+        ExtensionAlertsState,
         PortfolioExtensionOfficersState,
         PortfolioInputProvidersState,
         PortfolioMonitoringVisitsState,
         PortfolioFarmsState,
+        ProviderOrdersState,
       ],
       ...ngxsFeatures,
     ),

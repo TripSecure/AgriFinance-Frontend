@@ -1,0 +1,253 @@
+<div class="content">
+  <div class="title mb-4">
+    <h3>Agri-Loans</h3>
+    <p>Platform-wide loan application queue and active portfolio, scored by Taria risk assessment.</p>
+  </div>
+
+  <section class="metric-grid">
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--blue"><span class="material-symbols-outlined" aria-hidden="true">payments</span></div>
+      <div><p>Total portfolio (GHS)</p><strong>{{ isLoading() ? '—' : (summary()?.totalPortfolioGhs ?? 0 | number: '1.0-0') }}</strong></div>
+    </article>
+    <article class="metric-card" [class.metric-card--attention]="(summary()?.pendingApplications ?? 0) > 0">
+      <div class="metric-card__icon metric-card__icon--amber"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span></div>
+      <div><p>Pending applications</p><strong>{{ isLoading() ? '—' : (summary()?.pendingApplications ?? 0) }}</strong></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--green"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span></div>
+      <div><p>Approved this week</p><strong>{{ isLoading() ? '—' : (summary()?.approvedThisWeek ?? 0) }}</strong></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--green"><span class="material-symbols-outlined" aria-hidden="true">trending_up</span></div>
+      <div><p>Repayment rate</p><strong>{{ isLoading() ? '—' : (summary()?.repaymentRatePercent ?? 0) }}%</strong><span>Of disbursed loans fully repaid</span></div>
+    </article>
+  </section>
+
+  <section class="panel queue-panel">
+    <header class="panel__header">
+      <div><p class="eyebrow">AWAITING DECISION</p><h4>Loan Application Queue</h4></div>
+    </header>
+    @if (isLoading()) {
+      <div class="empty-state">Loading queue...</div>
+    } @else if (queue().length === 0) {
+      <div class="empty-state">No applications awaiting a decision.</div>
+    } @else {
+      <div class="queue-list">
+        @for (loan of queue(); track loan.id) {
+          <article
+            class="queue-card clickable-row"
+            tabindex="0"
+            role="button"
+            [attr.aria-label]="'View loan details for ' + loan.farmerName"
+            (click)="openDetails(loan.id)"
+            (keydown.enter)="openDetails(loan.id)"
+          >
+            <div class="queue-card__main">
+              <strong>{{ loan.farmerName }}</strong>
+              <span class="queue-card__amount">GHS {{ loan.requestedAmountGhs | number: '1.2-2' }}</span>
+            </div>
+            <div class="queue-card__meta">
+              @if (loan.riskScore != null) {
+                <span>Risk score: <strong>{{ loan.riskScore }}/100</strong> ({{ formatLabel(loan.riskCategory) }})</span>
+              } @else {
+                <span>Risk score: not yet assessed</span>
+              }
+              <span class="status-pill" [class.status-pill--pending]="true">{{ formatLabel(loan.status) }}</span>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <div class="filters">
+    <div class="filters__search">
+      <label for="loansSearch" class="d-block">Search</label>
+      <div class="filters__search__input-form">
+        <div class="d-flex align-items-center justify-content-center">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          <input id="loansSearch" (input)="onSearch($any($event.target)?.value ?? '')" type="text" placeholder="Search by farmer name" />
+        </div>
+      </div>
+    </div>
+
+    <div class="filters__actions">
+      <label for="loansStatusFilter">Filter by status</label>
+      <button id="loansStatusFilter" type="button" (click)="statusMenu.toggle($event)" class="filters__actions__input-form">
+        <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+      </button>
+      <p-menu #statusMenu [model]="statusMenuItems" [popup]="true" [appendTo]="'body'">
+        <ng-template pTemplate="item" let-item>
+          <button type="button" class="p-menu-item-link w-100 d-flex align-items-center gap-2 border-0 bg-transparent text-start py-2 px-3 text-secondary" (click)="item.command ? item.command($event) : null">
+            <span class="material-symbols-outlined">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+          </button>
+        </ng-template>
+      </p-menu>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="ps-3 py-2 d-flex align-items-center gap-3">
+      <div class="data-head">Active Portfolio Overview</div>
+      @if (!isLoading()) {
+        <div class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3">
+          {{ loansData().totalCount }}
+        </div>
+      }
+    </div>
+
+    <p-table
+      [value]="loans()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="loansData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadLoans($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th id="loanId">App ID</th>
+          <th id="loanFarmer">Farmer</th>
+          <th id="loanAmount">Amount (GHS)</th>
+          <th id="loanScore">Taria Score</th>
+          <th id="loanStatus">Status</th>
+          <th id="loanDate">Last Updated</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-loan>
+        <tr
+          class="clickable-row"
+          tabindex="0"
+          role="button"
+          [attr.aria-label]="'View loan details for ' + loan.farmerName"
+          (click)="openDetails(loan.id)"
+          (keydown.enter)="openDetails(loan.id)"
+        >
+          <td>#{{ loan.id.slice(0, 8).toUpperCase() }}</td>
+          <td>{{ loan.farmerName }}</td>
+          <td>{{ (loan.approvedAmountGhs ?? loan.requestedAmountGhs) | number: '1.2-2' }}</td>
+          <td>{{ loan.riskScore != null ? loan.riskScore : '-' }}</td>
+          <td>
+            <span class="status-pill" [class.status-pill--active]="isActiveStatus(loan.status)" [class.status-pill--pending]="isWarningStatus(loan.status)" [class.status-pill--inactive]="isDangerStatus(loan.status)">
+              {{ formatLabel(loan.status) }}
+            </span>
+          </td>
+          <td>{{ (loan.reviewedAt || loan.submittedAt || loan.createdAt | date: 'mediumDate') || '-' }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="6" class="empty-state">No loan applications found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog
+    [visible]="isDetailModalVisible()"
+    (visibleChange)="isDetailModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Loan application"
+    [style]="{ width: '90vw', maxWidth: '680px' }"
+    appendTo="body"
+  >
+    @if (isDetailLoading()) {
+      <div class="detail-loading">Loading loan application...</div>
+    } @else if (loanDetail(); as detail) {
+      <div class="d-flex flex-column gap-3">
+        <div class="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <div class="fw-semibold text-dark fs-6">{{ detail.loan.farmerName }}</div>
+            <div class="small text-secondary mt-1">{{ detail.loan.farmerContact || '-' }} &bull; #{{ detail.loan.id.slice(0, 8).toUpperCase() }}</div>
+          </div>
+          <span
+            class="status-pill"
+            [class.status-pill--active]="isActiveStatus(detail.loan.status)"
+            [class.status-pill--pending]="isWarningStatus(detail.loan.status)"
+            [class.status-pill--inactive]="isDangerStatus(detail.loan.status)"
+          >
+            {{ formatLabel(detail.loan.status) }}
+          </span>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-cell"><span>Eligible amount</span><strong>GHS {{ detail.loan.eligibleAmountGhs | number: '1.2-2' }}</strong></div>
+          <div class="detail-cell"><span>Requested amount</span><strong>GHS {{ detail.loan.requestedAmountGhs | number: '1.2-2' }}</strong></div>
+          <div class="detail-cell"><span>Approved amount</span><strong>{{ detail.loan.approvedAmountGhs != null ? ('GHS ' + (detail.loan.approvedAmountGhs | number: '1.2-2')) : '-' }}</strong></div>
+          <div class="detail-cell"><span>Interest rate</span><strong>{{ detail.loan.interestRatePercent }}%</strong></div>
+          <div class="detail-cell"><span>Embedded insurance premium</span><strong>GHS {{ detail.loan.embeddedInsurancePremiumGhs | number: '1.2-2' }}</strong></div>
+          <div class="detail-cell"><span>Insurance accepted</span><strong>{{ detail.loan.insuranceAcceptance ? 'Yes' : 'No' }}</strong></div>
+        </div>
+
+        @if (detail.riskProfile; as risk) {
+          <div class="outcome-grid">
+            <div class="outcome-card"><span>Taria risk score</span><strong>{{ risk.score }}/100</strong></div>
+            <div class="outcome-card"><span>Risk category</span><strong>{{ formatLabel(risk.riskCategory) }}</strong></div>
+          </div>
+        }
+
+        @if (detail.loan.rejectionReason) {
+          <div class="alert-callout">
+            <span class="material-symbols-outlined" aria-hidden="true">error</span>
+            <div><strong>Rejection reason</strong><span>{{ detail.loan.rejectionReason }}</span></div>
+          </div>
+        }
+
+        @if (cropPlanEntries().length > 0) {
+          <div>
+            <h4 class="section-heading">Crop plan</h4>
+            <div class="detail-grid">
+              @for (entry of cropPlanEntries(); track entry.label) {
+                <div class="detail-cell"><span>{{ entry.label }}</span><strong>{{ entry.value }}</strong></div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (repaymentScheduleEntries().length > 0) {
+          <div>
+            <h4 class="section-heading">Repayment schedule</h4>
+            <div class="detail-grid">
+              @for (entry of repaymentScheduleEntries(); track entry.label) {
+                <div class="detail-cell"><span>{{ entry.label }}</span><strong>{{ entry.value }}</strong></div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (inputBundleItems().length > 0) {
+          <div>
+            <h4 class="section-heading">Input bundle</h4>
+            <div class="d-flex flex-wrap gap-2">
+              @for (item of inputBundleItems(); track item) {
+                <span class="factor-chip">{{ item }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        @if (statusHistoryRows().length > 0) {
+          <div>
+            <h4 class="section-heading">Status history</h4>
+            <div class="d-flex flex-column gap-2">
+              @for (row of statusHistoryRows(); track $index) {
+                <div class="detail-cell d-flex justify-content-between align-items-center">
+                  <strong>{{ row.label }}</strong>
+                  <span class="small text-secondary">{{ row.value }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </p-dialog>
+</div>

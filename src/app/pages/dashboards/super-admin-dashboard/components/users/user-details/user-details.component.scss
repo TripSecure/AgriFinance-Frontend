@@ -72,6 +72,60 @@
     text-transform: uppercase;
   }
 
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+    flex: 0 0 auto;
+  }
+}
+
+.review-actions {
+  display: flex;
+  gap: 0.5rem;
+
+  &__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 8px;
+    padding: 0.5rem 0.85rem;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #d0d5dd;
+    background: #ffffff;
+    color: #344054;
+
+    .material-symbols-outlined {
+      font-size: 18px;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &--approve {
+      border-color: #027a48;
+      color: #027a48;
+      &:hover:not(:disabled) { background: #ecfdf3; }
+    }
+
+    &--reject {
+      border-color: #b42318;
+      color: #b42318;
+      &:hover:not(:disabled) { background: #fef3f2; }
+    }
+
+    &--suspend {
+      border-color: #b54708;
+      color: #b54708;
+      &:hover:not(:disabled) { background: #fffaeb; }
+    }
+  }
+
   h2 {
     margin: 0;
     color: #101828;

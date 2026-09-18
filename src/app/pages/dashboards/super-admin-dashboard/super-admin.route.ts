@@ -44,6 +44,30 @@ export const superAdminRoutes: Routes = [
         redirectTo: 'audit-log',
         pathMatch: 'full',
       },
+      {
+        path: 'farmers-data',
+        loadComponent: () =>
+          import('./components/farmers-data/farmers-data.component').then(
+            (m) => m.FarmersDataComponent,
+          ),
+        title: 'Farmers Data',
+      },
+      {
+        path: 'risk-scores',
+        loadComponent: () =>
+          import('./components/risk-scores/risk-scores.component').then(
+            (m) => m.RiskScoresComponent,
+          ),
+        title: 'Risk Scores',
+      },
+      {
+        path: 'agri-loans',
+        loadComponent: () =>
+          import('./components/agri-loans/agri-loans.component').then(
+            (m) => m.AgriLoansComponent,
+          ),
+        title: 'Agri-Loans',
+      },
     ],
   },
 ];

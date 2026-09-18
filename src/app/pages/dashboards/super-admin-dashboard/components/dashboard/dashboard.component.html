@@ -1,1 +1,120 @@
-<p>dashboard works!</p>
+<main class="admin-home">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">SYSTEM OVERVIEW</p>
+      <h1>Admin Dashboard</h1>
+      <p class="page-header__copy">Platform-wide user activity, onboarding pipeline, and system audit trail.</p>
+    </div>
+    <a class="primary-action" routerLink="/dashboard/super-admin/users">
+      <span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span>
+      Manage users
+    </a>
+  </header>
+
+  <section class="metric-grid" aria-label="Platform user summary">
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--blue"><span class="material-symbols-outlined" aria-hidden="true">groups</span></div>
+      <div><p>Total users</p><strong>{{ isLoadingOverview() ? '—' : (overview()?.totals?.totalUsers ?? 0) }}</strong><span>{{ overview()?.totals?.recentUsersLast7Days ?? 0 }} joined in the last 7 days</span></div>
+    </article>
+    <article class="metric-card" [class.metric-card--attention]="(overview()?.totals?.pendingApprovals ?? 0) > 0">
+      <div class="metric-card__icon metric-card__icon--amber"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span></div>
+      <div><p>Pending approvals</p><strong>{{ isLoadingOverview() ? '—' : (overview()?.totals?.pendingApprovals ?? 0) }}</strong><span>Awaiting onboarding review</span></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--green"><span class="material-symbols-outlined" aria-hidden="true">verified_user</span></div>
+      <div><p>Active users</p><strong>{{ isLoadingOverview() ? '—' : (overview()?.totals?.activeUsers ?? 0) }}</strong><span>Approved and able to sign in</span></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--blue"><span class="material-symbols-outlined" aria-hidden="true">fact_check</span></div>
+      <div><p>KYC completion rate</p><strong>{{ isLoadingOverview() ? '—' : (overview()?.totals?.kycCompletionRate ?? 0) }}%</strong><span>{{ overview()?.totals?.kycApprovedUsers ?? 0 }} of {{ overview()?.totals?.totalUsers ?? 0 }} verified</span></div>
+    </article>
+  </section>
+
+  <div class="home-grid">
+    <section class="panel role-panel" aria-labelledby="role-breakdown-heading">
+      <header class="panel__header">
+        <div><p class="eyebrow">PLATFORM MIX</p><h2 id="role-breakdown-heading">Users by role</h2></div>
+      </header>
+
+      @if (isLoadingOverview()) {
+        <div class="empty-state">Loading role breakdown...</div>
+      } @else if (roleBreakdown().length === 0) {
+        <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">groups</span><strong>No users yet</strong></div>
+      } @else {
+        <div class="role-list">
+          @for (row of roleBreakdown(); track row.role) {
+            <div class="role-row">
+              <span class="role-row__icon material-symbols-outlined" aria-hidden="true">{{ row.icon }}</span>
+              <div class="role-row__body">
+                <div class="role-row__label"><span>{{ formatLabel(row.role) }}</span><strong>{{ row.count }}</strong></div>
+                <div class="role-row__bar"><span [style.width.%]="row.percent"></span></div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="panel pipeline-panel" aria-labelledby="pipeline-heading">
+      <header class="panel__header">
+        <div><p class="eyebrow">ONBOARDING PIPELINE</p><h2 id="pipeline-heading">Pipeline snapshot</h2></div>
+      </header>
+      <div class="pipeline-grid">
+        <div class="pipeline-chip">
+          <span class="material-symbols-outlined pipeline-chip__icon" aria-hidden="true">drafts</span>
+          <div><p>In progress</p><strong>{{ isLoadingOverview() ? '—' : (overview()?.totals?.onboardingUsers ?? 0) }}</strong></div>
+        </div>
+        <div class="pipeline-chip">
+          <span class="material-symbols-outlined pipeline-chip__icon" aria-hidden="true">person_add</span>
+          <div><p>New (7 days)</p><strong>{{ isLoadingOverview() ? '—' : (overview()?.totals?.recentUsersLast7Days ?? 0) }}</strong></div>
+        </div>
+        <div class="pipeline-chip">
+          <span class="material-symbols-outlined pipeline-chip__icon" aria-hidden="true">cancel</span>
+          <div><p>Rejected</p><strong>{{ isLoadingOverview() ? '—' : (overview()?.totals?.rejectedUsers ?? 0) }}</strong></div>
+        </div>
+        <div class="pipeline-chip" [class.pipeline-chip--danger]="(overview()?.totals?.suspendedUsers ?? 0) > 0">
+          <span class="material-symbols-outlined pipeline-chip__icon" aria-hidden="true">block</span>
+          <div><p>Suspended</p><strong>{{ isLoadingOverview() ? '—' : (overview()?.totals?.suspendedUsers ?? 0) }}</strong></div>
+        </div>
+      </div>
+      @if ((overview()?.totals?.suspendedUsers ?? 0) > 0) {
+        <div class="alert-callout"><span class="material-symbols-outlined" aria-hidden="true">warning</span><div><strong>{{ overview()?.totals?.suspendedUsers }} account{{ (overview()?.totals?.suspendedUsers ?? 0) === 1 ? '' : 's' }} suspended</strong><span>Review in Users for reinstatement or removal.</span></div></div>
+      }
+    </section>
+
+    <aside class="panel action-panel" aria-labelledby="actions-heading">
+      <header class="panel__header"><div><p class="eyebrow">YOUR WORKSPACE</p><h2 id="actions-heading">Next actions</h2></div></header>
+      <nav class="action-list" aria-label="Admin actions">
+        <a routerLink="/dashboard/super-admin/users"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span></span><span><strong>Review pending approvals</strong><small>{{ overview()?.totals?.pendingApprovals ?? 0 }} account{{ (overview()?.totals?.pendingApprovals ?? 0) === 1 ? '' : 's' }} awaiting a decision</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
+        <a routerLink="/dashboard/super-admin/farmers-data"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">groups</span></span><span><strong>Verify farmer KYC</strong><small>Review farmers submitted by portfolio officers</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
+        <a routerLink="/dashboard/super-admin/audit-log"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">history_edu</span></span><span><strong>Open the audit trail</strong><small>Full record of administrative and system events</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
+      </nav>
+    </aside>
+  </div>
+
+  <section class="panel activity-panel" aria-labelledby="activity-heading">
+    <header class="panel__header">
+      <div><p class="eyebrow">SYSTEM AUDIT LOG</p><h2 id="activity-heading">Recent activity</h2></div>
+      <a routerLink="/dashboard/super-admin/audit-log">View all</a>
+    </header>
+
+    @if (isLoadingActivity()) {
+      <div class="empty-state">Loading recent activity...</div>
+    } @else if (recentActivity().length === 0) {
+      <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">history</span><strong>No activity recorded yet</strong></div>
+    } @else {
+      <div class="activity-list">
+        @for (log of recentActivity(); track log.id) {
+          <article class="activity-row">
+            <span class="material-symbols-outlined activity-row__icon" aria-hidden="true">bolt</span>
+            <div class="activity-row__body">
+              <strong>{{ formatLabel(log.action) }}</strong>
+              <span>{{ activityDescription(log) }}</span>
+            </div>
+            <span class="activity-row__time">{{ (activityTimestamp(log) | date: 'MMM d, h:mm a') || '-' }}</span>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</main>

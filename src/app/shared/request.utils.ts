@@ -7,6 +7,7 @@ export interface PagedQueryParams {
   sortField?: string;
   sortOrder?: number;
   status?: string;
+  view?: string;
 }
 
 export interface PagedData<T> {
@@ -55,6 +56,10 @@ export const buildListParams = (params?: PagedQueryParams): HttpParams => {
 
   if (params.status) {
     httpParams = httpParams.set('status', params.status);
+  }
+
+  if (params.view) {
+    httpParams = httpParams.set('view', params.view);
   }
 
   if (params.sortField) {

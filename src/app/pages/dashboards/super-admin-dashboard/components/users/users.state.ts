@@ -65,6 +65,18 @@ interface UserDetailResponse {
   data?: unknown;
 }
 
+interface UsersSummary {
+  totalUsers: number;
+  pendingApprovals: number;
+  onboardingUsers: number;
+  activeUsers: number;
+  rejectedUsers: number;
+  securityFlags: number;
+  recentUsersLast7Days: number;
+  kycCompletionRate: number;
+  roleBreakdown: Array<{ role: string; count: number }>;
+}
+
 interface UsersData {
   totalPages?: number;
   pageIndex?: number;
@@ -73,6 +85,7 @@ interface UsersData {
   results?: User[];
   items?: User[];
   data?: User[];
+  summary?: UsersSummary;
 }
 
 interface UserMutationResponse {
@@ -87,6 +100,7 @@ export interface UsersQueryParams {
   sortField?: string;
   sortOrder?: number;
   status?: string;
+  view?: 'directory' | 'approvals';
 }
 
 export interface UsersStateModel {
@@ -99,6 +113,7 @@ export interface UsersStateModel {
   approvingUserId: string | null;
   selectedUser: User | null;
   users: User[];
+  summary: UsersSummary | null;
 }
 
 export class GetUsers {
@@ -131,6 +146,7 @@ export class UpdateUserApproval {
     isDetailLoading: false,
     approvingUserId: null,
     selectedUser: null,
+    summary: null,
   },
 })
 @Injectable()
@@ -168,6 +184,11 @@ export class UsersState {
     return { totalPages, pageIndex, pageSize, totalCount };
   }
 
+  @Selector()
+  static summary(state: UsersStateModel): UsersSummary | null {
+    return state.summary;
+  }
+
   @Action(GetUsers)
   getUsers(ctx: StateContext<UsersStateModel>, { params }: GetUsers) {
     ctx.patchState({ isLoading: true });
@@ -178,12 +199,14 @@ export class UsersState {
         tap({
           next: (response) => {
             const data = normalizeListResponse(response.data);
+            const summary = Array.isArray(response.data) ? undefined : response.data.summary;
             ctx.patchState({
               users: data.results,
               totalPages: data.totalPages,
               pageIndex: data.pageIndex,
               pageSize: data.pageSize,
               totalCount: data.totalCount,
+              summary: summary ?? ctx.getState().summary,
               isLoading: false,
             });
           },

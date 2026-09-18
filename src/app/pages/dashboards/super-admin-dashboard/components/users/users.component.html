@@ -1,8 +1,38 @@
 <div class="content">
   <div class="title mb-4">
-    <h3>Users</h3>
-    <p>Manage user accounts, review self-service registrations, assign roles, and approve system access.</p>
+    <h3>System Access &amp; Governance</h3>
+    <p>Manage global user permissions and audit incoming partner onboarding requests.</p>
   </div>
+
+  <section class="metric-grid">
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--blue"><span class="material-symbols-outlined" aria-hidden="true">group</span></div>
+      <div><p>Total active users</p><strong>{{ isLoading() ? '—' : (summary()?.activeUsers ?? 0) }}</strong></div>
+    </article>
+    <article class="metric-card" [class.metric-card--attention]="(summary()?.pendingApprovals ?? 0) > 0">
+      <div class="metric-card__icon metric-card__icon--amber"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span></div>
+      <div><p>Pending approvals</p><strong>{{ isLoading() ? '—' : (summary()?.pendingApprovals ?? 0) }}</strong></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--green"><span class="material-symbols-outlined" aria-hidden="true">fact_check</span></div>
+      <div><p>KYC completion rate</p><strong>{{ isLoading() ? '—' : (summary()?.kycCompletionRate ?? 0) }}%</strong></div>
+    </article>
+    <article class="metric-card" [class.metric-card--attention]="(summary()?.securityFlags ?? 0) > 0">
+      <div class="metric-card__icon metric-card__icon--red"><span class="material-symbols-outlined" aria-hidden="true">shield</span></div>
+      <div><p>Security flags</p><strong>{{ isLoading() ? '—' : (summary()?.securityFlags ?? 0) }}</strong></div>
+    </article>
+  </section>
+
+  <div class="tabs">
+    <button type="button" class="tabs__item" [class.tabs__item--active]="activeTab() === 'directory'" (click)="onTabChange('directory')">User Directory</button>
+    <button type="button" class="tabs__item" [class.tabs__item--active]="activeTab() === 'approvals'" (click)="onTabChange('approvals')">
+      Onboarding Approvals
+      @if ((summary()?.pendingApprovals ?? 0) > 0) {
+        <span class="tabs__badge">{{ summary()?.pendingApprovals }}</span>
+      }
+    </button>
+  </div>
+
   <div class="filters">
     <div class="filters__search">
       <label for="usersSearch" class="d-block">Search</label>

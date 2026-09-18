@@ -21,14 +21,33 @@
         </div>
       </div>
 
-      <span
-        class="status-pill"
-        [class.status-pill--approved]="isApproved()"
-        [class.status-pill--rejected]="isRejected()"
-        [class.status-pill--pending]="isPending()"
-      >
-        {{ formatLabel(status()) }}
-      </span>
+      <div class="profile-hero__actions">
+        <span
+          class="status-pill"
+          [class.status-pill--approved]="isApproved()"
+          [class.status-pill--rejected]="isRejected()"
+          [class.status-pill--pending]="isPending()"
+        >
+          {{ formatLabel(status()) }}
+        </span>
+
+        <div class="review-actions">
+          @for (option of approvalOptions; track option.value) {
+            <button
+              type="button"
+              class="review-actions__button"
+              [class.review-actions__button--approve]="option.value === 'approved'"
+              [class.review-actions__button--reject]="option.value === 'rejected'"
+              [class.review-actions__button--suspend]="option.value === 'suspended'"
+              [disabled]="isActionInProgress()"
+              (click)="onApprovalRequest(option)"
+            >
+              <span class="material-symbols-outlined">{{ option.icon }}</span>
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </div>
     </section>
 
     <section class="summary-grid" aria-label="User summary">

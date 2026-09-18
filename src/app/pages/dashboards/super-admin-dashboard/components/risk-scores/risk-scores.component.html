@@ -1,0 +1,196 @@
+<div class="content">
+  <div class="title mb-4">
+    <h3>Risk Score Analytics</h3>
+    <p>Platform-wide risk assessments across the agricultural portfolio.</p>
+  </div>
+
+  <section class="panel distribution-panel">
+    <header class="panel__header">
+      <div><p class="eyebrow">RISK LEVEL DISTRIBUTION</p><h4>{{ summary()?.totalScored ?? 0 }} farmers scored</h4></div>
+    </header>
+    @if ((summary()?.riskDistribution ?? []).length === 0) {
+      <div class="empty-state">No risk scores yet.</div>
+    } @else {
+      <div class="distribution-list">
+        @for (row of summary()?.riskDistribution ?? []; track row.category) {
+          <div class="distribution-row">
+            <div class="distribution-row__label">
+              <span [class.dot--low]="row.category === 'low'" [class.dot--medium]="row.category === 'medium'" [class.dot--elevated]="row.category === 'elevated'" [class.dot--high]="row.category === 'high'" class="dot"></span>
+              <span>{{ formatLabel(row.category) }}</span>
+              <strong>{{ row.count }} ({{ row.percent }}%)</strong>
+            </div>
+            <div class="distribution-row__bar">
+              <span [class.bar--low]="row.category === 'low'" [class.bar--medium]="row.category === 'medium'" [class.bar--elevated]="row.category === 'elevated'" [class.bar--high]="row.category === 'high'" [style.width.%]="row.percent"></span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <div class="filters">
+    <div class="filters__search">
+      <label for="riskSearch" class="d-block">Search</label>
+      <div class="filters__search__input-form">
+        <div class="d-flex align-items-center justify-content-center">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          <input id="riskSearch" (input)="onSearch($any($event.target)?.value ?? '')" type="text" placeholder="Search farmers, scores, regions..." />
+        </div>
+      </div>
+    </div>
+
+    <div class="filters__actions">
+      <label for="riskCategoryFilter">Filter by risk level</label>
+      <button id="riskCategoryFilter" type="button" (click)="categoryMenu.toggle($event)" class="filters__actions__input-form">
+        <span>{{ selectedCategory ? formatLabel(selectedCategory) : 'All levels' }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+      </button>
+      <p-menu #categoryMenu [model]="categoryMenuItems" [popup]="true" [appendTo]="'body'">
+        <ng-template pTemplate="item" let-item>
+          <button type="button" class="p-menu-item-link w-100 d-flex align-items-center gap-2 border-0 bg-transparent text-start py-2 px-3 text-secondary" (click)="item.command ? item.command($event) : null">
+            <span class="material-symbols-outlined">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+          </button>
+        </ng-template>
+      </p-menu>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="ps-3 py-2 d-flex align-items-center gap-3">
+      <div class="data-head">Farmer Risk Scores</div>
+      @if (!isLoading()) {
+        <div class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3">
+          {{ scoresData().totalCount }}
+        </div>
+      }
+    </div>
+
+    <p-table
+      [value]="scoreRows()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="scoresData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadScores($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th id="riskFarmer">Farmer Entity</th>
+          <th id="riskScore">Score</th>
+          <th id="riskLevel">Risk Level</th>
+          <th id="riskFactors">Risk Factors</th>
+          <th id="riskLocation">Location / Crop</th>
+          <th id="riskAssessed">Last Assessment</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr
+          class="clickable-row"
+          tabindex="0"
+          role="button"
+          [attr.aria-label]="'View risk details for ' + row.score.farmerName"
+          (click)="openDetails(row.score)"
+          (keydown.enter)="openDetails(row.score)"
+        >
+          <td>{{ row.score.farmerName }}</td>
+          <td>{{ row.score.score }}</td>
+          <td>
+            <span class="status-pill" [class.status-pill--active]="row.score.riskCategory === 'low'" [class.status-pill--pending]="row.score.riskCategory === 'medium' || row.score.riskCategory === 'elevated'" [class.status-pill--inactive]="row.score.riskCategory === 'high'">
+              {{ row.categoryLabel }}
+            </span>
+          </td>
+          <td>
+            @if (row.factors.length === 0) {
+              <span>-</span>
+            } @else {
+              @for (factor of row.factors; track factor) {
+                <span class="factor-chip">{{ factor }}</span>
+              }
+            }
+          </td>
+          <td>{{ formatLabel(row.score.region) }} &bull; {{ formatLabel(row.score.cropType) }}</td>
+          <td>{{ (row.score.scoredAt | date: 'mediumDate') || '-' }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="6" class="empty-state">No risk scores found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog
+    [visible]="isDetailModalVisible()"
+    (visibleChange)="isDetailModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Taria risk assessment"
+    [style]="{ width: '90vw', maxWidth: '640px' }"
+    appendTo="body"
+  >
+    @if (selectedScore(); as score) {
+      <div class="d-flex flex-column gap-3">
+        <div class="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <div class="fw-semibold text-dark fs-6">{{ score.farmerName }}</div>
+            <div class="small text-secondary mt-1">{{ formatLabel(score.region) }} &bull; {{ formatLabel(score.cropType) }}</div>
+          </div>
+          <div class="text-end">
+            <div class="fw-bold fs-5 text-dark">{{ score.score }}/100</div>
+            <div class="small text-secondary">{{ formatLabel(score.riskCategory) }} risk</div>
+          </div>
+        </div>
+
+        <div class="outcome-grid">
+          <div class="outcome-card">
+            <span>Loan eligibility</span>
+            <strong>{{ score.loanEligibilityPercent }}%</strong>
+          </div>
+          <div class="outcome-card">
+            <span>Premium category</span>
+            <strong>{{ formatLabel(score.premiumCategory) }}</strong>
+          </div>
+        </div>
+
+        @if (sectionFactors().length > 0) {
+          <div>
+            <h4 class="section-heading">Taria risk factors</h4>
+            <div class="factor-list">
+              @for (factor of sectionFactors(); track factor.label) {
+                <div class="factor-row">
+                  <span class="factor-row__icon material-symbols-outlined" aria-hidden="true">{{ factor.icon }}</span>
+                  <div class="factor-row__body">
+                    <div class="factor-row__header">
+                      <strong>{{ factor.label }}</strong>
+                      <span>{{ factor.value }}/100</span>
+                    </div>
+                    <div class="factor-row__bar"><span [style.width.%]="factor.value"></span></div>
+                    <p>Affects: {{ factor.affects }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (applicationFactors().length > 0) {
+          <div>
+            <h4 class="section-heading">Application factors</h4>
+            <div class="app-factor-grid">
+              @for (factor of applicationFactors(); track factor.label) {
+                <div class="app-factor-chip"><span>{{ factor.label }}</span><strong>{{ factor.value }}</strong></div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </p-dialog>
+</div>
