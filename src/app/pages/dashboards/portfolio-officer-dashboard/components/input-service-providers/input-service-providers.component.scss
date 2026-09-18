@@ -301,6 +301,33 @@ p-table {
     background-color: #fffaeb;
     color: #b54708;
   }
+
+  &--review {
+    background-color: #eff8ff;
+    color: #175cd3;
+  }
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f9fafb;
+  }
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
 }
 
 .empty-state {

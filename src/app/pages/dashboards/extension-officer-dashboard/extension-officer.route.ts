@@ -20,12 +20,6 @@ export const extensionOfficerRoutes: Routes = [
         title: 'Home',
       },
       {
-        path: 'farmers',
-        loadComponent: () =>
-          import('./components/farmers/farmers.component').then((m) => m.FarmersComponent),
-        title: 'Farmers',
-      },
-      {
         path: 'farms',
         loadComponent: () =>
           import('./components/farms/farms.component').then((m) => m.FarmsComponent),
@@ -36,6 +30,20 @@ export const extensionOfficerRoutes: Routes = [
         loadComponent: () =>
           import('./components/farm-visits/farm-visits.component').then((m) => m.FarmVisitsComponent),
         title: 'Farm Visits',
+      },
+      {
+        path: 'visits/:visitId/report',
+        loadComponent: () =>
+          import('./components/farm-visits/visit-report/visit-report.component').then(
+            (m) => m.VisitReportComponent,
+          ),
+        title: 'Log Visit Report',
+      },
+      {
+        path: 'alerts',
+        loadComponent: () =>
+          import('./components/alerts/alerts.component').then((m) => m.AlertsComponent),
+        title: 'Alerts',
       },
     ],
   },

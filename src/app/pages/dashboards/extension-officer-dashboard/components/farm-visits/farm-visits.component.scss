@@ -309,6 +309,29 @@ p-table {
   color: #b42318;
 }
 
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f9fafb;
+  }
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+}
+
 .empty-state {
   height: 120px !important;
   text-align: center !important;

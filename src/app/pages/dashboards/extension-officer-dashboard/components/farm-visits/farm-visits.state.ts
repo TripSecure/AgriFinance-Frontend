@@ -6,17 +6,19 @@ import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../../../environment/environment';
 import { extractErrorMessage, normalizeListResponse } from '../../../../../shared/request.utils';
 
-export interface FarmVisitFarm {
-  id: string;
+export interface FarmVisitFarmDetails {
   locationLabel?: string | null;
   cropType?: string | null;
+  secondaryCrop?: string | null;
   sizeHectares?: number | null;
+  gpsLocation?: Record<string, unknown>;
 }
 
 export interface FarmVisitFarmer {
   id: string;
   fullName?: string | null;
   phone?: string | null;
+  farmDetails?: FarmVisitFarmDetails | null;
 }
 
 export interface FarmVisitOfficer {
@@ -25,13 +27,18 @@ export interface FarmVisitOfficer {
   region?: string | null;
 }
 
+export interface FarmVisitScheduling {
+  date?: string | null;
+  description?: string | null;
+}
+
 export interface FarmVisit extends Record<string, unknown> {
   id: string;
-  farm?: FarmVisitFarm | null;
   farmer?: FarmVisitFarmer | null;
   officer?: FarmVisitOfficer | null;
-  visitDate?: string | null;
-  instructions?: string | null;
+  visitScheduling?: FarmVisitScheduling | null;
+  checklist?: Record<string, unknown> | null;
+  photos?: string[];
   yieldEstimate?: number | null;
   riskNotes?: string | null;
   alertGenerated?: boolean;
@@ -77,6 +84,16 @@ export interface FarmVisitsQueryParams {
   timeframeDays?: number;
 }
 
+export interface VisitReportPayload {
+  checklist: Record<string, unknown>;
+  photos: string[];
+  yieldEstimate?: number | null;
+  riskNotes?: string | null;
+  alertGenerated: boolean;
+  submit: boolean;
+  visitDate?: string | null;
+}
+
 export interface FarmVisitsStateModel {
   totalPages: number;
   pageIndex: number;
@@ -85,11 +102,27 @@ export interface FarmVisitsStateModel {
   isLoading: boolean;
   errors: string[];
   visits: FarmVisit[];
+  visitDetail: FarmVisit | null;
+  isDetailLoading: boolean;
+  detailErrors: string[];
+  isSubmittingReport: boolean;
+  submitMessage: string | null;
+  submitErrors: string[];
 }
 
 export class GetExtensionFarmVisits {
   static readonly type = '[Extension Farm Visits] Get Visits';
   constructor(public params?: FarmVisitsQueryParams) {}
+}
+
+export class GetExtensionVisitDetail {
+  static readonly type = '[Extension Farm Visits] Get Visit Detail';
+  constructor(public visitId: string) {}
+}
+
+export class SubmitVisitReport {
+  static readonly type = '[Extension Farm Visits] Submit Visit Report';
+  constructor(public visitId: string, public payload: VisitReportPayload) {}
 }
 
 @State<FarmVisitsStateModel>({
@@ -102,6 +135,12 @@ export class GetExtensionFarmVisits {
     totalCount: 0,
     isLoading: false,
     errors: [],
+    visitDetail: null,
+    isDetailLoading: false,
+    detailErrors: [],
+    isSubmittingReport: false,
+    submitMessage: null,
+    submitErrors: [],
   },
 })
 @Injectable()
@@ -127,6 +166,81 @@ export class FarmVisitsState {
   static visitsConfigs(state: FarmVisitsStateModel) {
     const { totalPages, pageIndex, pageSize, totalCount } = state;
     return { totalPages, pageIndex, pageSize, totalCount };
+  }
+
+  @Selector()
+  static visitDetail(state: FarmVisitsStateModel): FarmVisit | null {
+    return state.visitDetail;
+  }
+
+  @Selector()
+  static isDetailLoading(state: FarmVisitsStateModel): boolean {
+    return state.isDetailLoading;
+  }
+
+  @Selector()
+  static detailErrors(state: FarmVisitsStateModel): string[] {
+    return state.detailErrors;
+  }
+
+  @Selector()
+  static isSubmittingReport(state: FarmVisitsStateModel): boolean {
+    return state.isSubmittingReport;
+  }
+
+  @Selector()
+  static submitMessage(state: FarmVisitsStateModel): string | null {
+    return state.submitMessage;
+  }
+
+  @Selector()
+  static submitErrors(state: FarmVisitsStateModel): string[] {
+    return state.submitErrors;
+  }
+
+  @Action(GetExtensionVisitDetail)
+  getVisitDetail(ctx: StateContext<FarmVisitsStateModel>, { visitId }: GetExtensionVisitDetail) {
+    ctx.patchState({ isDetailLoading: true, detailErrors: [], visitDetail: null });
+
+    return this.http.get<{ message?: string; data: { visit: FarmVisit } }>(`${environment.api}/extension/visits/${visitId}`).pipe(
+      tap((response) => {
+        ctx.patchState({ visitDetail: response.data.visit, isDetailLoading: false });
+      }),
+      catchError((error: unknown) => {
+        ctx.patchState({
+          isDetailLoading: false,
+          detailErrors: [extractErrorMessage(error, 'Unable to load this visit.')],
+        });
+        return of(error);
+      }),
+    );
+  }
+
+  @Action(SubmitVisitReport)
+  submitVisitReport(ctx: StateContext<FarmVisitsStateModel>, { visitId, payload }: SubmitVisitReport) {
+    ctx.patchState({ isSubmittingReport: true, submitMessage: null, submitErrors: [] });
+
+    return this.http.put<{ message?: string; data: { visit: FarmVisit } }>(
+      `${environment.api}/extension/visits/${visitId}/report`,
+      payload,
+    ).pipe(
+      tap((response) => {
+        ctx.patchState({
+          isSubmittingReport: false,
+          submitMessage: response.message ?? 'Visit report saved successfully.',
+          submitErrors: [],
+          visitDetail: response.data.visit,
+        });
+      }),
+      catchError((error: unknown) => {
+        ctx.patchState({
+          isSubmittingReport: false,
+          submitMessage: null,
+          submitErrors: [extractErrorMessage(error, 'Unable to save this visit report.')],
+        });
+        return of(error);
+      }),
+    );
   }
 
   @Action(GetExtensionFarmVisits)

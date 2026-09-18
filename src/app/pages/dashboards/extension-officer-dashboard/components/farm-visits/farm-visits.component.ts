@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 import { Store } from '@ngxs/store';
@@ -55,7 +56,7 @@ const timeframeOptions: readonly TimeframeFilterOption[] = [
 
 @Component({
   selector: 'app-farm-visits',
-  imports: [DatePipe, MenuModule, TableModule],
+  imports: [DatePipe, MenuModule, RouterLink, TableModule],
   templateUrl: './farm-visits.component.html',
   styleUrl: './farm-visits.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -142,15 +143,15 @@ export class FarmVisitsComponent {
     const isApproved = status === 'approved';
     const isRejected = status === 'rejected';
 
-    const visitDate = visit.visitDate || null;
+    const visitDate = visit.visitScheduling?.date || null;
     const latestActivity = visit.updatedAt || visit.createdAt || null;
 
     return {
       visit,
       farmerName: visit.farmer?.fullName || '-',
       contact: visit.farmer?.phone || '-',
-      farm: visit.farm?.locationLabel || '-',
-      crop: visit.farm?.cropType || '-',
+      farm: visit.farmer?.farmDetails?.locationLabel || '-',
+      crop: visit.farmer?.farmDetails?.cropType || '-',
       visitDate,
       statusLabel: this.formatLabel(status),
       latestActivity,

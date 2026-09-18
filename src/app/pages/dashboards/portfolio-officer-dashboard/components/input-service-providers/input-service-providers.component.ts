@@ -1,16 +1,26 @@
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MenuItem } from 'primeng/api';
+import { Dialog } from 'primeng/dialog';
 import { MenuModule } from 'primeng/menu';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { ConfirmModalComponent } from '../../../../../shared/confirm-modal/confirm-modal.component';
+import { FormInputComponent } from '../../../../../shared/form-input/form-input.component';
+import { extractErrorMessage } from '../../../../../shared/request.utils';
+import { ToastrService } from '../../../../../shared/toastr/toastr.service';
 import {
+  GetInputProviderDetail,
   GetPortfolioInputProviders,
   InputProviderActivityItem,
+  InputProviderOrderSummary,
   InputProvidersQueryParams,
   PortfolioInputProvidersState,
+  ReviewProviderOrder,
 } from './input-service-providers.state';
 
 interface ProviderStatusFilterOption {
@@ -32,6 +42,7 @@ interface InputProviderRow {
   isActive: boolean;
   isInactive: boolean;
   isPending: boolean;
+  pendingReviewCount: number;
 }
 
 const providerStatusOptions: readonly ProviderStatusFilterOption[] = [
@@ -44,19 +55,33 @@ const providerStatusOptions: readonly ProviderStatusFilterOption[] = [
 
 @Component({
   selector: 'app-input-service-providers',
-  imports: [DatePipe, MenuModule, TableModule],
+  imports: [DatePipe, DecimalPipe, Dialog, FormInputComponent, MenuModule, ReactiveFormsModule, TableModule],
   templateUrl: './input-service-providers.component.html',
   styleUrl: './input-service-providers.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InputServiceProvidersComponent {
+  private readonly dialog = inject(MatDialog);
   private readonly store = inject(Store);
+  private readonly toastr = inject(ToastrService);
 
   private readonly providers = this.store.selectSignal(PortfolioInputProvidersState.providers);
   protected readonly providerRows = computed(() => this.providers().map((p) => this.toRow(p)));
   protected readonly providersData = this.store.selectSignal(PortfolioInputProvidersState.providersConfigs);
   protected readonly isLoading = this.store.selectSignal(PortfolioInputProvidersState.isLoading);
   protected readonly statusOptions = providerStatusOptions;
+
+  protected readonly detail = this.store.selectSignal(PortfolioInputProvidersState.detail);
+  protected readonly isDetailLoading = this.store.selectSignal(PortfolioInputProvidersState.isDetailLoading);
+  protected readonly isReviewing = this.store.selectSignal(PortfolioInputProvidersState.isReviewing);
+
+  protected readonly isDetailModalVisible = signal(false);
+  protected readonly isDenyModalVisible = signal(false);
+  protected readonly selectedOrderForDeny = signal<InputProviderOrderSummary | null>(null);
+
+  protected readonly denyForm = new FormGroup({
+    notes: new FormControl('', { nonNullable: true }),
+  });
 
   protected readonly statusMenuItems: MenuItem[] = [
     {
@@ -168,7 +193,73 @@ export class InputServiceProvidersComponent {
       isActive,
       isInactive,
       isPending,
+      pendingReviewCount: Number(provider['pendingReviewCount'] ?? 0),
     };
+  }
+
+  protected onViewDetail(row: InputProviderRow): void {
+    const providerId = row.provider.providerId ?? row.provider.id;
+    if (!providerId) {
+      return;
+    }
+
+    this.isDetailModalVisible.set(true);
+    this.store.dispatch(new GetInputProviderDetail(providerId)).subscribe({
+      error: (error: unknown) =>
+        this.toastr.triggerToastr('error', extractErrorMessage(error, "Unable to load this provider's activity.")),
+    });
+  }
+
+  protected onApprove(order: InputProviderOrderSummary): void {
+    this.dialog
+      .open(ConfirmModalComponent, { disableClose: true })
+      .afterClosed()
+      .subscribe((confirmed?: boolean) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.store.dispatch(new ReviewProviderOrder(order.orderId, 'approve')).subscribe({
+          next: () => this.onReviewComplete(),
+          error: (error: unknown) =>
+            this.toastr.triggerToastr('error', extractErrorMessage(error, 'Unable to approve this order.')),
+        });
+      });
+  }
+
+  protected onOpenDeny(order: InputProviderOrderSummary): void {
+    this.selectedOrderForDeny.set(order);
+    this.denyForm.reset({ notes: '' });
+    this.isDenyModalVisible.set(true);
+  }
+
+  protected onSubmitDeny(): void {
+    const order = this.selectedOrderForDeny();
+    if (!order) {
+      return;
+    }
+
+    const notes = this.denyForm.controls.notes.value.trim();
+    this.store.dispatch(new ReviewProviderOrder(order.orderId, 'deny', notes || null)).subscribe({
+      next: () => {
+        this.isDenyModalVisible.set(false);
+        this.onReviewComplete();
+      },
+      error: (error: unknown) =>
+        this.toastr.triggerToastr('error', extractErrorMessage(error, 'Unable to send this order back.')),
+    });
+  }
+
+  private onReviewComplete(): void {
+    const errors = this.store.selectSnapshot(PortfolioInputProvidersState.reviewErrors);
+    if (errors.length) {
+      this.toastr.triggerToastr('error', errors[0]);
+      return;
+    }
+
+    const message = this.store.selectSnapshot(PortfolioInputProvidersState.reviewMessage);
+    this.toastr.triggerToastr('success', message || 'Review recorded successfully.');
+    this.dispatchProvidersLoad();
   }
 
   private formatDate(value: string | null | undefined): string {

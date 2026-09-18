@@ -24,7 +24,7 @@ export interface AssignedFarmAssignment {
 
 export interface AssignedFarmLatestVisit {
   id: string;
-  visitDate?: string | null;
+  visitScheduling?: { date?: string | null; description?: string | null } | null;
   status?: string | null;
   submittedAt?: string | null;
   reviewedAt?: string | null;

@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { GetExtensionFarmers, ExtensionFarmersState } from '../farmers/farmers.state';
+import { GetExtensionAlerts, ExtensionAlertsState } from '../alerts/alerts.state';
 import { GetExtensionFarms, ExtensionFarmsState } from '../farms/farms.state';
 import { FarmVisitsState, GetExtensionFarmVisits, FarmVisit } from '../farm-visits/farm-visits.state';
 
@@ -16,14 +16,13 @@ import { FarmVisitsState, GetExtensionFarmVisits, FarmVisit } from '../farm-visi
 export class DashboardComponent implements OnInit {
   private readonly store = inject(Store);
 
-  private readonly farmers = this.store.selectSignal(ExtensionFarmersState.farmers);
   private readonly visits = this.store.selectSignal(FarmVisitsState.visits);
-  protected readonly farmersData = this.store.selectSignal(ExtensionFarmersState.farmersConfigs);
   protected readonly farmsData = this.store.selectSignal(ExtensionFarmsState.farmsConfigs);
   protected readonly visitsData = this.store.selectSignal(FarmVisitsState.visitsConfigs);
-  protected readonly isLoadingFarmers = this.store.selectSignal(ExtensionFarmersState.isLoading);
+  protected readonly unreadAlertsCount = this.store.selectSignal(ExtensionAlertsState.unreadCount);
   protected readonly isLoadingFarms = this.store.selectSignal(ExtensionFarmsState.isLoading);
   protected readonly isLoadingVisits = this.store.selectSignal(FarmVisitsState.isLoading);
+  protected readonly isLoadingAlerts = this.store.selectSignal(ExtensionAlertsState.isLoading);
 
   protected readonly recentVisits = computed(() => this.visits().slice(0, 5));
   protected readonly reportsToComplete = computed(
@@ -34,9 +33,9 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.store
       .dispatch([
-        new GetExtensionFarmers({ rows: 1 }),
         new GetExtensionFarms({ rows: 1 }),
         new GetExtensionFarmVisits({ rows: 5, timeframeDays: 30 }),
+        new GetExtensionAlerts({ rows: 1 }),
       ])
       .subscribe();
   }
@@ -52,6 +51,6 @@ export class DashboardComponent implements OnInit {
   }
 
   protected visitDate(visit: FarmVisit): string {
-    return visit.visitDate || visit.createdAt || '';
+    return visit.visitScheduling?.date || visit.createdAt || '';
   }
 }

@@ -1,0 +1,50 @@
+<main class="alerts-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">NOTICES</p>
+      <h1>Alerts</h1>
+      <p class="page-header__copy">Notices and follow-ups sent to you by your portfolio officer.</p>
+    </div>
+    <button type="button" class="primary-action" [disabled]="unreadCount() === 0" (click)="onMarkAllRead()">
+      <span class="material-symbols-outlined" aria-hidden="true">done_all</span>
+      Mark all as read
+    </button>
+  </header>
+
+  <section class="panel">
+    <p-table
+      [value]="alerts()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="alertsData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadAlerts($event)"
+    >
+      <ng-template pTemplate="body" let-alert>
+        <tr
+          class="alert-row"
+          [class.alert-row--unread]="!alert.readAt"
+          [class.alert-row--critical]="alert.severity === 'critical'"
+          [class.alert-row--warning]="alert.severity === 'warning'"
+        >
+          <td class="alert-row__dot-cell"><span class="alert-row__dot" aria-hidden="true"></span></td>
+          <td class="alert-row__body">
+            <strong>{{ formatLabel(alert.title) }}</strong>
+            <span>{{ alert.message }}</span>
+          </td>
+          <td class="alert-row__time">{{ alert.timeAgo || (alert.createdAt | date: 'MMM d') }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="3" class="empty-state">
+            No alerts yet. Notices from your portfolio officer will appear here.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</main>

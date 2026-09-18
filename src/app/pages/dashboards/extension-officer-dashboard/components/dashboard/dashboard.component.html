@@ -13,8 +13,8 @@
 
   <section class="metric-grid" aria-label="Fieldwork summary">
     <article class="metric-card">
-      <div class="metric-card__icon metric-card__icon--green"><span class="material-symbols-outlined" aria-hidden="true">groups</span></div>
-      <div><p>Assigned farmers</p><strong>{{ isLoadingFarmers() ? '—' : farmersData().totalCount }}</strong><span>Farmers in your portfolio</span></div>
+      <div class="metric-card__icon metric-card__icon--green"><span class="material-symbols-outlined" aria-hidden="true">notifications</span></div>
+      <div><p>Alerts</p><strong>{{ isLoadingAlerts() ? '—' : unreadAlertsCount() }}</strong><span>Unread notices from your portfolio officer</span></div>
     </article>
     <article class="metric-card">
       <div class="metric-card__icon metric-card__icon--blue"><span class="material-symbols-outlined" aria-hidden="true">yard</span></div>
@@ -46,7 +46,7 @@
           @for (visit of recentVisits(); track visit.id) {
             <article class="visit-row">
               <div class="visit-row__date"><span>{{ visitDate(visit) | date: 'MMM' }}</span><strong>{{ visitDate(visit) | date: 'd' }}</strong></div>
-              <div class="visit-row__details"><strong>{{ visit.farmer?.fullName || 'Assigned farmer' }}</strong><span>{{ visit.farm?.locationLabel || 'Assigned farm' }} · {{ visit.farm?.cropType || 'Crop not specified' }}</span></div>
+              <div class="visit-row__details"><strong>{{ visit.farmer?.fullName || 'Assigned farmer' }}</strong><span>{{ visit.farmer?.farmDetails?.locationLabel || 'Assigned farm' }} · {{ visit.farmer?.farmDetails?.cropType || 'Crop not specified' }}</span></div>
               <div class="visit-row__meta"><span class="status-pill" [class.status-pill--success]="visit.status === 'approved'" [class.status-pill--warning]="visit.status !== 'approved'">{{ statusLabel(visit.status) }}</span>@if (visit.alertGenerated) {<span class="alert-badge"><span class="material-symbols-outlined" aria-hidden="true">priority_high</span>Risk alert</span>}</div>
             </article>
           }
@@ -59,7 +59,7 @@
       <nav class="action-list" aria-label="Extension officer actions">
         <a routerLink="/dashboard/extension-officer/visits"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">edit_calendar</span></span><span><strong>Complete visit reports</strong><small>{{ reportsToComplete() }} report{{ reportsToComplete() === 1 ? '' : 's' }} waiting for your update</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
         <a routerLink="/dashboard/extension-officer/farms"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">map</span></span><span><strong>Review assigned farms</strong><small>Check locations, crops, and latest visits</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
-        <a routerLink="/dashboard/extension-officer/farmers"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">person_search</span></span><span><strong>Open farmer list</strong><small>Find contact and field context quickly</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
+        <a routerLink="/dashboard/extension-officer/alerts"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">notifications</span></span><span><strong>Check alerts</strong><small>{{ unreadAlertsCount() }} unread notice{{ unreadAlertsCount() === 1 ? '' : 's' }} from your portfolio officer</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
       </nav>
       @if (riskAlerts() > 0) {<div class="alert-callout"><span class="material-symbols-outlined" aria-hidden="true">warning</span><div><strong>{{ riskAlerts() }} risk alert{{ riskAlerts() === 1 ? '' : 's' }} raised</strong><span>Include the issue in the visit report and submit it for review.</span></div></div>}
     </aside>

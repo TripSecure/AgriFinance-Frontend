@@ -115,7 +115,7 @@ export class FarmsComponent {
     const isActive = ['active', 'approved', 'assigned'].includes(assignmentStatus);
     const isInactive = ['inactive', 'rejected', 'suspended', 'archived'].includes(assignmentStatus);
     const isPending = !isActive && !isInactive;
-    const latestVisitDate = farm.latestVisit?.visitDate || (typeof farm['lastVisitDate'] === 'string' ? farm['lastVisitDate'] : null);
+    const latestVisitDate = farm.latestVisit?.visitScheduling?.date || (typeof farm['lastVisitDate'] === 'string' ? farm['lastVisitDate'] : null);
     const latestVisitStatus = farm.latestVisit?.status ? this.formatLabel(farm.latestVisit.status) : 'No visit';
 
     return {

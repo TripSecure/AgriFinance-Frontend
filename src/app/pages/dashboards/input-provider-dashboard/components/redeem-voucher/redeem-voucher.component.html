@@ -1,0 +1,57 @@
+<div class="content">
+  <div class="title mb-4">
+    <h3>Redeem Voucher</h3>
+    <p>For an on-the-spot handoff: scan or paste the farmer's voucher QR payload to submit it directly for portfolio officer review, without going through the order queue.</p>
+  </div>
+
+  <div class="redeem-card">
+    <form [formGroup]="redeemForm" (ngSubmit)="onSubmit()" class="d-flex flex-column gap-3">
+      <app-form-input
+        name="qrPayload"
+        label="Voucher QR payload"
+        [isRequired]="true"
+        placeholder="Scan or paste the voucher's QR payload"
+        [formGroup]="redeemForm"
+      />
+
+      <app-form-input
+        name="proofOfDelivery"
+        label="Proof of delivery (one URL per line, optional)"
+        type="textform"
+        placeholder="https://example.com/photo1.jpg"
+        [formGroup]="redeemForm"
+      />
+
+      <app-form-input
+        name="deliveryNotes"
+        label="Notes (optional)"
+        type="textform"
+        placeholder="e.g. Handed off at the farm gate."
+        [formGroup]="redeemForm"
+      />
+
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-success px-4 py-2 text-white fw-medium" [disabled]="redeemForm.invalid || isRedeeming()">
+          {{ isRedeeming() ? 'Submitting...' : 'Submit for review' }}
+        </button>
+      </div>
+    </form>
+
+    @if (redeemErrors().length) {
+      <div class="redeem-result redeem-result--error">
+        <span class="material-symbols-outlined" aria-hidden="true">error</span>
+        <span>{{ redeemErrors()[0] }}</span>
+      </div>
+    }
+
+    @if (redeemResult(); as result) {
+      <div class="redeem-result redeem-result--success">
+        <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+        <div>
+          <strong>Voucher {{ result.voucher.voucherCode }} submitted for review</strong>
+          <span>{{ formatLabel(result.voucher.inputType) }} &bull; GHS {{ result.order.amountGhs | number: '1.2-2' }} &bull; {{ result.order.farmerName }}</span>
+        </div>
+      </div>
+    }
+  </div>
+</div>

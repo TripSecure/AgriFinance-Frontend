@@ -73,6 +73,40 @@ export interface InputProvidersQueryParams {
   serviceType?: string;
 }
 
+export interface InputProviderOrderSummary {
+  orderId: string;
+  voucherId: string;
+  farmerId: string;
+  farmerName: string;
+  inputType: string;
+  status: string;
+  amountGhs: number;
+  deliveredAt: string | null;
+  updatedAt: string;
+  canReview: boolean;
+  reviewEndpoint: string;
+}
+
+export interface InputProviderDetail {
+  provider: {
+    id: string;
+    fullName: string;
+    initials: string;
+    role: string;
+    location: string | null;
+    createdAt: string | null;
+  };
+  summary: {
+    totalOrders: number;
+    fulfilledOrders: number;
+    totalServiceCostGhs: number;
+    pendingOrders: number;
+    pendingSettlementAmountGhs: number;
+  };
+  recentOrders: InputProviderOrderSummary[];
+  availableActions: { value: string; label: string }[];
+}
+
 export interface PortfolioInputProvidersStateModel {
   totalPages: number;
   pageIndex: number;
@@ -81,11 +115,31 @@ export interface PortfolioInputProvidersStateModel {
   isLoading: boolean;
   errors: string[];
   providers: InputProviderActivityItem[];
+  detail: InputProviderDetail | null;
+  isDetailLoading: boolean;
+  detailErrors: string[];
+  isReviewing: boolean;
+  reviewMessage: string | null;
+  reviewErrors: string[];
 }
 
 export class GetPortfolioInputProviders {
   static readonly type = '[Portfolio Input Providers] Get Providers Activity';
   constructor(public params?: InputProvidersQueryParams) {}
+}
+
+export class GetInputProviderDetail {
+  static readonly type = '[Portfolio Input Providers] Get Provider Detail';
+  constructor(public providerId: string) {}
+}
+
+export class ReviewProviderOrder {
+  static readonly type = '[Portfolio Input Providers] Review Provider Order';
+  constructor(
+    public orderId: string,
+    public decision: 'approve' | 'deny',
+    public notes?: string | null,
+  ) {}
 }
 
 @State<PortfolioInputProvidersStateModel>({
@@ -98,6 +152,12 @@ export class GetPortfolioInputProviders {
     totalCount: 0,
     isLoading: false,
     errors: [],
+    detail: null,
+    isDetailLoading: false,
+    detailErrors: [],
+    isReviewing: false,
+    reviewMessage: null,
+    reviewErrors: [],
   },
 })
 @Injectable()
@@ -123,6 +183,36 @@ export class PortfolioInputProvidersState {
   static providersConfigs(state: PortfolioInputProvidersStateModel) {
     const { totalPages, pageIndex, pageSize, totalCount } = state;
     return { totalPages, pageIndex, pageSize, totalCount };
+  }
+
+  @Selector()
+  static detail(state: PortfolioInputProvidersStateModel): InputProviderDetail | null {
+    return state.detail;
+  }
+
+  @Selector()
+  static isDetailLoading(state: PortfolioInputProvidersStateModel): boolean {
+    return state.isDetailLoading;
+  }
+
+  @Selector()
+  static detailErrors(state: PortfolioInputProvidersStateModel): string[] {
+    return state.detailErrors;
+  }
+
+  @Selector()
+  static isReviewing(state: PortfolioInputProvidersStateModel): boolean {
+    return state.isReviewing;
+  }
+
+  @Selector()
+  static reviewMessage(state: PortfolioInputProvidersStateModel): string | null {
+    return state.reviewMessage;
+  }
+
+  @Selector()
+  static reviewErrors(state: PortfolioInputProvidersStateModel): string[] {
+    return state.reviewErrors;
   }
 
   @Action(GetPortfolioInputProviders)
@@ -155,6 +245,69 @@ export class PortfolioInputProvidersState {
           ctx.patchState({
             isLoading: false,
             errors: [extractErrorMessage(error, 'Unable to load input service providers activity.')],
+          });
+          return of(error);
+        }),
+      );
+  }
+
+  @Action(GetInputProviderDetail)
+  getProviderDetail(ctx: StateContext<PortfolioInputProvidersStateModel>, { providerId }: GetInputProviderDetail) {
+    ctx.patchState({ isDetailLoading: true, detailErrors: [], detail: null });
+
+    return this.http
+      .get<{ message?: string; success?: boolean; data: InputProviderDetail }>(
+        `${environment.api}/portfolio/input-providers/activity/${providerId}`,
+      )
+      .pipe(
+        tap((response) => {
+          ctx.patchState({ detail: response.data, isDetailLoading: false });
+        }),
+        catchError((error: unknown) => {
+          ctx.patchState({
+            isDetailLoading: false,
+            detailErrors: [extractErrorMessage(error, 'Unable to load this provider\'s activity.')],
+          });
+          return of(error);
+        }),
+      );
+  }
+
+  @Action(ReviewProviderOrder)
+  reviewProviderOrder(
+    ctx: StateContext<PortfolioInputProvidersStateModel>,
+    { orderId, decision, notes }: ReviewProviderOrder,
+  ) {
+    ctx.patchState({ isReviewing: true, reviewMessage: null, reviewErrors: [] });
+
+    return this.http
+      .post<{ message?: string; data: unknown }>(`${environment.api}/portfolio/provider-orders/${orderId}/review`, {
+        decision,
+        notes: notes || null,
+      })
+      .pipe(
+        tap((response) => {
+          const detail = ctx.getState().detail;
+          const nextStatus = decision === 'approve' ? 'delivered' : 'rejected';
+          ctx.patchState({
+            isReviewing: false,
+            reviewMessage: response.message ?? 'Review recorded successfully.',
+            reviewErrors: [],
+            detail: detail
+              ? {
+                  ...detail,
+                  recentOrders: detail.recentOrders.map((order) =>
+                    order.orderId === orderId ? { ...order, status: nextStatus, canReview: false } : order,
+                  ),
+                }
+              : detail,
+          });
+        }),
+        catchError((error: unknown) => {
+          ctx.patchState({
+            isReviewing: false,
+            reviewMessage: null,
+            reviewErrors: [extractErrorMessage(error, 'Unable to record this review decision.')],
           });
           return of(error);
         }),

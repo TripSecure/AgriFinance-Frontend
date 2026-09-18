@@ -79,6 +79,7 @@
           <th id="providerFulfilledOrders">Fulfilled Orders</th>
           <th id="providerStatus">Status</th>
           <th id="providerLastActivity">Last Activity</th>
+          <th id="providerActions">Action</th>
         </tr>
       </ng-template>
 
@@ -99,16 +100,128 @@
             >
               {{ row.statusLabel }}
             </span>
+            @if (row.pendingReviewCount > 0) {
+              <span class="status-pill status-pill--review ms-1">{{ row.pendingReviewCount }} awaiting review</span>
+            }
           </td>
           <td>{{ (row.lastActivity | date: 'medium') || row.provider.lastActivityLabel || '-' }}</td>
+          <td>
+            <button type="button" class="action-button" (click)="onViewDetail(row)">
+              <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+              View activity
+            </button>
+          </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [colSpan]="8" class="empty-state">No input service providers found.</td>
+          <td [colSpan]="9" class="empty-state">No input service providers found.</td>
         </tr>
       </ng-template>
     </p-table>
   </div>
+
+  <p-dialog
+    [visible]="isDetailModalVisible()"
+    (visibleChange)="isDetailModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Provider activity"
+    [style]="{ width: '90vw', maxWidth: '720px' }"
+    appendTo="body"
+  >
+    @if (isDetailLoading()) {
+      <div class="empty-state">Loading provider activity...</div>
+    } @else if (detail(); as d) {
+      <div class="d-flex flex-column gap-3">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fw-semibold text-dark fs-6">{{ d.provider.fullName }}</div>
+          <div class="small text-secondary mt-1">{{ d.provider.location || 'No location on file' }}</div>
+          <div class="d-flex gap-4 mt-2 small text-secondary">
+            <span>Total orders: <strong class="text-dark">{{ d.summary.totalOrders }}</strong></span>
+            <span>Fulfilled: <strong class="text-dark">{{ d.summary.fulfilledOrders }}</strong></span>
+            <span>Pending: <strong class="text-dark">{{ d.summary.pendingOrders }}</strong></span>
+          </div>
+        </div>
+
+        <div class="d-flex flex-column gap-2">
+          @for (order of d.recentOrders; track order.orderId) {
+            <div class="p-3 border rounded-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                <div class="fw-semibold text-dark small">{{ order.farmerName }}</div>
+                <div class="small text-secondary">
+                  {{ formatLabel(order.inputType) }} &bull; GHS {{ order.amountGhs | number: '1.2-2' }}
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span
+                  class="status-pill"
+                  [class.status-pill--active]="order.status === 'delivered'"
+                  [class.status-pill--inactive]="order.status === 'cancelled' || order.status === 'rejected'"
+                  [class.status-pill--pending]="order.status === 'pending' || order.status === 'accepted' || order.status === 'in_transit'"
+                  [class.status-pill--review]="order.status === 'pending_review'"
+                >
+                  {{ formatLabel(order.status) }}
+                </span>
+                @if (order.canReview) {
+                  <button type="button" class="btn btn-success btn-sm text-white" [disabled]="isReviewing()" (click)="onApprove(order)">
+                    Approve
+                  </button>
+                  <button type="button" class="btn btn-danger btn-sm text-white" [disabled]="isReviewing()" (click)="onOpenDeny(order)">
+                    Deny
+                  </button>
+                }
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-state">No orders yet for this provider.</div>
+          }
+        </div>
+      </div>
+    }
+  </p-dialog>
+
+  <p-dialog
+    [visible]="isDenyModalVisible()"
+    (visibleChange)="isDenyModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Deny provider order"
+    [style]="{ width: '90vw', maxWidth: '480px' }"
+    appendTo="body"
+    [closable]="!isReviewing()"
+  >
+    <form [formGroup]="denyForm" (ngSubmit)="onSubmitDeny()" class="d-flex flex-column gap-3 pt-2">
+      @if (selectedOrderForDeny(); as order) {
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fw-semibold text-dark fs-6">{{ order.farmerName }}</div>
+          <div class="small text-secondary mt-1">{{ formatLabel(order.inputType) }}</div>
+        </div>
+      }
+
+      <p class="small text-secondary mb-0">
+        The provider will be notified and can resubmit this order once they've addressed the issue.
+      </p>
+
+      <app-form-input
+        name="notes"
+        label="Reason (optional)"
+        type="textform"
+        placeholder="e.g. Photos don't show the soil test completed."
+        [formGroup]="denyForm"
+      />
+
+      <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-2">
+        <button type="button" class="btn btn-outline-secondary px-3 py-2" (click)="isDenyModalVisible.set(false)" [disabled]="isReviewing()">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-danger px-4 py-2 text-white fw-medium" [disabled]="isReviewing()">
+          {{ isReviewing() ? 'Saving...' : 'Deny order' }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
 </div>

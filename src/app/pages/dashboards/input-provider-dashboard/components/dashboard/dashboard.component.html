@@ -1,0 +1,77 @@
+<main class="provider-home">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">FULFILLMENT OVERVIEW</p>
+      <h1>Welcome back</h1>
+      <p class="page-header__copy">Track the orders assigned to you and keep vouchers moving from acceptance to delivery.</p>
+    </div>
+    <a class="primary-action" routerLink="../orders">
+      <span class="material-symbols-outlined" aria-hidden="true">local_shipping</span>
+      Open order fulfillment
+    </a>
+  </header>
+
+  <section class="metric-grid" aria-label="Order fulfillment summary">
+    <article class="metric-card" [class.metric-card--attention]="ordersNeedingAction() > 0">
+      <div class="metric-card__icon metric-card__icon--amber"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span></div>
+      <div><p>Needs your action</p><strong>{{ isLoading() ? '—' : ordersNeedingAction() }}</strong><span>Pending, accepted, or in transit</span></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--blue"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></div>
+      <div><p>Awaiting review</p><strong>{{ isLoading() ? '—' : (summary()?.pendingReviewCount ?? 0) }}</strong><span>With your portfolio officer</span></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--green"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span></div>
+      <div><p>Delivered orders</p><strong>{{ isLoading() ? '—' : (summary()?.deliveredCount ?? 0) }}</strong><span>Vouchers redeemed</span></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--blue"><span class="material-symbols-outlined" aria-hidden="true">payments</span></div>
+      <div><p>Value delivered</p><strong>{{ isLoading() ? '—' : ('GHS ' + ((summary()?.totalValueDeliveredGhs ?? 0) | number: '1.2-2')) }}</strong><span>Fulfilled orders</span></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__icon metric-card__icon--red"><span class="material-symbols-outlined" aria-hidden="true">hourglass_top</span></div>
+      <div><p>Value pending</p><strong>{{ isLoading() ? '—' : ('GHS ' + ((summary()?.totalValuePendingGhs ?? 0) | number: '1.2-2')) }}</strong><span>Not yet delivered</span></div>
+    </article>
+  </section>
+
+  <div class="home-grid">
+    <section class="panel visit-panel" aria-labelledby="recent-orders-heading">
+      <header class="panel__header">
+        <div><p class="eyebrow">ACTIVITY</p><h2 id="recent-orders-heading">Recent orders</h2></div>
+        <a routerLink="../orders">View all</a>
+      </header>
+
+      @if (isLoading()) {
+        <div class="empty-state">Loading your order activity...</div>
+      } @else if (recentOrders().length === 0) {
+        <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><strong>No orders yet</strong><span>Orders assigned to you will appear here.</span></div>
+      } @else {
+        <div class="visit-list">
+          @for (order of recentOrders(); track order.id) {
+            <article class="visit-row">
+              <div class="visit-row__details"><strong>{{ order.farmerName }}</strong><span>{{ formatLabel(order.inputType) }} &bull; GHS {{ order.amountGhs | number: '1.2-2' }}</span></div>
+              <div class="visit-row__meta">
+                <span
+                  class="status-pill"
+                  [class.status-pill--success]="order.status === 'delivered'"
+                  [class.status-pill--warning]="order.status !== 'delivered' && order.status !== 'cancelled'"
+                >
+                  {{ formatLabel(order.status) }}
+                </span>
+                <span class="text-secondary small">{{ order.updatedAt | date: 'MMM d' }}</span>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <aside class="panel action-panel" aria-labelledby="actions-heading">
+      <header class="panel__header"><div><p class="eyebrow">YOUR WORKSPACE</p><h2 id="actions-heading">Next actions</h2></div></header>
+      <nav class="action-list" aria-label="Provider actions">
+        <a routerLink="../orders"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span></span><span><strong>Work through your order queue</strong><small>Accept, dispatch, and deliver assigned vouchers</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
+        <a routerLink="../redeem"><span class="action-list__icon"><span class="material-symbols-outlined" aria-hidden="true">qr_code_scanner</span></span><span><strong>Redeem a voucher on the spot</strong><small>Scan or enter a farmer's voucher code directly</small></span><span class="material-symbols-outlined action-list__arrow" aria-hidden="true">chevron_right</span></a>
+      </nav>
+    </aside>
+  </div>
+</main>

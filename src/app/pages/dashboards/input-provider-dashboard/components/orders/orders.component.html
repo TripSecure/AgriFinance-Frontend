@@ -1,0 +1,258 @@
+<div class="content">
+  <div class="title mb-4">
+    <h3>Order Fulfillment</h3>
+    <p>Accept, dispatch, and deliver the input vouchers assigned to you. Delivering an order sends it to the portfolio officer for review before the voucher is redeemed.</p>
+  </div>
+
+  <div class="filters">
+    <div class="filters__actions">
+      <label for="orderStatusFilter">Filter by status</label>
+      <button
+        id="orderStatusFilter"
+        type="button"
+        (click)="statusMenu.toggle($event)"
+        class="filters__actions__input-form"
+      >
+        <span>{{ selectedStatus ? formatLabel(selectedStatus) : 'All statuses' }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+      </button>
+      <p-menu #statusMenu [model]="statusMenuItems" [popup]="true" [appendTo]="'body'">
+        <ng-template pTemplate="item" let-item>
+          <button
+            type="button"
+            class="p-menu-item-link w-100 d-flex align-items-center gap-2 border-0 bg-transparent text-start py-2 px-3 text-secondary"
+            (click)="item.command ? item.command($event) : null"
+          >
+            <span class="material-symbols-outlined">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+          </button>
+        </ng-template>
+      </p-menu>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="ps-3 py-2 d-flex align-items-center gap-3">
+      <div class="data-head">Total Orders</div>
+      @if (!isLoading()) {
+        <div class="h-2 d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-pill p-3">
+          {{ ordersData().totalCount }}
+        </div>
+      }
+    </div>
+
+    <p-table
+      [value]="orders()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 30]"
+      [lazy]="true"
+      [totalRecords]="ordersData().totalCount"
+      [loading]="isLoading()"
+      (onLazyLoad)="loadOrders($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th id="orderFarmer">Farmer</th>
+          <th id="orderInputType">Input Type</th>
+          <th id="orderVoucherCode">Voucher Code</th>
+          <th id="orderAmount">Amount (GHS)</th>
+          <th id="orderStatus">Status</th>
+          <th id="orderUpdated">Last Updated</th>
+          <th id="orderActions">Action</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-order>
+        <tr>
+          <td>{{ order.farmerName }}</td>
+          <td>{{ formatLabel(order.inputType) }}</td>
+          <td>{{ order.voucherCode || '-' }}</td>
+          <td>{{ order.amountGhs | number: '1.2-2' }}</td>
+          <td>
+            <span
+              class="status-pill"
+              [class.status-pill--active]="order.status === 'delivered'"
+              [class.status-pill--inactive]="order.status === 'cancelled' || order.status === 'rejected'"
+              [class.status-pill--pending]="order.status === 'pending' || order.status === 'accepted' || order.status === 'in_transit'"
+              [class.status-pill--review]="order.status === 'pending_review'"
+            >
+              {{ formatLabel(order.status) }}
+            </span>
+          </td>
+          <td>{{ (order.updatedAt | date: 'medium') || '-' }}</td>
+          <td>
+            @if (order.status === 'pending' || order.status === 'accepted' || order.status === 'in_transit' || order.status === 'pending_review' || order.status === 'rejected') {
+              <button
+                type="button"
+                class="action-button"
+                aria-label="Open order actions"
+                (click)="$event.stopPropagation(); selectedOrderForAction.set(order); actionMenu.toggle($event)"
+              >
+                <span class="material-symbols-outlined">more_vert</span>
+              </button>
+            } @else {
+              <span class="text-secondary small">No actions</span>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="7" class="empty-state">No orders found for this filter.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" [appendTo]="'body'">
+      <ng-template pTemplate="item" let-item>
+        <button
+          type="button"
+          class="p-menu-item-link w-100 d-flex align-items-center gap-2 border-0 bg-transparent text-start py-2 px-3 text-secondary"
+          (click)="item.command ? item.command($event) : null"
+        >
+          <span class="material-symbols-outlined">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </button>
+      </ng-template>
+    </p-menu>
+  </div>
+
+  <p-dialog
+    [visible]="isDispatchModalVisible()"
+    (visibleChange)="isDispatchModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Mark order in transit"
+    [style]="{ width: '90vw', maxWidth: '480px' }"
+    appendTo="body"
+    [closable]="!isMutating()"
+  >
+    <form [formGroup]="dispatchForm" (ngSubmit)="onSubmitDispatch()" class="d-flex flex-column gap-3 pt-2">
+      @if (selectedOrderForModal(); as order) {
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fw-semibold text-dark fs-6">{{ order.farmerName }}</div>
+          <div class="small text-secondary mt-1">{{ formatLabel(order.inputType) }}</div>
+        </div>
+      }
+
+      <app-form-input
+        name="deliveryNotes"
+        label="Notes (optional)"
+        type="textform"
+        placeholder="e.g. Left the warehouse, expected arrival tomorrow..."
+        [formGroup]="dispatchForm"
+      />
+
+      <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-2">
+        <button type="button" class="btn btn-outline-secondary px-3 py-2" (click)="isDispatchModalVisible.set(false)" [disabled]="isMutating()">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-success px-4 py-2 text-white fw-medium" [disabled]="isMutating()">
+          {{ isMutating() ? 'Saving...' : 'Mark in transit' }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <p-dialog
+    [visible]="isDeliverModalVisible()"
+    (visibleChange)="isDeliverModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Mark order delivered"
+    [style]="{ width: '90vw', maxWidth: '520px' }"
+    appendTo="body"
+    [closable]="!isMutating()"
+  >
+    <form [formGroup]="deliverForm" (ngSubmit)="onSubmitDeliver()" class="d-flex flex-column gap-3 pt-2">
+      @if (selectedOrderForModal(); as order) {
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fw-semibold text-dark fs-6">{{ order.farmerName }}</div>
+          <div class="small text-secondary mt-1">{{ formatLabel(order.inputType) }} &bull; GHS {{ order.amountGhs | number: '1.2-2' }}</div>
+        </div>
+
+        @if (order.status === 'rejected' && order.reviewNotes) {
+          <div class="p-3 rounded-3 border" style="background-color: #fef3f2; border-color: #fda29b;">
+            <div class="fw-semibold small" style="color: #b42318;">Reason for rejection</div>
+            <div class="small mt-1" style="color: #b42318;">{{ order.reviewNotes }}</div>
+          </div>
+        }
+      }
+
+      <p class="small text-secondary mb-0">
+        This sends the order to the portfolio officer for review. The voucher is redeemed once they approve it.
+      </p>
+
+      <app-form-input
+        name="proofOfDelivery"
+        label="Proof of delivery (one URL per line)"
+        type="textform"
+        placeholder="https://example.com/photo1.jpg"
+        [formGroup]="deliverForm"
+      />
+
+      <app-form-input
+        name="deliveryNotes"
+        label="Notes (optional)"
+        type="textform"
+        placeholder="e.g. Handed off to the farmer at the farm gate."
+        [formGroup]="deliverForm"
+      />
+
+      <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-2">
+        <button type="button" class="btn btn-outline-secondary px-3 py-2" (click)="isDeliverModalVisible.set(false)" [disabled]="isMutating()">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-success px-4 py-2 text-white fw-medium" [disabled]="isMutating()">
+          {{ isMutating() ? 'Saving...' : 'Mark delivered' }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <p-dialog
+    [visible]="isCancelModalVisible()"
+    (visibleChange)="isCancelModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Cancel order"
+    [style]="{ width: '90vw', maxWidth: '480px' }"
+    appendTo="body"
+    [closable]="!isMutating()"
+  >
+    <form [formGroup]="cancelForm" (ngSubmit)="onSubmitCancel()" class="d-flex flex-column gap-3 pt-2">
+      @if (selectedOrderForModal(); as order) {
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fw-semibold text-dark fs-6">{{ order.farmerName }}</div>
+          <div class="small text-secondary mt-1">{{ formatLabel(order.inputType) }}</div>
+        </div>
+      }
+
+      <p class="small text-secondary mb-0">
+        The voucher will become unassigned so another provider can pick it up.
+      </p>
+
+      <app-form-input
+        name="reason"
+        label="Reason (optional)"
+        type="textform"
+        placeholder="e.g. Out of stock this week."
+        [formGroup]="cancelForm"
+      />
+
+      <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-2">
+        <button type="button" class="btn btn-outline-secondary px-3 py-2" (click)="isCancelModalVisible.set(false)" [disabled]="isMutating()">
+          Keep order
+        </button>
+        <button type="submit" class="btn btn-danger px-4 py-2 text-white fw-medium" [disabled]="isMutating()">
+          {{ isMutating() ? 'Saving...' : 'Cancel order' }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+</div>

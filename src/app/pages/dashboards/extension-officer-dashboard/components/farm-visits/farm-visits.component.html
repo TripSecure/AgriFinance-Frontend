@@ -103,6 +103,7 @@
           <th id="visitStatus">Status</th>
           <th id="visitActivity">Last activity</th>
           <th id="visitAlert">Alert</th>
+          <th id="visitActions">Action</th>
         </tr>
       </ng-template>
 
@@ -129,12 +130,18 @@
               {{ row.alertLabel }}
             </span>
           </td>
+          <td>
+            <a [routerLink]="[row.visit.id, 'report']" class="action-button">
+              <span class="material-symbols-outlined" aria-hidden="true">edit_note</span>
+              {{ row.isApproved ? 'View Report' : 'Log Visit' }}
+            </a>
+          </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [colSpan]="8" class="empty-state">No farm visits found.</td>
+          <td [colSpan]="9" class="empty-state">No farm visits found.</td>
         </tr>
       </ng-template>
     </p-table>

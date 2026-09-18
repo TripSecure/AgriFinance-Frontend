@@ -1,0 +1,62 @@
+.content {
+  margin: 2rem 1rem;
+  margin-bottom: 5rem;
+  max-width: 640px;
+
+  .title {
+    h3 {
+      font-weight: 700;
+      font-size: 20px;
+      line-height: 30px;
+      color: #344054;
+      margin-bottom: 0.25rem;
+    }
+
+    p {
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20px;
+      color: #667085;
+      margin-bottom: 0;
+    }
+  }
+}
+
+.redeem-card {
+  border-radius: 8px;
+  padding: 1.5rem;
+  background-color: white;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+  border: 1px solid #d0d5dd;
+}
+
+.redeem-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  font-size: 0.85rem;
+
+  strong {
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  span {
+    display: block;
+  }
+
+  &--success {
+    background-color: #ecfdf3;
+    color: #027a48;
+  }
+
+  &--error {
+    background-color: #fef3f2;
+    color: #b42318;
+  }
+}

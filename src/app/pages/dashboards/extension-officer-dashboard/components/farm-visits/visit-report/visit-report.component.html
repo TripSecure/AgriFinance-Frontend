@@ -1,0 +1,196 @@
+<div class="content">
+  <div class="breadcrumb">
+    <a routerLink="/dashboard/extension-officer/visits">Visit Schedule</a>
+    <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+    <span>Log Visit</span>
+  </div>
+  <div class="title mb-4">
+    <h3>Log Farm Visit Report</h3>
+    <p>Record what you observed on this visit, then save a draft or submit it for portfolio officer review.</p>
+  </div>
+
+  @if (isLoading()) {
+    <div class="empty-state">Loading visit details...</div>
+  } @else if (visit(); as v) {
+    <div class="summary-card">
+      <div class="summary-card__icon"><span class="material-symbols-outlined" aria-hidden="true">agriculture</span></div>
+      <div class="summary-card__body">
+        <strong>{{ v.farmer?.fullName || 'Assigned Farmer' }} Farm</strong>
+        <div class="summary-card__tags">
+          <span>{{ (v.farmer?.farmDetails?.sizeHectares | number: '1.0-2') || '-' }} HA</span>
+          <span>{{ formatLabel(v.farmer?.farmDetails?.cropType || '-') }}</span>
+        </div>
+      </div>
+      <div class="summary-card__meta">
+        <span>LAST VISIT</span>
+        <strong>{{ v.lastActivityLabel || '-' }}</strong>
+      </div>
+    </div>
+
+    @if (isApproved) {
+      <div class="locked-banner">
+        <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+        This report was approved by your portfolio officer and can no longer be edited.
+      </div>
+    }
+
+    <form [formGroup]="reportForm" class="report-grid">
+      <section class="report-card">
+        <h4><span class="material-symbols-outlined" aria-hidden="true">terrain</span> 1. Land Preparation</h4>
+        <app-form-input
+          name="landPreparationStatus"
+          label="Current Status"
+          [isOption]="true"
+          [selections]="landPreparationOptions"
+          [formGroup]="reportForm"
+        />
+      </section>
+
+      <section class="report-card">
+        <h4><span class="material-symbols-outlined" aria-hidden="true">grass</span> 2. Planting Status</h4>
+        <div class="report-card__row">
+          <app-form-input
+            name="plantingStatus"
+            label="Status"
+            [isOption]="true"
+            [selections]="plantingStatusOptions"
+            [formGroup]="reportForm"
+          />
+          <app-form-input name="plantingDate" label="Planting Date" type="date" [formGroup]="reportForm" />
+        </div>
+      </section>
+
+      <section class="report-card">
+        <h4><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> 3. Seed &amp; Input Usage</h4>
+        <div class="report-card__row">
+          <app-form-input
+            name="seedVariety"
+            label="Seed Variety"
+            type="textform"
+            placeholder="e.g. Forastero Hybrid"
+            [formGroup]="reportForm"
+          />
+          <div class="toggle-field-group">
+            <label>Fertilizer Applied?</label>
+            <label class="toggle-field">
+              <span>Yes / No</span>
+              <input type="checkbox" [formControl]="reportForm.controls.fertilizerApplied" />
+            </label>
+          </div>
+          <app-form-input
+            name="fertilizerType"
+            label="Fertilizer Type"
+            type="textform"
+            placeholder="e.g. NPK 15-15-15"
+            [formGroup]="reportForm"
+          />
+        </div>
+      </section>
+
+      <section class="report-card">
+        <h4><span class="material-symbols-outlined" aria-hidden="true">trending_up</span> 4. Germination Rate</h4>
+        <div class="report-card__row">
+          <app-form-input
+            name="germinationRatePercent"
+            label="Rate (%)"
+            type="number"
+            placeholder="0-100"
+            [min]="0"
+            [formGroup]="reportForm"
+          />
+          <app-form-input
+            name="germinationCondition"
+            label="Condition"
+            [isOption]="true"
+            [selections]="germinationConditionOptions"
+            [formGroup]="reportForm"
+          />
+        </div>
+      </section>
+
+      <section class="report-card">
+        <h4><span class="material-symbols-outlined" aria-hidden="true">pest_control</span> 5. Weed &amp; Pest Control</h4>
+        <div class="report-card__row">
+          <app-form-input
+            name="pestPressureLevel"
+            label="Pressure Level"
+            [isOption]="true"
+            [selections]="pestPressureOptions"
+            [formGroup]="reportForm"
+          />
+          <app-form-input
+            name="pestWeedDetails"
+            label="Pest/Weed Details"
+            type="textform"
+            placeholder="Identify species if observed..."
+            [formGroup]="reportForm"
+          />
+        </div>
+      </section>
+
+      <section class="report-card">
+        <h4><span class="material-symbols-outlined" aria-hidden="true">water_drop</span> 6. Irrigation Status</h4>
+        <app-form-input
+          name="irrigationStatus"
+          label="Status"
+          [isOption]="true"
+          [selections]="irrigationStatusOptions"
+          [formGroup]="reportForm"
+        />
+      </section>
+
+      <section class="report-card">
+        <h4><span class="material-symbols-outlined" aria-hidden="true">photo_camera</span> 7. Crop Photos</h4>
+        <app-form-input
+          name="photos"
+          label="Photo URLs (one per line)"
+          type="textform"
+          placeholder="https://example.com/photo1.jpg"
+          [formGroup]="reportForm"
+        />
+      </section>
+
+      <section class="report-card">
+        <h4><span class="material-symbols-outlined" aria-hidden="true">warning</span> 8. Yield &amp; Risk Assessment</h4>
+        <div class="report-card__row">
+          <app-form-input name="yieldEstimate" label="Est. Yield (kg)" type="number" placeholder="Enter weight" [formGroup]="reportForm" />
+          <app-form-input
+            name="yieldConfidenceLevel"
+            label="Confidence Level"
+            [isOption]="true"
+            [selections]="confidenceLevelOptions"
+            [formGroup]="reportForm"
+          />
+        </div>
+        <app-form-input
+          name="riskNotes"
+          label="Advisory Notes"
+          type="textform"
+          placeholder="Provide detailed field observations and recommendations for the farmer..."
+          [formGroup]="reportForm"
+        />
+        <label class="toggle-field toggle-field--danger">
+          <span>
+            <strong>Flag as High Risk</strong>
+            <small>Alert your portfolio officer of immediate danger</small>
+          </span>
+          <input type="checkbox" [formControl]="reportForm.controls.alertGenerated" />
+        </label>
+      </section>
+    </form>
+
+    @if (!isApproved) {
+      <div class="report-footer">
+        <button type="button" class="btn btn-outline-secondary px-4 py-2" [disabled]="isSaving()" (click)="onSaveDraft()">
+          {{ isSaving() ? 'Saving...' : 'Save as Draft' }}
+        </button>
+        <button type="button" class="btn btn-success px-4 py-2 text-white fw-medium" [disabled]="isSaving()" (click)="onSubmitReport()">
+          <span class="material-symbols-outlined" aria-hidden="true">send</span>
+          {{ isSaving() ? 'Submitting...' : 'Submit Report' }}
+        </button>
+      </div>
+    }
+  } @else {
+    <div class="empty-state">Visit not found.</div>
+  }
+</div>
