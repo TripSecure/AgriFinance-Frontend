@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Serves the built Angular app as static assets. Unknown paths (e.g. /auth/login) return
+  // index.html so the Angular router can handle them.
+  "name": "agrifinance-frontend",
+  "compatibility_date": "2026-10-18",
+  "assets": {
+    "directory": "./dist/TripSecure/browser",
+    "not_found_handling": "single-page-application"
+  },
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "tripsecureagrifinanceltd.com", "custom_domain": true },
+    { "pattern": "www.tripsecureagrifinanceltd.com", "custom_domain": true }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
