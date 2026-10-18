@@ -48,8 +48,27 @@ export interface AdminLoanDetail {
     submittedAt: string | null;
     reviewedAt: string | null;
     createdAt: string;
+    canReview: boolean;
   };
+  vouchers: AdminLoanVoucher[];
   riskProfile: { id: string; score: number; riskCategory: string; premiumCategory: string } | null;
+}
+
+export interface AdminLoanVoucher {
+  id: string;
+  voucherCode: string;
+  service: string;
+  amountGhs: number;
+  status: string;
+  expiresAt: string | null;
+  provider: { id: string; name: string } | null;
+  order: { id: string; status: string } | null;
+}
+
+export interface ReviewAdminLoanPayload {
+  decision: 'approve' | 'reject';
+  approvedAmount?: number | null;
+  reason?: string | null;
 }
 
 interface AdminLoansResponse {
@@ -82,6 +101,8 @@ export interface AdminLoansStateModel {
   loanDetail: AdminLoanDetail | null;
   isDetailLoading: boolean;
   detailErrors: string[];
+  isReviewing: boolean;
+  reviewMessage: string | null;
 }
 
 export class GetAdminLoans {
@@ -92,6 +113,14 @@ export class GetAdminLoans {
 export class GetAdminLoanDetail {
   static readonly type = '[Admin Loans] Get Loan Detail';
   constructor(public loanId: string) {}
+}
+
+export class ReviewAdminLoan {
+  static readonly type = '[Admin Loans] Review Loan';
+  constructor(
+    public loanId: string,
+    public payload: ReviewAdminLoanPayload,
+  ) {}
 }
 
 @State<AdminLoansStateModel>({
@@ -109,6 +138,8 @@ export class GetAdminLoanDetail {
     loanDetail: null,
     isDetailLoading: false,
     detailErrors: [],
+    isReviewing: false,
+    reviewMessage: null,
   },
 })
 @Injectable()
@@ -154,6 +185,21 @@ export class AdminLoansState {
   @Selector()
   static isDetailLoading(state: AdminLoansStateModel): boolean {
     return state.isDetailLoading;
+  }
+
+  @Selector()
+  static detailErrors(state: AdminLoansStateModel): string[] {
+    return state.detailErrors;
+  }
+
+  @Selector()
+  static isReviewing(state: AdminLoansStateModel): boolean {
+    return state.isReviewing;
+  }
+
+  @Selector()
+  static reviewMessage(state: AdminLoansStateModel): string | null {
+    return state.reviewMessage;
   }
 
   @Action(GetAdminLoans)
@@ -205,5 +251,41 @@ export class AdminLoansState {
         return of(error);
       }),
     );
+  }
+
+  @Action(ReviewAdminLoan)
+  reviewLoan(ctx: StateContext<AdminLoansStateModel>, { loanId, payload }: ReviewAdminLoan) {
+    ctx.patchState({ isReviewing: true, detailErrors: [], reviewMessage: null });
+
+    return this.http
+      .post<{ message?: string; data: AdminLoanDetail }>(`${environment.api}/admin/loans/${loanId}/review`, payload)
+      .pipe(
+        tap((response) => {
+          const updated = response.data;
+          ctx.patchState({
+            isReviewing: false,
+            loanDetail: updated,
+            reviewMessage: response.message ?? null,
+            loans: ctx.getState().loans.map((loan) =>
+              loan.id === updated.loan.id
+                ? {
+                    ...loan,
+                    status: updated.loan.status,
+                    approvedAmountGhs: updated.loan.approvedAmountGhs,
+                    reviewedAt: updated.loan.reviewedAt,
+                  }
+                : loan,
+            ),
+            queue: ctx.getState().queue.filter((loan) => loan.id !== updated.loan.id),
+          });
+        }),
+        catchError((error: unknown) => {
+          ctx.patchState({
+            isReviewing: false,
+            detailErrors: [extractErrorMessage(error, 'Unable to review this loan.')],
+          });
+          return of(error);
+        }),
+      );
   }
 }

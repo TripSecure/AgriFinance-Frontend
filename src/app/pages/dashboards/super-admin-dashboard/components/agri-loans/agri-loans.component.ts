@@ -1,19 +1,40 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Dialog } from 'primeng/dialog';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { FormInputComponent } from '../../../../../shared/form-input/form-input.component';
+import { ToastrService } from '../../../../../shared/toastr/toastr.service';
 import {
   AdminLoan,
   AdminLoansQueryParams,
   AdminLoansState,
   GetAdminLoanDetail,
   GetAdminLoans,
+  ReviewAdminLoan,
 } from './agri-loans.state';
+
+// Loan services a provider fulfils; each one becomes a voucher when the loan is approved.
+const voucherServices = new Set([
+  'agrochemicals',
+  'soil_testing',
+  'tractor_services',
+  'irrigation_and_water_support',
+  'logistics_and_aggregation',
+]);
+
+const voucherStatusLabels: Record<string, string> = {
+  generated: 'Open',
+  assigned: 'Assigned',
+  redeemed: 'Redeemed',
+  expired: 'Expired',
+  cancelled: 'Cancelled',
+};
 
 interface StatusFilterOption {
   label: string;
@@ -40,13 +61,14 @@ const statusOptions: readonly StatusFilterOption[] = [
 
 @Component({
   selector: 'app-agri-loans',
-  imports: [DatePipe, DecimalPipe, Dialog, MenuModule, TableModule],
+  imports: [DatePipe, DecimalPipe, Dialog, FormInputComponent, MenuModule, ReactiveFormsModule, TableModule],
   templateUrl: './agri-loans.component.html',
   styleUrl: './agri-loans.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AgriLoansComponent {
   private readonly store = inject(Store);
+  private readonly toastr = inject(ToastrService);
 
   protected readonly loans = this.store.selectSignal(AdminLoansState.loans);
   protected readonly loansData = this.store.selectSignal(AdminLoansState.loansConfigs);
@@ -58,6 +80,18 @@ export class AgriLoansComponent {
   protected readonly isDetailModalVisible = signal(false);
   protected readonly loanDetail = this.store.selectSignal(AdminLoansState.loanDetail);
   protected readonly isDetailLoading = this.store.selectSignal(AdminLoansState.isDetailLoading);
+  protected readonly isReviewing = this.store.selectSignal(AdminLoansState.isReviewing);
+
+  protected readonly reviewMode = signal<'approve' | 'reject' | null>(null);
+  protected readonly reviewForm = new FormGroup({
+    approvedAmount: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0.01)] }),
+    reason: new FormControl('', { nonNullable: true }),
+  });
+
+  protected readonly voucherServiceCount = computed(() => {
+    const bundle = this.loanDetail()?.loan.inputBundle ?? [];
+    return new Set(bundle.filter((item): item is string => typeof item === 'string' && voucherServices.has(item))).size;
+  });
 
   protected readonly cropPlanEntries = computed<KeyValueView[]>(() =>
     this.toEntries(this.loanDetail()?.loan.cropPlan),
@@ -148,7 +182,73 @@ export class AgriLoansComponent {
 
   protected openDetails(loanId: string): void {
     this.isDetailModalVisible.set(true);
+    this.reviewMode.set(null);
     this.store.dispatch(new GetAdminLoanDetail(loanId));
+  }
+
+  protected voucherStatusLabel(status: string): string {
+    return voucherStatusLabels[status] ?? this.formatLabel(status);
+  }
+
+  protected voucherShareGhs(): number {
+    const amount = Number(this.reviewForm.controls.approvedAmount.value ?? 0);
+    const count = this.voucherServiceCount() || 1;
+    return Number.isFinite(amount) ? amount / count : 0;
+  }
+
+  protected onStartReview(mode: 'approve' | 'reject'): void {
+    const detail = this.loanDetail();
+    if (!detail) {
+      return;
+    }
+
+    this.reviewForm.reset({ approvedAmount: detail.loan.requestedAmountGhs, reason: '' });
+    this.reviewForm.controls.approvedAmount.setValidators(
+      mode === 'approve'
+        ? [Validators.required, Validators.min(0.01), Validators.max(detail.loan.requestedAmountGhs)]
+        : [],
+    );
+    this.reviewForm.controls.reason.setValidators(mode === 'reject' ? [Validators.required] : []);
+    this.reviewForm.controls.approvedAmount.updateValueAndValidity();
+    this.reviewForm.controls.reason.updateValueAndValidity();
+    this.reviewMode.set(mode);
+  }
+
+  protected onSubmitReview(): void {
+    const detail = this.loanDetail();
+    const mode = this.reviewMode();
+    if (!detail || !mode) {
+      return;
+    }
+
+    if (this.reviewForm.invalid) {
+      this.reviewForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.reviewForm.getRawValue();
+    this.store
+      .dispatch(
+        new ReviewAdminLoan(detail.loan.id, {
+          decision: mode,
+          approvedAmount: mode === 'approve' ? Number(raw.approvedAmount) : null,
+          reason: raw.reason.trim() || null,
+        }),
+      )
+      .subscribe(() => {
+        const errors = this.store.selectSnapshot(AdminLoansState.detailErrors);
+        if (errors.length) {
+          this.toastr.triggerToastr('error', errors[0]);
+          return;
+        }
+
+        this.reviewMode.set(null);
+        this.toastr.triggerToastr(
+          'success',
+          this.store.selectSnapshot(AdminLoansState.reviewMessage) ?? 'Loan reviewed successfully.',
+        );
+        this.dispatchLoad();
+      });
   }
 
   private toEntries(source: Record<string, unknown> | undefined | null): KeyValueView[] {

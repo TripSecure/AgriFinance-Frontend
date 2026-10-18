@@ -1,0 +1,125 @@
+@if (isLoading()) {
+  <p class="text-secondary py-3 mb-0">Loading vouchers...</p>
+} @else {
+  <div class="d-flex flex-column gap-3 pt-2">
+    <div class="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <div class="fw-semibold text-dark fs-6">{{ loan().farmerName || 'Loan' }}</div>
+        @if (loan().approvedAmount != null) {
+          <div class="small text-secondary mt-1">Approved for GHS {{ loan().approvedAmount | number: '1.2-2' }}</div>
+        }
+      </div>
+      @if (vouchers().length) {
+        <span class="small text-secondary">{{ openCount() }} of {{ vouchers().length }} still open</span>
+      }
+    </div>
+
+    @if (vouchers().length === 0) {
+      <div class="empty-note">
+        <span class="material-symbols-outlined" aria-hidden="true">confirmation_number</span>
+        @if (loan().status === 'approved') {
+          <p>This loan has no provider services, so no vouchers were issued.</p>
+        } @else {
+          <p>Vouchers are issued automatically once the loan is approved. This loan is currently <strong>{{ loanStatusLabel() }}</strong>.</p>
+        }
+      </div>
+    }
+
+    @for (voucher of vouchers(); track voucher.id) {
+      <article class="voucher-card">
+        <header class="voucher-card__header">
+          <div>
+            <h4>{{ serviceLabel(voucher.service) }}</h4>
+            <span class="voucher-card__amount">GHS {{ voucher.amountGhs | number: '1.2-2' }}</span>
+          </div>
+          <span
+            class="status-pill"
+            [class.status-pill--open]="voucher.status === 'generated'"
+            [class.status-pill--assigned]="voucher.status === 'assigned'"
+            [class.status-pill--done]="voucher.status === 'redeemed'"
+            [class.status-pill--closed]="voucher.status === 'expired' || voucher.status === 'cancelled'"
+          >
+            {{ voucherStatusLabel(voucher.status) }}
+          </span>
+        </header>
+
+        <dl class="voucher-card__facts">
+          <dt>Voucher code</dt>
+          <dd class="voucher-card__code">{{ voucher.voucherCode }}</dd>
+          <dt>Provider</dt>
+          <dd>{{ voucher.provider?.name || 'Not assigned. Any approved ' + providerKindSingular(voucher.providerRole) + ' can scan it.' }}</dd>
+          @if (voucher.order) {
+            <dt>Order</dt>
+            <dd>{{ orderStatusLabel(voucher.order.status) }}</dd>
+          }
+          <dt>{{ voucher.status === 'redeemed' ? 'Redeemed' : 'Expires' }}</dt>
+          <dd>{{ ((voucher.status === 'redeemed' ? voucher.redeemedAt : voucher.expiresAt) | date: 'mediumDate') || '-' }}</dd>
+        </dl>
+
+        @if (assigningVoucherId() === voucher.id) {
+          <form class="assign-form" [formGroup]="assignForm" (ngSubmit)="onConfirmAssign(voucher)">
+            @if (!isProvidersLoading() && providers().length === 0) {
+              <p class="small text-secondary mb-0">
+                There are no approved {{ providerKind(voucher.providerRole) }} yet. Leave the voucher open, or approve one in the admin dashboard first.
+              </p>
+            } @else {
+              <app-form-input
+                name="providerId"
+                [label]="'Send to which ' + providerKindSingular(voucher.providerRole) + '?'"
+                [isSelect]="true"
+                [options]="providers()"
+                [placeholder]="isProvidersLoading() ? 'Loading providers...' : 'Choose a provider'"
+                [filter]="true"
+                [isRequired]="true"
+                [formGroup]="assignForm"
+              />
+            }
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="onCancelAssign()" [disabled]="isAssigning()">
+                Cancel
+              </button>
+              @if (providers().length > 0) {
+                <button type="submit" class="btn btn-success btn-sm text-white" [disabled]="isAssigning() || assignForm.invalid">
+                  {{ isAssigning() ? 'Assigning...' : 'Assign voucher' }}
+                </button>
+              }
+            </div>
+          </form>
+        }
+
+        @if (qrVoucherId() === voucher.id) {
+          <div class="qr-panel">
+            @if (qrImages()[voucher.id]; as image) {
+              <img [src]="image" width="200" height="200" [alt]="'QR code for voucher ' + voucher.voucherCode" />
+            } @else {
+              <p class="small text-secondary mb-0">Drawing QR code...</p>
+            }
+            <p class="small text-secondary mb-0">The farmer shows this, or reads out the code, at the provider.</p>
+          </div>
+        }
+
+        <div class="voucher-card__actions">
+          @if (voucher.canAssign && assigningVoucherId() !== voucher.id) {
+            <button type="button" class="btn btn-success btn-sm text-white" (click)="onStartAssign(voucher)">
+              <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
+              Assign to provider
+            </button>
+          }
+          @if (voucher.status === 'generated' || voucher.status === 'assigned') {
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="onToggleQr(voucher)" [attr.aria-expanded]="qrVoucherId() === voucher.id">
+              <span class="material-symbols-outlined" aria-hidden="true">qr_code_2</span>
+              {{ qrVoucherId() === voucher.id ? 'Hide QR' : 'Show QR' }}
+            </button>
+            @if (qrVoucherId() === voucher.id && qrImages()[voucher.id]) {
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="onPrint(voucher)">
+                <span class="material-symbols-outlined" aria-hidden="true">print</span>
+                Print voucher
+              </button>
+            }
+            <button type="button" class="btn btn-link btn-sm" (click)="onCopyCode(voucher)">Copy code</button>
+          }
+        </div>
+      </article>
+    }
+  </div>
+}

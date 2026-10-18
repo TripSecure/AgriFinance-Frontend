@@ -201,6 +201,91 @@
           </div>
         }
 
+        @if (detail.loan.canReview) {
+          <section class="review-panel" aria-labelledby="loan-review-heading">
+            <h4 id="loan-review-heading" class="section-heading">Bank decision</h4>
+            @if (reviewMode() === null) {
+              <p class="small text-secondary mb-2">
+                You are approving on behalf of the bank. Approving issues {{ voucherServiceCount() }}
+                voucher{{ voucherServiceCount() === 1 ? '' : 's' }} for the portfolio officer to send to providers.
+              </p>
+              <div class="d-flex gap-2 flex-wrap">
+                <button type="button" class="btn btn-success text-white" (click)="onStartReview('approve')">Approve loan</button>
+                <button type="button" class="btn btn-outline-danger" (click)="onStartReview('reject')">Reject loan</button>
+              </div>
+            } @else {
+              <form class="d-flex flex-column gap-3" [formGroup]="reviewForm" (ngSubmit)="onSubmitReview()">
+                @if (reviewMode() === 'approve') {
+                  <app-form-input
+                    name="approvedAmount"
+                    label="Approved amount (GHS)"
+                    type="number"
+                    [min]="0"
+                    [isRequired]="true"
+                    [formGroup]="reviewForm"
+                  />
+                  <p class="small text-secondary mb-0">
+                    At most the requested GHS {{ detail.loan.requestedAmountGhs | number: '1.2-2' }}.
+                    @if (voucherServiceCount() > 0) {
+                      This issues {{ voucherServiceCount() }} voucher{{ voucherServiceCount() === 1 ? '' : 's' }} of
+                      GHS {{ voucherShareGhs() | number: '1.2-2' }} each, valid for 90 days.
+                    } @else {
+                      This loan has no provider services, so no vouchers will be issued.
+                    }
+                  </p>
+                  <app-form-input
+                    name="reason"
+                    label="Note (optional)"
+                    type="textform"
+                    placeholder="e.g. Approved at 80% of the request."
+                    [formGroup]="reviewForm"
+                  />
+                } @else {
+                  <app-form-input
+                    name="reason"
+                    label="Reason for rejecting"
+                    type="textform"
+                    [isRequired]="true"
+                    placeholder="The portfolio officer will see this."
+                    [formGroup]="reviewForm"
+                  />
+                }
+                <div class="d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-outline-secondary" (click)="reviewMode.set(null)" [disabled]="isReviewing()">Back</button>
+                  @if (reviewMode() === 'approve') {
+                    <button type="submit" class="btn btn-success text-white" [disabled]="isReviewing() || reviewForm.invalid">
+                      {{ isReviewing() ? 'Approving...' : 'Confirm approval' }}
+                    </button>
+                  } @else {
+                    <button type="submit" class="btn btn-danger text-white" [disabled]="isReviewing() || reviewForm.invalid">
+                      {{ isReviewing() ? 'Rejecting...' : 'Confirm rejection' }}
+                    </button>
+                  }
+                </div>
+              </form>
+            }
+          </section>
+        }
+
+        @if (detail.vouchers.length > 0) {
+          <div>
+            <h4 class="section-heading">Vouchers</h4>
+            <div class="d-flex flex-column gap-2">
+              @for (voucher of detail.vouchers; track voucher.id) {
+                <div class="detail-cell d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div>
+                    <strong>{{ formatLabel(voucher.service) }}</strong>
+                    <span class="small text-secondary d-block">{{ voucher.voucherCode }} &bull; GHS {{ voucher.amountGhs | number: '1.2-2' }}</span>
+                  </div>
+                  <span class="small text-secondary">
+                    {{ voucherStatusLabel(voucher.status) }}{{ voucher.provider ? ' to ' + voucher.provider.name : '' }}
+                  </span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
         @if (cropPlanEntries().length > 0) {
           <div>
             <h4 class="section-heading">Crop plan</h4>

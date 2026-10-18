@@ -1,13 +1,15 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MenuItem } from 'primeng/api';
+import { Dialog } from 'primeng/dialog';
 import { MenuModule } from 'primeng/menu';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ToastrService } from '../../../../../shared/toastr/toastr.service';
+import { LoanVouchersComponent } from '../loan-vouchers/loan-vouchers.component';
 import {
   GetPortfolioLoans,
   PortfolioLoanApplication,
@@ -53,7 +55,7 @@ const loanStatusOptions: readonly LoanStatusFilterOption[] = [
 
 @Component({
   selector: 'app-loans',
-  imports: [DatePipe, MenuModule, TableModule],
+  imports: [DatePipe, Dialog, LoanVouchersComponent, MenuModule, TableModule],
   templateUrl: './loans.component.html',
   styleUrl: './loans.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,6 +75,7 @@ export class LoansComponent {
   protected readonly statusOptions = loanStatusOptions;
 
   protected selectedLoanForAction: PortfolioLoanApplication | null = null;
+  protected readonly vouchersLoanId = signal<string | null>(null);
 
   protected readonly statusMenuItems: MenuItem[] = [
     {
@@ -94,6 +97,15 @@ export class LoansComponent {
       command: () => {
         if (this.selectedLoanForAction) {
           this.onViewLoan(this.selectedLoanForAction);
+        }
+      },
+    },
+    {
+      label: 'Vouchers',
+      icon: 'confirmation_number',
+      command: () => {
+        if (this.selectedLoanForAction?.id) {
+          this.vouchersLoanId.set(this.selectedLoanForAction.id);
         }
       },
     },

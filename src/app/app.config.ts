@@ -27,6 +27,7 @@ import { PortfolioInputProvidersState } from './pages/dashboards/portfolio-offic
 import { PortfolioMonitoringVisitsState } from './pages/dashboards/portfolio-officer-dashboard/components/visits-reports/visits-reports.state';
 import { PortfolioFarmsState } from './pages/dashboards/portfolio-officer-dashboard/components/farms/farms.state';
 import { ProviderOrdersState } from './pages/dashboards/input-provider-dashboard/components/orders/orders.state';
+import { LoanVouchersState } from './pages/dashboards/portfolio-officer-dashboard/components/loan-vouchers/loan-vouchers.state';
 import { environment } from '../environment/environment';
 
 const ngxsFeatures: EnvironmentProviders[] = [
@@ -71,6 +72,7 @@ export const appConfig: ApplicationConfig = {
         PortfolioMonitoringVisitsState,
         PortfolioFarmsState,
         ProviderOrdersState,
+        LoanVouchersState,
       ],
       ...ngxsFeatures,
     ),

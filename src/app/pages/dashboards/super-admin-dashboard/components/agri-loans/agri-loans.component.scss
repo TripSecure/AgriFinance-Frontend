@@ -320,3 +320,14 @@ p-table {
     }
   }
 }
+
+.review-panel {
+  padding: 1rem;
+  border: 1px solid #d1fadf;
+  border-radius: 12px;
+  background: #f6fef9;
+
+  .section-heading {
+    margin-top: 0;
+  }
+}

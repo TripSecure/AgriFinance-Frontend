@@ -147,4 +147,19 @@
       </ng-template>
     </p-menu>
   </div>
+
+  <p-dialog
+    [visible]="vouchersLoanId() !== null"
+    (visibleChange)="!$event && vouchersLoanId.set(null)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Loan vouchers"
+    [style]="{ width: '90vw', maxWidth: '620px' }"
+    appendTo="body"
+  >
+    @if (vouchersLoanId(); as loanId) {
+      <app-loan-vouchers [loanId]="loanId" />
+    }
+  </p-dialog>
 </div>
