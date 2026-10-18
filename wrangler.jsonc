@@ -1,17 +1,24 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // Serves the built Angular app as static assets. Unknown paths (e.g. /auth/login) return
-  // index.html so the Angular router can handle them.
+  // Serves the built Angular app as static assets on agrifinance.tripsecureagrifinanceltd.com.
+  // Unknown paths (e.g. /auth/login) return index.html so the Angular router can handle them.
+  // cloudflare/worker.js redirects any other hostname (workers.dev, the bare domain, www) there.
   "name": "agrifinance-frontend",
+  "main": "./cloudflare/worker.js",
   "compatibility_date": "2026-10-18",
   "assets": {
     "directory": "./dist/TripSecure/browser",
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true
   },
   "workers_dev": true,
   "routes": [
-    { "pattern": "tripsecureagrifinanceltd.com", "custom_domain": true },
-    { "pattern": "www.tripsecureagrifinanceltd.com", "custom_domain": true }
+    { "pattern": "agrifinance.tripsecureagrifinanceltd.com", "custom_domain": true }
+    // After the old DNS records for the bare domain and www are deleted, add these so they
+    // redirect to the app:
+    // { "pattern": "tripsecureagrifinanceltd.com", "custom_domain": true },
+    // { "pattern": "www.tripsecureagrifinanceltd.com", "custom_domain": true }
   ],
   "observability": {
     "enabled": true
