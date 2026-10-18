@@ -11,6 +11,7 @@ import {
   GetVoucherProviders,
   LoanVoucher,
   LoanVouchersState,
+  ResendVoucherSms,
 } from './loan-vouchers.state';
 
 const serviceLabels: Record<string, string> = {
@@ -65,6 +66,7 @@ export class LoanVouchersComponent implements OnInit {
   protected readonly providers = this.store.selectSignal(LoanVouchersState.providers);
   protected readonly isProvidersLoading = this.store.selectSignal(LoanVouchersState.isProvidersLoading);
   protected readonly isAssigning = this.store.selectSignal(LoanVouchersState.isAssigning);
+  protected readonly sendingSmsVoucherId = this.store.selectSignal(LoanVouchersState.sendingSmsVoucherId);
 
   protected readonly assigningVoucherId = signal<string | null>(null);
   protected readonly qrVoucherId = signal<string | null>(null);
@@ -129,6 +131,15 @@ export class LoanVouchersComponent implements OnInit {
 
       this.assigningVoucherId.set(null);
       this.toastr.triggerToastr('success', `Voucher sent to ${providerName}. It is now on their order list.`);
+    });
+  }
+
+  protected onSendSms(voucher: LoanVoucher): void {
+    this.store.dispatch(new ResendVoucherSms(voucher.id)).subscribe(() => {
+      if (this.toastFirstError()) {
+        return;
+      }
+      this.toastr.triggerToastr('success', `Voucher code ${voucher.voucherCode} texted to the farmer.`);
     });
   }
 

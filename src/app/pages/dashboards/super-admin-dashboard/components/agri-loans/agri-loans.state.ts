@@ -63,6 +63,7 @@ export interface AdminLoanVoucher {
   expiresAt: string | null;
   provider: { id: string; name: string } | null;
   order: { id: string; status: string } | null;
+  lastSmsAt: string | null;
 }
 
 export interface ReviewAdminLoanPayload {

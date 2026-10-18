@@ -207,7 +207,8 @@
             @if (reviewMode() === null) {
               <p class="small text-secondary mb-2">
                 You are approving on behalf of the bank. Approving issues {{ voucherServiceCount() }}
-                voucher{{ voucherServiceCount() === 1 ? '' : 's' }} for the portfolio officer to send to providers.
+                voucher{{ voucherServiceCount() === 1 ? '' : 's' }}, texts each code to the farmer's phone, and lets the
+                portfolio officer send them to providers.
               </p>
               <div class="d-flex gap-2 flex-wrap">
                 <button type="button" class="btn btn-success text-white" (click)="onStartReview('approve')">Approve loan</button>
@@ -228,7 +229,7 @@
                     At most the requested GHS {{ detail.loan.requestedAmountGhs | number: '1.2-2' }}.
                     @if (voucherServiceCount() > 0) {
                       This issues {{ voucherServiceCount() }} voucher{{ voucherServiceCount() === 1 ? '' : 's' }} of
-                      GHS {{ voucherShareGhs() | number: '1.2-2' }} each, valid for 90 days.
+                      GHS {{ voucherShareGhs() | number: '1.2-2' }} each, valid for 90 days, and texts each code to the farmer.
                     } @else {
                       This loan has no provider services, so no vouchers will be issued.
                     }
@@ -277,8 +278,9 @@
                     <strong>{{ formatLabel(voucher.service) }}</strong>
                     <span class="small text-secondary d-block">{{ voucher.voucherCode }} &bull; GHS {{ voucher.amountGhs | number: '1.2-2' }}</span>
                   </div>
-                  <span class="small text-secondary">
+                  <span class="small text-secondary text-end">
                     {{ voucherStatusLabel(voucher.status) }}{{ voucher.provider ? ' to ' + voucher.provider.name : '' }}
+                    <span class="d-block">{{ voucher.lastSmsAt ? 'Texted ' + (voucher.lastSmsAt | date: 'MMM d, h:mm a') : 'Not texted yet' }}</span>
                   </span>
                 </div>
               }

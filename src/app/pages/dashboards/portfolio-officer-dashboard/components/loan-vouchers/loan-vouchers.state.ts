@@ -19,6 +19,8 @@ export interface LoanVoucher {
   provider: { id: string; name: string } | null;
   order: { id: string; status: string } | null;
   canAssign: boolean;
+  lastSmsAt: string | null;
+  canSendSms: boolean;
 }
 
 export interface VoucherProviderOption {
@@ -43,6 +45,7 @@ export interface LoanVouchersStateModel {
   providers: VoucherProviderOption[];
   isProvidersLoading: boolean;
   isAssigning: boolean;
+  sendingSmsVoucherId: string | null;
   errors: string[];
 }
 
@@ -53,6 +56,11 @@ export class GetLoanVouchers {
 
 export class GetVoucherProviders {
   static readonly type = '[Loan Vouchers] Get Providers';
+  constructor(public voucherId: string) {}
+}
+
+export class ResendVoucherSms {
+  static readonly type = '[Loan Vouchers] Resend Voucher SMS';
   constructor(public voucherId: string) {}
 }
 
@@ -76,6 +84,7 @@ export class AssignVoucher {
     providers: [],
     isProvidersLoading: false,
     isAssigning: false,
+    sendingSmsVoucherId: null,
     errors: [],
   },
 })
@@ -116,6 +125,11 @@ export class LoanVouchersState {
   @Selector()
   static isAssigning(state: LoanVouchersStateModel): boolean {
     return state.isAssigning;
+  }
+
+  @Selector()
+  static sendingSmsVoucherId(state: LoanVouchersStateModel): string | null {
+    return state.sendingSmsVoucherId;
   }
 
   @Selector()
@@ -163,6 +177,32 @@ export class LoanVouchersState {
           ctx.patchState({
             isProvidersLoading: false,
             errors: [extractErrorMessage(error, 'Unable to load providers for this voucher.')],
+          });
+          return of(error);
+        }),
+      );
+  }
+
+  @Action(ResendVoucherSms)
+  resendSms(ctx: StateContext<LoanVouchersStateModel>, { voucherId }: ResendVoucherSms) {
+    ctx.patchState({ sendingSmsVoucherId: voucherId, errors: [] });
+
+    return this.http
+      .post<{ data: { voucher: LoanVoucher | null } }>(`${environment.api}/portfolio/vouchers/${voucherId}/sms`, {})
+      .pipe(
+        tap((response) => {
+          const updated = response.data.voucher;
+          ctx.patchState({
+            sendingSmsVoucherId: null,
+            vouchers: updated
+              ? ctx.getState().vouchers.map((voucher) => (voucher.id === updated.id ? updated : voucher))
+              : ctx.getState().vouchers,
+          });
+        }),
+        catchError((error: unknown) => {
+          ctx.patchState({
+            sendingSmsVoucherId: null,
+            errors: [extractErrorMessage(error, 'Unable to text this voucher code.')],
           });
           return of(error);
         }),

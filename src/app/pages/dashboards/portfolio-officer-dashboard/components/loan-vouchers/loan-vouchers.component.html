@@ -52,6 +52,8 @@
             <dt>Order</dt>
             <dd>{{ orderStatusLabel(voucher.order.status) }}</dd>
           }
+          <dt>Texted to farmer</dt>
+          <dd>{{ voucher.lastSmsAt ? (voucher.lastSmsAt | date: 'medium') : 'Not yet' }}</dd>
           <dt>{{ voucher.status === 'redeemed' ? 'Redeemed' : 'Expires' }}</dt>
           <dd>{{ ((voucher.status === 'redeemed' ? voucher.redeemedAt : voucher.expiresAt) | date: 'mediumDate') || '-' }}</dd>
         </dl>
@@ -94,7 +96,7 @@
             } @else {
               <p class="small text-secondary mb-0">Drawing QR code...</p>
             }
-            <p class="small text-secondary mb-0">The farmer shows this, or reads out the code, at the provider.</p>
+            <p class="small text-secondary mb-0">For farmers with a smartphone. Everyone also gets the code by text.</p>
           </div>
         }
 
@@ -103,6 +105,17 @@
             <button type="button" class="btn btn-success btn-sm text-white" (click)="onStartAssign(voucher)">
               <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
               Assign to provider
+            </button>
+          }
+          @if (voucher.canSendSms) {
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm"
+              (click)="onSendSms(voucher)"
+              [disabled]="sendingSmsVoucherId() === voucher.id"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">sms</span>
+              {{ sendingSmsVoucherId() === voucher.id ? 'Sending...' : voucher.lastSmsAt ? 'Text code again' : 'Text code to farmer' }}
             </button>
           }
           @if (voucher.status === 'generated' || voucher.status === 'assigned') {
