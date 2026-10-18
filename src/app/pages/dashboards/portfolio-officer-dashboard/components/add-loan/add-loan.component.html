@@ -86,13 +86,13 @@
         <div class="form-section-body bundle-grid">
           <app-form-input
             name="agrochemicals"
-            label="Agrochemicals"
+            label="Seeds, fertiliser and agrochemicals"
             type="checkbox"
             [formGroup]="loanForm"
           />
           <app-form-input
-            name="seeds"
-            label="Seeds and planting materials"
+            name="soilTesting"
+            label="Soil testing"
             type="checkbox"
             [formGroup]="loanForm"
           />
@@ -103,8 +103,8 @@
             [formGroup]="loanForm"
           />
           <app-form-input
-            name="farmEquipment"
-            label="Farm tools and equipment"
+            name="tractorServices"
+            label="Tractor services"
             type="checkbox"
             [formGroup]="loanForm"
           />
@@ -131,13 +131,11 @@
           <button
             type="button"
             class="risk-button"
-            [disabled]="isLoadingRiskPreview() || isCreating()"
+            [disabled]="isCreating()"
             (click)="loadRiskProfile()"
           >
             <mat-icon aria-hidden="true">psychology</mat-icon>
-            <span>{{
-              isLoadingRiskPreview() ? 'Connecting to TARIA AI...' : 'Load Risk Profile'
-            }}</span>
+            <span>Load Risk Profile</span>
           </button>
           <div class="risk-results" aria-live="polite">
             <div>
@@ -223,7 +221,7 @@
             <dd>{{ principalAmount() | currency: 'GHS' : 'GH₵' : '1.2-2' }}</dd>
           </div>
           <div>
-            <dt>Insurance Premium (1.2%)</dt>
+            <dt>Insurance Premium (from TARIA)</dt>
             <dd>{{ insurancePremium() | currency: 'GHS' : 'GH₵' : '1.2-2' }}</dd>
           </div>
           <div>
@@ -247,7 +245,7 @@
           <button
             type="button"
             class="summary-action summary-action--bank"
-            [disabled]="isCreating() || isLoadingRiskPreview()"
+            [disabled]="isCreating()"
             (click)="onSubmit('bank')"
           >
             <span>{{ isCreating() ? 'Submitting...' : 'Submit to Bank' }}</span>
@@ -256,7 +254,7 @@
           <button
             type="button"
             class="summary-action summary-action--insurance"
-            [disabled]="isCreating() || isLoadingRiskPreview()"
+            [disabled]="isCreating()"
             (click)="onSubmit('insurance')"
           >
             <span>{{ isCreating() ? 'Submitting...' : 'Submit to Insurance Partner' }}</span>

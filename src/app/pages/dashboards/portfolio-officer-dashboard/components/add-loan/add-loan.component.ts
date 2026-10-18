@@ -42,12 +42,26 @@ type LoanFormControls = {
   interestRate: FormControl<string | null>;
   repaymentPeriod: FormControl<string | null>;
   agrochemicals: FormControl<boolean | null>;
-  seeds: FormControl<boolean | null>;
+  soilTesting: FormControl<boolean | null>;
+  tractorServices: FormControl<boolean | null>;
   irrigation: FormControl<boolean | null>;
-  farmEquipment: FormControl<boolean | null>;
   insurance: FormControl<boolean | null>;
   logistics: FormControl<boolean | null>;
 };
+
+// Form checkboxes and the backend loan service each one sends (the backend's serviceCatalog).
+const serviceControls = [
+  ['agrochemicals', 'agrochemicals'],
+  ['soilTesting', 'soil_testing'],
+  ['tractorServices', 'tractor_services'],
+  ['irrigation', 'irrigation_and_water_support'],
+  ['logistics', 'logistics_and_aggregation'],
+  ['insurance', 'insurance'],
+] as const;
+
+// Matches the backend: the annual rate, less 0.25% when soil testing or irrigation is included.
+const baseInterestRateAnnual = 4.5;
+const greenServiceDiscount = 0.25;
 
 @Component({
   selector: 'app-add-loan',
@@ -66,9 +80,6 @@ export class AddLoanComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly isCreating = this.store.selectSignal(PortfolioLoansState.isCreating);
-  protected readonly isLoadingRiskPreview = this.store.selectSignal(
-    PortfolioLoansState.isLoadingRiskPreview,
-  );
   protected readonly stateErrors = this.store.selectSignal(PortfolioLoansState.errors);
   protected readonly stateMessage = this.store.selectSignal(PortfolioLoansState.message);
   protected readonly farmers = this.store.selectSignal(FarmersState.farmers);
@@ -134,9 +145,9 @@ export class AddLoanComponent implements OnInit {
     interestRate: new FormControl<string | null>(null),
     repaymentPeriod: new FormControl<string | null>(null, Validators.required),
     agrochemicals: new FormControl<boolean | null>(null),
-    seeds: new FormControl<boolean | null>(null),
+    soilTesting: new FormControl<boolean | null>(null),
+    tractorServices: new FormControl<boolean | null>(null),
     irrigation: new FormControl<boolean | null>(null),
-    farmEquipment: new FormControl<boolean | null>(null),
     insurance: new FormControl<boolean | null>(null),
     logistics: new FormControl<boolean | null>(null),
   });
@@ -152,12 +163,27 @@ export class AddLoanComponent implements OnInit {
     ),
   );
 
+  private readonly formValue = toSignal(
+    this.loanForm.valueChanges.pipe(startWith(this.loanForm.getRawValue())),
+    { initialValue: this.loanForm.getRawValue() },
+  );
+
   protected readonly principalAmount = computed(() => Number(this.loanAmount()) || 0);
-  protected readonly insurancePremium = computed(() => this.principalAmount() * 0.012);
+  // TARIA sets the insurance premium; there is no local premium formula.
+  protected readonly insurancePremium = computed(() =>
+    this.formValue().insurance ? Number(this.tariaAssessment()?.insurancePremium ?? 0) : 0,
+  );
   protected readonly applicationFee = 25;
+  protected readonly interestRateAnnual = computed(() => {
+    const value = this.formValue();
+    return value.soilTesting || value.irrigation
+      ? baseInterestRateAnnual - greenServiceDiscount
+      : baseInterestRateAnnual;
+  });
   protected readonly totalRepayable = computed(() => {
-    const annualInterest = this.principalAmount() * 0.045;
-    return this.principalAmount() + annualInterest + this.insurancePremium() + this.applicationFee;
+    const months = Number(this.repaymentPeriod()) || 12;
+    const interest = this.principalAmount() * (this.interestRateAnnual() / 100) * (months / 12);
+    return this.principalAmount() + interest + this.insurancePremium() + this.applicationFee;
   });
   protected readonly monthlyInstallment = computed(() => {
     const installments = Number(this.repaymentPeriod()) || 1;
@@ -301,11 +327,11 @@ export class AddLoanComponent implements OnInit {
           this.readNumber(repaymentSchedule, ['repaymentPeriodMonths', 'repayment_period_months']) ?? 12,
         ),
         agrochemicals: selectedServices.has('agrochemicals'),
-        seeds: selectedServices.has('seeds'),
-        irrigation: selectedServices.has('irrigation'),
-        farmEquipment: selectedServices.has('farmEquipment'),
+        soilTesting: selectedServices.has('soil_testing'),
+        tractorServices: selectedServices.has('tractor_services'),
+        irrigation: selectedServices.has('irrigation_and_water_support'),
         insurance: Boolean(application.insuranceAcceptance),
-        logistics: selectedServices.has('logistics'),
+        logistics: selectedServices.has('logistics_and_aggregation'),
       });
       this.selectedFarmerId.set(application.farmerId);
 
@@ -521,13 +547,9 @@ export class AddLoanComponent implements OnInit {
       return null;
     }
 
-    const selectedServices: string[] = [];
-    if (val.agrochemicals) selectedServices.push('agrochemicals');
-    if (val.seeds) selectedServices.push('seeds');
-    if (val.irrigation) selectedServices.push('irrigation');
-    if (val.farmEquipment) selectedServices.push('farmEquipment');
-    if (val.insurance) selectedServices.push('insurance');
-    if (val.logistics) selectedServices.push('logistics');
+    const selectedServices = serviceControls
+      .filter(([control]) => Boolean(val[control]))
+      .map(([, service]) => service);
 
     const payload: CreatePortfolioLoanPayload = {
       farmId: val.farmId,
@@ -539,7 +561,7 @@ export class AddLoanComponent implements OnInit {
       },
       loanParameters: {
         loanAmount: Number(val.loanAmount) || 0,
-        interestRateAnnual: 4.5,
+        interestRateAnnual: baseInterestRateAnnual,
         repaymentPeriodMonths: Number(val.repaymentPeriod) || 12,
       },
       selectedServices,

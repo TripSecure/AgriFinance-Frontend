@@ -130,7 +130,6 @@ export interface PortfolioLoansStateModel {
   totalCount: number;
   isLoading: boolean;
   isCreating: boolean;
-  isLoadingRiskPreview: boolean;
   message: string | null;
   errors: string[];
   loans: PortfolioLoanApplication[];
@@ -146,11 +145,6 @@ export class CreatePortfolioLoan {
   constructor(public farmerId: string, public payload: CreatePortfolioLoanPayload) {}
 }
 
-export class CreatePortfolioLoanRiskPreview {
-  static readonly type = '[Portfolio Loans] Create Risk Preview';
-  constructor(public farmerId: string, public payload: CreatePortfolioLoanPayload) {}
-}
-
 @State<PortfolioLoansStateModel>({
   name: 'portfolioLoans',
   defaults: {
@@ -161,7 +155,6 @@ export class CreatePortfolioLoanRiskPreview {
     totalCount: 0,
     isLoading: false,
     isCreating: false,
-    isLoadingRiskPreview: false,
     message: null,
     errors: [],
   },
@@ -178,11 +171,6 @@ export class PortfolioLoansState {
   @Selector()
   static isCreating(state: PortfolioLoansStateModel): boolean {
     return state.isCreating;
-  }
-
-  @Selector()
-  static isLoadingRiskPreview(state: PortfolioLoansStateModel): boolean {
-    return state.isLoadingRiskPreview;
   }
 
   @Selector()
@@ -267,41 +255,6 @@ export class PortfolioLoansState {
           );
           ctx.patchState({
             isCreating: false,
-            message: null,
-            errors: [message],
-          });
-          return of(error);
-        }),
-      );
-  }
-
-  @Action(CreatePortfolioLoanRiskPreview)
-  createRiskPreview(
-    ctx: StateContext<PortfolioLoansStateModel>,
-    { farmerId, payload }: CreatePortfolioLoanRiskPreview,
-  ) {
-    ctx.patchState({ isLoadingRiskPreview: true, message: null, errors: [] });
-
-    return this.http
-      .post<{ message?: string; success?: boolean; isSuccessful?: boolean; data?: unknown }>(
-        `${environment.api}/portfolio/farmers/${farmerId}/loans/risk-preview`,
-        payload,
-      )
-      .pipe(
-        tap((response) => {
-          ctx.patchState({
-            isLoadingRiskPreview: false,
-            message: response.message ?? 'Risk preview initialized successfully.',
-            errors: [],
-          });
-        }),
-        catchError((error: unknown) => {
-          const message = extractErrorMessage(
-            error,
-            'Unable to initialize risk preview. Please try again.',
-          );
-          ctx.patchState({
-            isLoadingRiskPreview: false,
             message: null,
             errors: [message],
           });
