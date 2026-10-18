@@ -1,16 +1,16 @@
 <div class="content">
   <div class="title mb-4">
     <h3>Redeem Voucher</h3>
-    <p>For an on-the-spot handoff: scan or paste the farmer's voucher QR payload to submit it directly for portfolio officer review, without going through the order queue.</p>
+    <p>For an on-the-spot handoff: scan the farmer's voucher QR, or type the code printed on it (like TS-7K3P-9QX2), to submit it straight for portfolio officer review without going through the order queue.</p>
   </div>
 
   <div class="redeem-card">
     <form [formGroup]="redeemForm" (ngSubmit)="onSubmit()" class="d-flex flex-column gap-3">
       <app-form-input
         name="qrPayload"
-        label="Voucher QR payload"
+        label="Voucher code or QR"
         [isRequired]="true"
-        placeholder="Scan or paste the voucher's QR payload"
+        placeholder="e.g. TS-7K3P-9QX2, or scan the QR"
         [formGroup]="redeemForm"
       />
 
@@ -29,6 +29,21 @@
         placeholder="e.g. Handed off at the farm gate."
         [formGroup]="redeemForm"
       />
+
+      <div class="location-row">
+        @if (deliveryLocation(); as location) {
+          <span class="location-row__value">
+            <span class="material-symbols-outlined" aria-hidden="true">location_on</span>
+            GPS attached: {{ location.lat }}, {{ location.lng }}
+          </span>
+          <button type="button" class="btn btn-link btn-sm p-0" (click)="deliveryLocation.set(null)">Remove</button>
+        } @else {
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="onAttachLocation()" [disabled]="isLocating()">
+            <span class="material-symbols-outlined" aria-hidden="true">my_location</span>
+            {{ isLocating() ? 'Reading location...' : 'Attach my current location (optional)' }}
+          </button>
+        }
+      </div>
 
       <div class="d-flex justify-content-end">
         <button type="submit" class="btn btn-success px-4 py-2 text-white fw-medium" [disabled]="redeemForm.invalid || isRedeeming()">

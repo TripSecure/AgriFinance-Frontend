@@ -14,7 +14,7 @@
   <section class="metric-grid" aria-label="Order fulfillment summary">
     <article class="metric-card" [class.metric-card--attention]="ordersNeedingAction() > 0">
       <div class="metric-card__icon metric-card__icon--amber"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span></div>
-      <div><p>Needs your action</p><strong>{{ isLoading() ? '—' : ordersNeedingAction() }}</strong><span>Pending, accepted, or in transit</span></div>
+      <div><p>Needs your action</p><strong>{{ isLoading() ? '—' : ordersNeedingAction() }}</strong><span>Pending, in progress, or sent back</span></div>
     </article>
     <article class="metric-card">
       <div class="metric-card__icon metric-card__icon--blue"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></div>
@@ -54,7 +54,8 @@
                 <span
                   class="status-pill"
                   [class.status-pill--success]="order.status === 'delivered'"
-                  [class.status-pill--warning]="order.status !== 'delivered' && order.status !== 'cancelled'"
+                  [class.status-pill--warning]="order.status !== 'delivered' && order.status !== 'cancelled' && order.status !== 'rejected'"
+                  [class.status-pill--danger]="order.status === 'rejected'"
                 >
                   {{ formatLabel(order.status) }}
                 </span>

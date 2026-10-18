@@ -82,18 +82,14 @@
           </td>
           <td>{{ (order.updatedAt | date: 'medium') || '-' }}</td>
           <td>
-            @if (order.status === 'pending' || order.status === 'accepted' || order.status === 'in_transit' || order.status === 'pending_review' || order.status === 'rejected') {
-              <button
-                type="button"
-                class="action-button"
-                aria-label="Open order actions"
-                (click)="$event.stopPropagation(); selectedOrderForAction.set(order); actionMenu.toggle($event)"
-              >
-                <span class="material-symbols-outlined">more_vert</span>
-              </button>
-            } @else {
-              <span class="text-secondary small">No actions</span>
-            }
+            <button
+              type="button"
+              class="action-button"
+              aria-label="Open order actions"
+              (click)="$event.stopPropagation(); selectedOrderForAction.set(order); actionMenu.toggle($event)"
+            >
+              <span class="material-symbols-outlined">more_vert</span>
+            </button>
           </td>
         </tr>
       </ng-template>
@@ -203,6 +199,21 @@
         [formGroup]="deliverForm"
       />
 
+      <div class="location-row">
+        @if (deliveryLocation(); as location) {
+          <span class="location-row__value">
+            <span class="material-symbols-outlined" aria-hidden="true">location_on</span>
+            GPS attached: {{ location.lat }}, {{ location.lng }}
+          </span>
+          <button type="button" class="btn btn-link btn-sm p-0" (click)="deliveryLocation.set(null)">Remove</button>
+        } @else {
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="onAttachLocation()" [disabled]="isLocating()">
+            <span class="material-symbols-outlined" aria-hidden="true">my_location</span>
+            {{ isLocating() ? 'Reading location...' : 'Attach my current location (optional)' }}
+          </button>
+        }
+      </div>
+
       <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-2">
         <button type="button" class="btn btn-outline-secondary px-3 py-2" (click)="isDeliverModalVisible.set(false)" [disabled]="isMutating()">
           Cancel
@@ -212,6 +223,80 @@
         </button>
       </div>
     </form>
+  </p-dialog>
+
+  <p-dialog
+    [visible]="isDetailModalVisible()"
+    (visibleChange)="isDetailModalVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Order details"
+    [style]="{ width: '90vw', maxWidth: '560px' }"
+    appendTo="body"
+  >
+    @if (isDetailLoading()) {
+      <p class="text-secondary py-3 mb-0">Loading order...</p>
+    } @else if (orderDetail(); as detail) {
+      <div class="d-flex flex-column gap-3 pt-2">
+        <div class="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-start gap-3">
+          <div>
+            <div class="fw-semibold text-dark fs-6">{{ detail.farmer?.fullName || detail.order.farmerName }}</div>
+            @if (detail.farmer?.phone; as phone) {
+              <a class="small" [href]="'tel:' + phone">{{ phone }}</a>
+            }
+          </div>
+          <span
+            class="status-pill"
+            [class.status-pill--active]="detail.order.status === 'delivered'"
+            [class.status-pill--inactive]="detail.order.status === 'cancelled' || detail.order.status === 'rejected'"
+            [class.status-pill--pending]="detail.order.status === 'pending' || detail.order.status === 'accepted' || detail.order.status === 'in_transit'"
+            [class.status-pill--review]="detail.order.status === 'pending_review'"
+          >
+            {{ formatLabel(detail.order.status) }}
+          </span>
+        </div>
+
+        @if (detail.order.status === 'rejected' && detail.order.reviewNotes) {
+          <div class="p-3 rounded-3 border rejection-note">
+            <div class="fw-semibold small">Reason for rejection</div>
+            <div class="small mt-1">{{ detail.order.reviewNotes }}</div>
+          </div>
+        }
+
+        <dl class="detail-list">
+          <dt>Input / service</dt>
+          <dd>{{ formatLabel(detail.voucher?.inputType || detail.order.inputType) }}</dd>
+          <dt>Amount</dt>
+          <dd>GHS {{ detail.order.amountGhs | number: '1.2-2' }}</dd>
+          <dt>Voucher code</dt>
+          <dd>{{ detail.voucher?.voucherCode || detail.order.voucherCode || '-' }}</dd>
+          <dt>Voucher status</dt>
+          <dd>{{ detail.voucher ? formatLabel(detail.voucher.status) : '-' }}</dd>
+          <dt>Voucher expires</dt>
+          <dd>{{ (detail.voucher?.expiresAt | date: 'mediumDate') || '-' }}</dd>
+          <dt>Assigned</dt>
+          <dd>{{ detail.order.createdAt | date: 'medium' }}</dd>
+          <dt>Submitted for review</dt>
+          <dd>{{ (detail.order.deliveredAt | date: 'medium') || '-' }}</dd>
+          <dt>Reviewed</dt>
+          <dd>{{ (detail.order.reviewedAt | date: 'medium') || '-' }}</dd>
+          <dt>Notes</dt>
+          <dd>{{ detail.order.deliveryNotes || '-' }}</dd>
+        </dl>
+
+        @if (detail.order.proofOfDelivery.length) {
+          <div>
+            <div class="fw-semibold small mb-1">Proof of delivery</div>
+            <ul class="small mb-0 ps-3">
+              @for (proof of detail.order.proofOfDelivery; track proof) {
+                <li><a [href]="proof" target="_blank" rel="noopener">{{ proof }}</a></li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    }
   </p-dialog>
 
   <p-dialog

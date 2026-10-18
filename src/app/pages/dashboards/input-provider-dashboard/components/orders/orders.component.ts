@@ -13,12 +13,15 @@ import { ConfirmModalComponent } from '../../../../../shared/confirm-modal/confi
 import { FormInputComponent } from '../../../../../shared/form-input/form-input.component';
 import { extractErrorMessage } from '../../../../../shared/request.utils';
 import { ToastrService } from '../../../../../shared/toastr/toastr.service';
+import { getCurrentLocation } from './current-location';
 import {
   AcceptProviderOrder,
   CancelProviderOrder,
   DeliverProviderOrder,
   DispatchProviderOrder,
+  GetProviderOrder,
   GetProviderOrders,
+  GpsLocation,
   ProviderOrder,
   ProviderOrdersQueryParams,
   ProviderOrdersState,
@@ -81,35 +84,45 @@ export class OrdersComponent {
       return [];
     }
 
+    const viewDetails: MenuItem = { label: 'View details', icon: 'visibility', command: () => this.onOpenDetail(order) };
+
     switch (order.status) {
       case 'pending':
-        return [{ label: 'Accept order', icon: 'task_alt', command: () => this.onAccept(order) }];
+        return [viewDetails, { label: 'Accept order', icon: 'task_alt', command: () => this.onAccept(order) }];
       case 'accepted':
         return [
+          viewDetails,
           { label: 'Mark in transit', icon: 'local_shipping', command: () => this.onOpenDispatch(order) },
           { label: 'Mark delivered', icon: 'check_circle', command: () => this.onOpenDeliver(order) },
           { label: 'Cancel order', icon: 'cancel', command: () => this.onOpenCancel(order) },
         ];
       case 'in_transit':
         return [
+          viewDetails,
           { label: 'Mark delivered', icon: 'check_circle', command: () => this.onOpenDeliver(order) },
           { label: 'Cancel order', icon: 'cancel', command: () => this.onOpenCancel(order) },
         ];
       case 'pending_review':
-        return [{ label: 'Cancel order', icon: 'cancel', command: () => this.onOpenCancel(order) }];
+        return [viewDetails, { label: 'Cancel order', icon: 'cancel', command: () => this.onOpenCancel(order) }];
       case 'rejected':
         return [
+          viewDetails,
           { label: 'Resubmit delivery', icon: 'check_circle', command: () => this.onOpenDeliver(order) },
           { label: 'Cancel order', icon: 'cancel', command: () => this.onOpenCancel(order) },
         ];
       default:
-        return [];
+        return [viewDetails];
     }
   });
 
   protected readonly isDispatchModalVisible = signal(false);
   protected readonly isDeliverModalVisible = signal(false);
   protected readonly isCancelModalVisible = signal(false);
+  protected readonly isDetailModalVisible = signal(false);
+  protected readonly orderDetail = this.store.selectSignal(ProviderOrdersState.orderDetail);
+  protected readonly isDetailLoading = this.store.selectSignal(ProviderOrdersState.isDetailLoading);
+  protected readonly deliveryLocation = signal<GpsLocation | null>(null);
+  protected readonly isLocating = signal(false);
   protected readonly selectedOrderForModal = signal<ProviderOrder | null>(null);
 
   protected readonly dispatchForm = new FormGroup({
@@ -172,6 +185,24 @@ export class OrdersComponent {
       });
   }
 
+  protected onOpenDetail(order: ProviderOrder): void {
+    this.isDetailModalVisible.set(true);
+    this.store.dispatch(new GetProviderOrder(order.id)).subscribe(() => {
+      const errors = this.store.selectSnapshot(ProviderOrdersState.errors);
+      if (errors.length) {
+        this.toastr.triggerToastr('error', errors[0]);
+      }
+    });
+  }
+
+  protected onAttachLocation(): void {
+    this.isLocating.set(true);
+    getCurrentLocation()
+      .then((location) => this.deliveryLocation.set(location))
+      .catch((error: Error) => this.toastr.triggerToastr('error', error.message))
+      .finally(() => this.isLocating.set(false));
+  }
+
   protected onOpenDispatch(order: ProviderOrder): void {
     this.selectedOrderForModal.set(order);
     this.dispatchForm.reset({ deliveryNotes: '' });
@@ -198,6 +229,7 @@ export class OrdersComponent {
   protected onOpenDeliver(order: ProviderOrder): void {
     this.selectedOrderForModal.set(order);
     this.deliverForm.reset({ deliveryNotes: '', proofOfDelivery: '' });
+    this.deliveryLocation.set(null);
     this.isDeliverModalVisible.set(true);
   }
 
@@ -213,6 +245,7 @@ export class OrdersComponent {
         new DeliverProviderOrder(order.id, {
           deliveryNotes: raw.deliveryNotes.trim() || null,
           proofOfDelivery: parseProofLines(raw.proofOfDelivery),
+          gpsLocation: this.deliveryLocation(),
         }),
       )
       .subscribe({

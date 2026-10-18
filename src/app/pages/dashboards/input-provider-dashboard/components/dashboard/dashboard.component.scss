@@ -38,6 +38,7 @@ h2 { margin-bottom: 0; color: #102a43; font-size: 1.15rem; letter-spacing: -.02e
 .status-pill { display: inline-flex; align-items: center; gap: .25rem; border-radius: 999px; padding: .28rem .55rem; font-size: .68rem; font-weight: 700; white-space: nowrap; }
 .status-pill--success { background: #dff5e8; color: #14743e; }
 .status-pill--warning { background: #fff0c9; color: #8b6100; }
+.status-pill--danger { background: #fee4e2; color: #b42318; }
 .empty-state { display: grid; place-items: center; gap: .35rem; min-height: 220px; padding: 2rem; color: #7a8b9b; text-align: center; font-size: .82rem; }
 .empty-state .material-symbols-outlined { color: #007c5a; font-size: 2rem; }
 .empty-state strong { color: #102a43; font-size: .95rem; }

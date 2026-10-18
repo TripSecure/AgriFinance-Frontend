@@ -1,11 +1,12 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { FormInputComponent } from '../../../../../shared/form-input/form-input.component';
 import { extractErrorMessage } from '../../../../../shared/request.utils';
 import { ToastrService } from '../../../../../shared/toastr/toastr.service';
-import { ProviderOrdersState, RedeemVoucher } from '../orders/orders.state';
+import { getCurrentLocation } from '../orders/current-location';
+import { GpsLocation, ProviderOrdersState, RedeemVoucher } from '../orders/orders.state';
 
 const parseProofLines = (value: string): string[] =>
   value
@@ -28,6 +29,9 @@ export class RedeemVoucherComponent {
   protected readonly redeemResult = this.store.selectSignal(ProviderOrdersState.redeemResult);
   protected readonly redeemErrors = this.store.selectSignal(ProviderOrdersState.redeemErrors);
 
+  protected readonly deliveryLocation = signal<GpsLocation | null>(null);
+  protected readonly isLocating = signal(false);
+
   protected readonly redeemForm = new FormGroup({
     qrPayload: new FormControl('', { nonNullable: true, validators: Validators.required }),
     deliveryNotes: new FormControl('', { nonNullable: true }),
@@ -47,6 +51,7 @@ export class RedeemVoucherComponent {
           qrPayload: raw.qrPayload.trim(),
           deliveryNotes: raw.deliveryNotes.trim() || null,
           proofOfDelivery: parseProofLines(raw.proofOfDelivery),
+          gpsLocation: this.deliveryLocation(),
         }),
       )
       .subscribe({
@@ -59,10 +64,19 @@ export class RedeemVoucherComponent {
 
           this.toastr.triggerToastr('success', 'Voucher scanned and submitted for portfolio officer review.');
           this.redeemForm.reset({ qrPayload: '', deliveryNotes: '', proofOfDelivery: '' });
+          this.deliveryLocation.set(null);
         },
         error: (error: unknown) =>
           this.toastr.triggerToastr('error', extractErrorMessage(error, 'Unable to redeem this voucher.')),
       });
+  }
+
+  protected onAttachLocation(): void {
+    this.isLocating.set(true);
+    getCurrentLocation()
+      .then((location) => this.deliveryLocation.set(location))
+      .catch((error: Error) => this.toastr.triggerToastr('error', error.message))
+      .finally(() => this.isLocating.set(false));
   }
 
   protected formatLabel(value: string | null | undefined): string {

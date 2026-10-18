@@ -62,7 +62,7 @@ interface ProviderOrdersResponse {
 interface ProviderOrderDetailResponse {
   message?: string;
   success?: boolean;
-  data: { order: ProviderOrder; farmer: ProviderOrderFarmer | null; voucher: ProviderOrderVoucher | null };
+  data: ProviderOrderDetail;
 }
 
 interface ProviderDashboardResponse {
@@ -77,15 +77,28 @@ export interface ProviderOrdersQueryParams {
   status?: 'all' | 'pending' | 'accepted' | 'in_transit' | 'pending_review' | 'delivered' | 'rejected' | 'cancelled';
 }
 
+export interface GpsLocation {
+  lat: number;
+  lng: number;
+}
+
 export interface DeliverOrderPayload {
   deliveryNotes?: string | null;
   proofOfDelivery: string[];
+  gpsLocation?: GpsLocation | null;
 }
 
 export interface RedeemVoucherPayload {
   qrPayload: string;
   deliveryNotes?: string | null;
   proofOfDelivery: string[];
+  gpsLocation?: GpsLocation | null;
+}
+
+export interface ProviderOrderDetail {
+  order: ProviderOrder;
+  farmer: ProviderOrderFarmer | null;
+  voucher: ProviderOrderVoucher | null;
 }
 
 export interface ProviderOrdersStateModel {
@@ -104,11 +117,18 @@ export interface ProviderOrdersStateModel {
   redeemResult: { order: ProviderOrder; voucher: ProviderOrderVoucher } | null;
   isRedeeming: boolean;
   redeemErrors: string[];
+  orderDetail: ProviderOrderDetail | null;
+  isDetailLoading: boolean;
 }
 
 export class GetProviderOrders {
   static readonly type = '[Provider Orders] Get Orders';
   constructor(public params?: ProviderOrdersQueryParams) {}
+}
+
+export class GetProviderOrder {
+  static readonly type = '[Provider Orders] Get Order';
+  constructor(public orderId: string) {}
 }
 
 export class AcceptProviderOrder {
@@ -158,6 +178,8 @@ export class RedeemVoucher {
     redeemResult: null,
     isRedeeming: false,
     redeemErrors: [],
+    orderDetail: null,
+    isDetailLoading: false,
   },
 })
 @Injectable()
@@ -225,6 +247,16 @@ export class ProviderOrdersState {
     return state.redeemErrors;
   }
 
+  @Selector()
+  static orderDetail(state: ProviderOrdersStateModel): ProviderOrderDetail | null {
+    return state.orderDetail;
+  }
+
+  @Selector()
+  static isDetailLoading(state: ProviderOrdersStateModel): boolean {
+    return state.isDetailLoading;
+  }
+
   @Action(GetProviderOrders)
   getOrders(ctx: StateContext<ProviderOrdersStateModel>, { params }: GetProviderOrders) {
     ctx.patchState({ isLoading: true, errors: [] });
@@ -253,6 +285,24 @@ export class ProviderOrdersState {
         ctx.patchState({
           isLoading: false,
           errors: [extractErrorMessage(error, 'Unable to load your orders.')],
+        });
+        return of(error);
+      }),
+    );
+  }
+
+  @Action(GetProviderOrder)
+  getOrder(ctx: StateContext<ProviderOrdersStateModel>, { orderId }: GetProviderOrder) {
+    ctx.patchState({ isDetailLoading: true, orderDetail: null, errors: [] });
+
+    return this.http.get<ProviderOrderDetailResponse>(`${environment.api}/provider/orders/${orderId}`).pipe(
+      tap((response) => {
+        ctx.patchState({ orderDetail: response.data, isDetailLoading: false });
+      }),
+      catchError((error: unknown) => {
+        ctx.patchState({
+          isDetailLoading: false,
+          errors: [extractErrorMessage(error, 'Unable to load this order.')],
         });
         return of(error);
       }),
@@ -288,6 +338,7 @@ export class ProviderOrdersState {
       this.http.post<ProviderOrderDetailResponse>(`${environment.api}/provider/orders/${orderId}/deliver`, {
         deliveryNotes: payload.deliveryNotes || null,
         proofOfDelivery: payload.proofOfDelivery,
+        gpsLocation: payload.gpsLocation ?? null,
       }),
       'Order submitted for portfolio officer review.',
       'Unable to mark this order delivered.',

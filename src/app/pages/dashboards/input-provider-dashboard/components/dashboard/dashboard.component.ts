@@ -23,7 +23,7 @@ export class ProviderDashboardComponent implements OnInit {
     if (!summary) {
       return 0;
     }
-    return summary.pendingCount + summary.acceptedCount + summary.inTransitCount;
+    return summary.pendingCount + summary.acceptedCount + summary.inTransitCount + summary.rejectedCount;
   });
 
   ngOnInit(): void {
