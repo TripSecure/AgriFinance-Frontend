@@ -1,13 +1,17 @@
 import { NgOptimizedImage } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { LoginWithOtp, PersistState, ResetLoginOtpRequest, SetRememberDevice } from '../services/auth/auth.actions';
+import {
+  LoginWithOtp,
+  PersistState,
+  RequestLoginOtp,
+  ResetLoginOtpRequest,
+  SetRememberDevice,
+} from '../services/auth/auth.actions';
 import { AuthState } from '../services/auth/auth.states';
 import { ToastrService } from '../../../shared/toastr/toastr.service';
-
-const DEFAULT_LOGIN_OTP = '000000';
 
 interface LoginFormValue {
   identity: string;
@@ -37,17 +41,33 @@ export class LoginComponent {
     otpCode: 'Enter your verification code.',
   };
 
+  // Step 1 checks the password and asks the backend to issue a login code. On staging and local
+  // the backend runs in bypass mode and returns the code, so sign-in completes straight away;
+  // on production it texts the code and step 2 asks the user to type it.
+  protected readonly step = signal<'credentials' | 'code'>('credentials');
+  protected readonly loginOtp = this.store.selectSignal(AuthState.loginOtp);
+  private readonly otpInput = viewChild<ElementRef<HTMLInputElement>>('otpInput');
+
+  protected readonly maskedPhone = computed(() => {
+    const digits = (this.loginOtp()?.phone ?? '').replace(/\D/g, '');
+    return digits.length >= 4 ? `the number ending ${digits.slice(-4)}` : 'your phone';
+  });
+
   protected readonly showPassword = signal(false);
   protected readonly authLoading = this.store.selectSignal(AuthState.isLoading);
   protected readonly authErrors = this.store.selectSignal(AuthState.getErrors);
   protected readonly authMessage = this.store.selectSignal(AuthState.message);
-  protected readonly loginTitle = computed(() => 'Welcome back');
-  protected readonly loginHelpText = computed(() => 'Enter your phone number or email and password.');
-  protected readonly submitButtonText = computed(() => 'Sign In');
+  protected readonly loginTitle = computed(() => (this.step() === 'code' ? 'Enter your code' : 'Welcome back'));
+  protected readonly loginHelpText = computed(() =>
+    this.step() === 'code'
+      ? `We sent a 6-digit code to ${this.maskedPhone()}. It expires in 10 minutes.`
+      : 'Enter your phone number or email and password.',
+  );
+  protected readonly submitButtonText = computed(() => (this.step() === 'code' ? 'Sign In' : 'Continue'));
   protected readonly loginForm = this.formBuilder.group({
     identity: ['', Validators.required],
     password: ['', Validators.required],
-    otpCode: [DEFAULT_LOGIN_OTP, [Validators.required, Validators.pattern('[0-9]{6}')]],
+    otpCode: ['', [Validators.required, Validators.pattern('^[0-9]{6}$')]],
     rememberDevice: false,
   });
   protected readonly loginControls = this.loginForm.controls;
@@ -79,16 +99,61 @@ export class LoginComponent {
   }
 
   protected signIn(): void {
-    if (!this.markControlsAsTouched(['identity', 'password', 'otpCode'])) {
+    if (this.step() === 'code') {
+      if (!this.markControlsAsTouched(['otpCode'])) {
+        return;
+      }
+      this.completeLogin(this.buildLoginValue().otpCode);
+      return;
+    }
+
+    if (!this.markControlsAsTouched(['identity', 'password'])) {
       return;
     }
 
     const { identity, password, rememberDevice } = this.buildLoginValue();
     this.store
-      .dispatch([
-        new SetRememberDevice(rememberDevice),
-        new LoginWithOtp({ identity, password, otpCode: DEFAULT_LOGIN_OTP }),
-      ])
+      .dispatch([new SetRememberDevice(rememberDevice), new RequestLoginOtp({ identity, password })])
+      .subscribe(() => {
+        const challenge = this.store.selectSnapshot(AuthState.loginOtp);
+        if (!challenge) {
+          this.showAuthError('Login failed. Check your details and try again.');
+          return;
+        }
+
+        // Only staging and local run in bypass mode; anything else must use the code the user received.
+        if (challenge.mode === 'bypass' && challenge.devCode) {
+          this.completeLogin(challenge.devCode);
+          return;
+        }
+
+        this.loginControls.otpCode.reset('');
+        this.step.set('code');
+        setTimeout(() => this.otpInput()?.nativeElement.focus());
+      });
+  }
+
+  protected resendCode(): void {
+    const { identity, password } = this.buildLoginValue();
+    this.store.dispatch(new RequestLoginOtp({ identity, password })).subscribe(() => {
+      if (this.store.selectSnapshot(AuthState.loginOtp)) {
+        this.toastr.triggerToastr('success', `A new code was sent to ${this.maskedPhone()}.`);
+        return;
+      }
+      this.showAuthError('Unable to send a new code. Try again in a few minutes.');
+    });
+  }
+
+  protected useDifferentAccount(): void {
+    this.store.dispatch(new ResetLoginOtpRequest());
+    this.loginControls.otpCode.reset('');
+    this.step.set('credentials');
+  }
+
+  private completeLogin(otpCode: string): void {
+    const { identity, password } = this.buildLoginValue();
+    this.store
+      .dispatch(new LoginWithOtp({ identity, password, otpCode }))
       .subscribe(() => {
         if (this.store.selectSnapshot(AuthState.isAuthenticated)) {
           this.store.dispatch(new PersistState()).subscribe();

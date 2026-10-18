@@ -10,6 +10,7 @@ import {
   AuthStateModel,
   AuthUser,
   CurrentSessionResponse,
+  LoginOtpChallenge,
   LoginResponse,
   OtpResponse,
 } from './auth.state.model';
@@ -124,6 +125,11 @@ export class AuthState implements NgxsOnInit {
     return state.loginOtpRequested;
   }
 
+  @Selector()
+  static loginOtp(state: AuthStateModel): LoginOtpChallenge | null {
+    return state.loginOtp;
+  }
+
   @Action(RequestLoginOtp)
   requestLoginOtp(ctx: StateContext<AuthStateModel>, action: RequestLoginOtp) {
     ctx.patchState({
@@ -131,6 +137,7 @@ export class AuthState implements NgxsOnInit {
       errors: [],
       message: null,
       loginOtpRequested: false,
+      loginOtp: null,
       isAuthenticated: false,
       currentUser: null,
       profile: null,
@@ -145,6 +152,12 @@ export class AuthState implements NgxsOnInit {
             prefix: response.data?.prefix ?? null,
             loading: false,
             loginOtpRequested: true,
+            loginOtp: {
+              mode: response.data?.mode ?? 'live',
+              phone: response.data?.phone ?? null,
+              devCode: response.data?.devCode ?? null,
+              expiresAt: response.data?.expiresAt ?? null,
+            },
             message: response.message,
             errors: [],
           });
@@ -195,6 +208,7 @@ export class AuthState implements NgxsOnInit {
           token: accessToken,
           expiry: response.data.expiry ?? null,
           loginOtpRequested: false,
+          loginOtp: null,
           requestId: null,
           prefix: null,
           message: response.message,
@@ -263,6 +277,7 @@ export class AuthState implements NgxsOnInit {
     ctx.patchState({
       loading: false,
       loginOtpRequested: false,
+      loginOtp: null,
       requestId: null,
       prefix: null,
       errors: [],

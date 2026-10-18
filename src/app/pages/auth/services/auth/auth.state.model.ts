@@ -9,6 +9,7 @@ export interface AuthStateModel {
   expiry: string | null;
   loading: boolean;
   loginOtpRequested: boolean;
+  loginOtp: LoginOtpChallenge | null;
   requestId?: string | null;
   prefix?: string | null;
   lastLogin: string | null;
@@ -53,10 +54,21 @@ export const authInitialState: AuthStateModel = {
   lastLogin: null,
   loading: false,
   loginOtpRequested: false,
+  loginOtp: null,
   errors: [],
   message: null,
   rememberDevice: false,
 };
+
+// What the backend said about the login code it issued. `bypass` (staging/local) includes the
+// code and the login screen uses it automatically. `mock` (test SMS) and `live` (real SMS) make
+// the user type the code they received.
+export interface LoginOtpChallenge {
+  mode: 'bypass' | 'mock' | 'live';
+  phone: string | null;
+  devCode: string | null;
+  expiresAt: string | null;
+}
 export interface LoginOtpRequestCredentials {
   identity: string;
   password: string;
@@ -94,8 +106,12 @@ export interface CurrentSessionResponse extends ApiResponseBase {
 }
 export interface OtpResponse extends ApiResponseBase {
   data: {
-    requestId: string;
-    prefix: string;
+    requestId?: string;
+    prefix?: string;
+    phone?: string | null;
+    expiresAt?: string | null;
+    mode?: 'bypass' | 'mock' | 'live';
+    devCode?: string;
   } | null;
 }
 

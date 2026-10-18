@@ -46,6 +46,7 @@
       </header>
 
       <form class="login-form" [formGroup]="loginForm" (ngSubmit)="signIn()" novalidate>
+        @if (step() === 'credentials') {
         <div class="login-field">
           <label for="login-identity">Phone Number or Email</label>
           <div class="login-control">
@@ -105,6 +106,38 @@
             <p class="login-error">{{ errorMessage }}</p>
           }
         </div>
+        } @else {
+        <div class="login-field">
+          <div class="login-label-row">
+            <label for="login-otp">Verification code</label>
+            <button type="button" class="login-link-button" (click)="resendCode()" [disabled]="authLoading()">
+              Resend code
+            </button>
+          </div>
+          <div class="login-control">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 2v16h10V4H7Zm4 13h2v2h-2v-2Z"
+              />
+            </svg>
+            <input
+              #otpInput
+              id="login-otp"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              placeholder="6-digit code"
+              formControlName="otpCode"
+              [attr.aria-invalid]="loginControls.otpCode.touched && loginControls.otpCode.invalid"
+              aria-describedby="login-heading"
+            />
+          </div>
+          @if (getLoginFieldError('otpCode'); as errorMessage) {
+            <p class="login-error">{{ errorMessage }}</p>
+          }
+        </div>
+        }
 
         @if (authErrors().length) {
           <div class="login-alert" role="alert">
@@ -116,10 +149,12 @@
           <p class="login-success" role="status">{{ authMessage() }}</p>
         }
 
-        <label class="remember-device">
-          <input type="checkbox" formControlName="rememberDevice" />
-          <span>Remember this device</span>
-        </label>
+        @if (step() === 'credentials') {
+          <label class="remember-device">
+            <input type="checkbox" formControlName="rememberDevice" />
+            <span>Remember this device</span>
+          </label>
+        }
 
         <button class="sign-in-button" type="submit" [disabled]="authLoading()">
           {{ authLoading() ? 'Please wait...' : submitButtonText() }}
@@ -131,9 +166,15 @@
         </button>
       </form>
 
-      <p class="register-prompt">
-        Don't have an account? <a routerLink="/auth/sign-up">Register</a>
-      </p>
+      @if (step() === 'code') {
+        <p class="register-prompt">
+          <button type="button" class="login-link-button" (click)="useDifferentAccount()">Use a different account</button>
+        </p>
+      } @else {
+        <p class="register-prompt">
+          Don't have an account? <a routerLink="/auth/sign-up">Register</a>
+        </p>
+      }
 
       <nav class="login-legal" aria-label="Legal and support links">
         <span>Privacy<br />Policy</span>
