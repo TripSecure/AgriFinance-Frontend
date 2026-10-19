@@ -1,7 +1,7 @@
-// Serves the Angular app on its own address and sends every other hostname there.
-// TARIA only returns farmer risk assessments to agrifinance.tripsecureagrifinanceltd.com (plus
-// the Vercel and localhost addresses), so the app must be used from that address.
-const appHost = "agrifinance.tripsecureagrifinanceltd.com";
+// Serves the Angular app on www.tripsecureagrifinanceltd.com and sends every other hostname
+// (the bare domain, agrifinance., workers.dev) there. TARIA only returns farmer risk assessments
+// to the addresses on its allowed list, which includes this one.
+const appHost = "www.tripsecureagrifinanceltd.com";
 
 export default {
   async fetch(request, env) {
